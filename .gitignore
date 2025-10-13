@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.lcov
+
+# Production
+build/
+dist/
+
+# Environment variables
+.env
+.env*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDEs
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backend
+backend/node_modules/
+backend/dist/
+backend/.env
+
+# iOS
+mobile/ios/*.xcworkspace
+mobile/ios/Pods/
+mobile/ios/.build/
+mobile/ios/DerivedData/
+mobile/ios/*.xcuserstate
+mobile/ios/*.moved-aside
+mobile/ios/*.pbxuser
+mobile/ios/*.mode1v3
+mobile/ios/*.mode2v3
+mobile/ios/*.perspectivev3
+
+# Android
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/local.properties
+mobile/android/.idea/
+mobile/android/*.iml
+mobile/android/.cxx/
+mobile/android/*.apk
+mobile/android/*.aab
+
+# Infrastructure
+infrastructure/.terraform/
+infrastructure/*.tfstate
+infrastructure/*.tfstate.*
+infrastructure/.terraform.lock.hcl
+
+# Secrets
+secrets/
+*.pem
+*.key
+*.crt
+
+# AWS
+.aws/
+
+# Database
+*.sql.backup
+pgdata/
+
+# Cache
+.cache/
+*.tmp
