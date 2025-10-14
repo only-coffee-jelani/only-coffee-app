@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">Only Coffee</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_menu">Menu</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_rewards">Rewards</string>
+    <string name="nav_profile">Profile</string>
+    
+    <!-- Home Screen -->
+    <string name="good_morning">Good morning, %1$s!</string>
+    <string name="welcome_back">Welcome back to Only Coffee</string>
+    <string name="order_ahead">Order Ahead</string>
+    <string name="skip_the_line">Skip the line</string>
+    <string name="find_stores">Find Stores</string>
+    <string name="locate_nearby">Locate nearby</string>
+    <string name="nearby_stores">Nearby Stores</string>
+    <string name="featured_items">Featured Items</string>
+    <string name="see_all">See All</string>
+    <string name="view_menu">View Menu</string>
+    
+    <!-- Menu Screen -->
+    <string name="menu">Menu</string>
+    <string name="search_menu_items">Search menu items...</string>
+    <string name="no_items_found">No items found</string>
+    <string name="try_different_search">Try a different search term</string>
+    <string name="no_items_available">No items available</string>
+    <string name="check_back_later">Check back later for new items</string>
+    
+    <!-- Orders Screen -->
+    <string name="orders">Orders</string>
+    <string name="no_orders_yet">No orders yet</string>
+    <string name="orders_will_appear_here">Your orders will appear here</string>
+    
+    <!-- Rewards Screen -->
+    <string name="rewards">Rewards</string>
+    <string name="earn_rewards">Earn Rewards</string>
+    <string name="rewards_coming_soon">Loyalty program coming soon!</string>
+    
+    <!-- Profile Screen -->
+    <string name="profile">Profile</string>
+    <string name="profile_setup">Profile Setup</string>
+    <string name="profile_coming_soon">Profile features coming soon!</string>
+    
+    <!-- Common -->
+    <string name="loading">Loading...</string>
+    <string name="error">Error</string>
+    <string name="retry">Retry</string>
+    <string name="cancel">Cancel</string>
+    <string name="ok">OK</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="add">Add</string>
+    <string name="remove">Remove</string>
+    <string name="clear">Clear</string>
+    <string name="search">Search</string>
+    <string name="filter">Filter</string>
+    <string name="sort">Sort</string>
+    
+    <!-- Store Status -->
+    <string name="open">Open</string>
+    <string name="closed">Closed</string>
+    <string name="opening_soon">Opening Soon</string>
+    <string name="closing_soon">Closing Soon</string>
+    
+    <!-- Menu Categories -->
+    <string name="category_coffee">Coffee</string>
+    <string name="category_espresso">Espresso</string>
+    <string name="category_tea">Tea</string>
+    <string name="category_cold_brew">Cold Brew</string>
+    <string name="category_frappuccino">Frappuccino</string>
+    <string name="category_food">Food</string>
+    <string name="category_pastries">Pastries</string>
+    <string name="category_seasonal">Seasonal</string>
+    
+    <!-- Cart -->
+    <string name="cart">Cart</string>
+    <string name="add_to_cart">Add to Cart</string>
+    <string name="remove_from_cart">Remove from Cart</string>
+    <string name="cart_empty">Your cart is empty</string>
+    <string name="cart_total">Total: %1$s</string>
+    <string name="checkout">Checkout</string>
+    
+    <!-- Order Status -->
+    <string name="order_placed">Order Placed</string>
+    <string name="order_confirmed">Order Confirmed</string>
+    <string name="order_preparing">Preparing</string>
+    <string name="order_ready">Ready for Pickup</string>
+    <string name="order_completed">Completed</string>
+    <string name="order_cancelled">Cancelled</string>
+    
+    <!-- Notifications -->
+    <string name="default_notification_channel_id">only_coffee_notifications</string>
+    <string name="notification_order_ready_title">Your order is ready!</string>
+    <string name="notification_order_ready_body">Pick up your order at %1$s</string>
+    
+    <!-- Permissions -->
+    <string name="permission_location_title">Location Permission</string>
+    <string name="permission_location_message">We need location access to find nearby stores</string>
+    <string name="permission_camera_title">Camera Permission</string>
+    <string name="permission_camera_message">We need camera access to scan QR codes</string>
+    <string name="permission_notification_title">Notification Permission</string>
+    <string name="permission_notification_message">We need notification access to send order updates</string>
+    
+    <!-- Errors -->
+    <string name="error_network">Network error. Please check your connection.</string>
+    <string name="error_server">Server error. Please try again later.</string>
+    <string name="error_unknown">An unknown error occurred.</string>
+    <string name="error_location">Unable to get your location.</string>
+    <string name="error_no_stores">No stores found in your area.</string>
+    
+    <!-- Accessibility -->
+    <string name="content_description_store_image">Store image</string>
+    <string name="content_description_menu_item_image">Menu item image</string>
+    <string name="content_description_user_avatar">User profile picture</string>
+    <string name="content_description_rating">Rating: %1$.1f stars</string>
+    <string name="content_description_cart_badge">%1$d items in cart</string>
+</resources>

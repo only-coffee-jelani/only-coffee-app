@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">maps.googleapis.com</domain>
+        <domain includeSubdomains="true">maps.google.com</domain>
+        <domain includeSubdomains="true">maps.gstatic.com</domain>
+        <domain includeSubdomains="true">geo0.ggpht.com</domain>
+        <domain includeSubdomains="true">geo1.ggpht.com</domain>
+        <domain includeSubdomains="true">geo2.ggpht.com</domain>
+        <domain includeSubdomains="true">geo3.ggpht.com</domain>
+        <domain includeSubdomains="true">mts0.googleapis.com</domain>
+        <domain includeSubdomains="true">mts1.googleapis.com</domain>
+        <domain includeSubdomains="true">mts2.googleapis.com</domain>
+        <domain includeSubdomains="true">mts3.googleapis.com</domain>
+    </domain-config>
+</network-security-config>
