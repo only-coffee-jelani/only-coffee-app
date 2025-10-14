@@ -9,7 +9,7 @@ import {
   OrderType,
   PaymentMethod,
 } from '@shared/database/entities';
-import { SlotManagementService, PaymentService } from '@shared/services';
+import { SlotManagementService, PaymentService, ToastApiService } from '@shared/services';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ConfirmOrderDto } from './dto/confirm-order.dto';
 
@@ -26,6 +26,7 @@ export class OrdersService {
     private readonly storeRepository: Repository<Store>,
     private readonly slotManagementService: SlotManagementService,
     private readonly paymentService: PaymentService,
+    private readonly toastApiService: ToastApiService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -226,14 +227,19 @@ export class OrdersService {
       order.paymentMethod = this.extractPaymentMethod(paymentIntent);
 
       // Confirm the slot reservation permanently
-      await this.slotManagementService.confirmSlot(orderId, order.storeId, order.pickupTime);
+      await this.slotManagementService.confirmSlot(orderId);
 
       const confirmedOrder = await manager.save(Order, order);
 
       this.logger.log(`Order ${orderId} confirmed with payment ${paymentIntentId}`);
 
+      // Send order to Toast POS asynchronously
+      this.sendOrderToToast(confirmedOrder, order.items, order.store).catch((error) => {
+        this.logger.error(`Failed to send order ${orderId} to Toast POS`, error);
+        // Don't fail the order confirmation, but log for manual intervention
+      });
+
       // TODO: Send confirmation email/push notification
-      // TODO: Send order to Toast POS
 
       return {
         ...confirmedOrder,
@@ -241,6 +247,57 @@ export class OrdersService {
         store: order.store,
       };
     });
+  }
+
+  /**
+   * Send order to Toast POS system
+   */
+  private async sendOrderToToast(order: Order, items: OrderItem[], store: Store): Promise<void> {
+    try {
+      this.logger.log(`Sending order ${order.id} to Toast POS`);
+
+      // Map order items to Toast format
+      const toastSelections = items.map((item) => ({
+        name: item.itemName,
+        quantity: item.quantity,
+        unitOfMeasure: 'NONE' as const,
+        price: parseFloat(item.totalPrice.toString()),
+        modifiers: item.modifiers.map((mod: any) => ({
+          name: mod.name,
+          price: parseFloat(mod.price || '0'),
+          quantity: 1,
+        })),
+        specialRequests: item.specialInstructions || undefined,
+      }));
+
+      // Create Toast check
+      const toastCheck = {
+        entityType: 'Check' as const,
+        deleted: false,
+        selections: toastSelections,
+        customer: {
+          firstName: '', // Would come from user entity
+          lastName: '',
+          phone: '',
+          email: '',
+        },
+        promisedDate: order.pickupTime?.toISOString() || new Date().toISOString(),
+        notes: order.specialInstructions || `Order #${order.id.substring(0, 8)}`,
+      };
+
+      const createdCheck = await this.toastApiService.createCheck(toastCheck);
+
+      // Update order with Toast check GUID
+      if (createdCheck.guid) {
+        order.toastCheckId = createdCheck.guid;
+        await this.orderRepository.save(order);
+      }
+
+      this.logger.log(`Successfully sent order ${order.id} to Toast POS. Check GUID: ${createdCheck.guid}`);
+    } catch (error) {
+      this.logger.error(`Failed to send order ${order.id} to Toast POS:`, error);
+      throw error;
+    }
   }
 
   /**

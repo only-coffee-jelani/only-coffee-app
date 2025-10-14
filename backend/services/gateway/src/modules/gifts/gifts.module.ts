@@ -1,9 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { GiftCard } from '@shared/database/entities';
+import { GiftCard, Order } from '@shared/database/entities';
+import { GiftsController } from './gifts.controller';
+import { GiftsService } from './gifts.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([GiftCard])],
-  // TODO: Add controllers and services for gift cards
+  imports: [TypeOrmModule.forFeature([GiftCard, Order])],
+  controllers: [GiftsController],
+  providers: [GiftsService],
+  exports: [GiftsService],
 })
 export class GiftsModule {}
