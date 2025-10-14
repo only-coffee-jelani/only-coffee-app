@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { User, Order, OrderStatus } from '@shared/database/entities';
+import { User, Order, OrderStatus, PaymentMethod } from '@shared/database/entities';
 import { PaymentService } from '@shared/services';
 import { CreatePaymentIntentDto } from './dto/create-payment-intent.dto';
 import { ConfirmPaymentDto } from './dto/confirm-payment.dto';
@@ -357,20 +357,20 @@ export class PaymentsService {
   /**
    * Extract payment method type from PaymentIntent
    */
-  private getPaymentMethodType(paymentIntent: Stripe.PaymentIntent): string {
+  private getPaymentMethodType(paymentIntent: any): PaymentMethod {
     const charges = paymentIntent.charges?.data;
     if (charges && charges.length > 0) {
       const paymentMethodDetails = charges[0].payment_method_details;
       if (paymentMethodDetails?.card?.wallet?.type === 'apple_pay') {
-        return 'apple_pay';
+        return PaymentMethod.APPLE_PAY;
       }
       if (paymentMethodDetails?.card?.wallet?.type === 'google_pay') {
-        return 'google_pay';
+        return PaymentMethod.GOOGLE_PAY;
       }
       if (paymentMethodDetails?.card) {
-        return 'card';
+        return PaymentMethod.STRIPE;
       }
     }
-    return 'unknown';
+    return PaymentMethod.STRIPE;
   }
 }
