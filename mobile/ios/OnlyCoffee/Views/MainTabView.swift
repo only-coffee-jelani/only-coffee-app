@@ -6,7 +6,11 @@ struct MainTabView: View {
 
     var body: some View {
         NavigationView {
-            ZStack(alignment: .top) {
+            VStack(spacing: 0) {
+                // Logo header with profile button - Fixed at top
+                BrandHeader()
+
+                // Tab content below header
                 TabView(selection: $selectedTab) {
                     // Home
                     HomeView()
@@ -36,18 +40,16 @@ struct MainTabView: View {
                         }
                         .tag(3)
 
-                    // Stores
+                    // Locations
                     StoresView()
                         .tabItem {
-                            Label("Stores", systemImage: "map")
+                            Label("Locations", systemImage: "map")
                         }
                         .tag(4)
                 }
                 .accentColor(.brandPink)
-
-                // Logo header with profile button
-                BrandHeader()
             }
+            .ignoresSafeArea(edges: .top)
             .overlay(alignment: .topTrailing) {
                 // Cart badge
                 if cartManager.itemCount > 0 {

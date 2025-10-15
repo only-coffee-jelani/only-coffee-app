@@ -202,6 +202,9 @@ fun MenuItemCard(
 fun MenuItemListCard(
     menuItem: MenuItem,
     onItemClick: (MenuItem) -> Unit,
+    isFavorite: Boolean = false,
+    onFavoriteClick: (String) -> Unit = {},
+    onAddToCart: (MenuItem) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -222,18 +225,35 @@ fun MenuItemListCard(
                     model = menuItem.imageUrl,
                     contentDescription = menuItem.name,
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(100.dp)
                         .clip(RoundedCornerShape(CornerRadius.image)),
                     contentScale = ContentScale.Crop,
                     placeholder = painterResource(R.drawable.coffee_cup),
                     error = painterResource(R.drawable.coffee_cup)
                 )
-                
+
+                // Favorite Heart Button (top right of image)
+                IconButton(
+                    onClick = { onFavoriteClick(menuItem.id) },
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(4.dp)
+                        .size(28.dp)
+                        .background(Color.Black.copy(alpha = 0.3f), CircleShape)
+                ) {
+                    Icon(
+                        painter = painterResource(if (isFavorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
+                        contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                        tint = if (isFavorite) Color.Red else Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
                 // Unavailable Overlay
                 if (!menuItem.isAvailable) {
                     Box(
                         modifier = Modifier
-                            .size(80.dp)
+                            .size(100.dp)
                             .background(
                                 color = OverlayMedium,
                                 shape = RoundedCornerShape(CornerRadius.image)
@@ -288,34 +308,44 @@ fun MenuItemListCard(
                 )
                 
                 Spacer(modifier = Modifier.height(Spacing.sm))
-                
-                // Category, Prep Time, and Customizable
+
+                // Price and Calories Row
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(Spacing.md),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(getCategoryIcon(menuItem.category.iconName)),
-                            contentDescription = null,
-                            tint = BrandAccent,
-                            modifier = Modifier.size(IconSize.sm)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(Spacing.xs))
-                        
+                    Text(
+                        text = menuItem.formattedPrice,
+                        style = OnlyCoffeeTextStyles.PriceText,
+                        color = BrandPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    menuItem.calories?.let { calories ->
                         Text(
-                            text = menuItem.category.displayName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextTertiary
+                            text = "$calories cal",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
                         )
                     }
-                    
+                }
 
-                    
+                Spacer(modifier = Modifier.height(Spacing.sm))
 
+                // Add to Cart Button
+                androidx.compose.material3.Button(
+                    onClick = { onAddToCart(menuItem) },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = BrandPrimary
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text(
+                        text = "Add to Cart",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
                 }
             }
 

@@ -7,13 +7,12 @@ struct LoginView: View {
     @State private var showingSignup = false
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background - pink
-                Color.brandPink
-                    .ignoresSafeArea()
+        ZStack {
+            // Background - pink
+            Color.brandPink
+                .ignoresSafeArea()
 
-                VStack(spacing: 30) {
+            VStack(spacing: 30) {
                     // Logo and title
                     VStack(spacing: 12) {
                         Image(systemName: "cup.and.saucer.fill")
@@ -183,10 +182,12 @@ struct LoginView: View {
                     Spacer()
                 }
             }
-            .sheet(isPresented: $showingSignup) {
-                SignupView()
-            }
         }
+        .sheet(isPresented: $showingSignup) {
+            SignupView()
+        }
+        .navigationTitle("Sign In")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

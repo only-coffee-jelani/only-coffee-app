@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuBrowseView: View {
     @State private var selectedCategory: String = "Hot Coffee"
+    @State private var favoriteItems: Set<String> = []
 
     let categories = [
         "Hot Coffee",
@@ -235,7 +236,17 @@ struct MenuBrowseView: View {
             ScrollView {
                 LazyVStack(spacing: 16) {
                     ForEach(menuItems[selectedCategory] ?? [], id: \.name) { item in
-                        MenuItemCard(item: item)
+                        MenuItemCard(
+                            item: item,
+                            isFavorite: favoriteItems.contains(item.name),
+                            onFavoriteToggle: {
+                                if favoriteItems.contains(item.name) {
+                                    favoriteItems.remove(item.name)
+                                } else {
+                                    favoriteItems.insert(item.name)
+                                }
+                            }
+                        )
                     }
                 }
                 .padding()
@@ -249,6 +260,8 @@ struct MenuBrowseView: View {
 
 struct MenuItemCard: View {
     let item: MenuItemData
+    let isFavorite: Bool
+    let onFavoriteToggle: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -261,6 +274,24 @@ struct MenuItemCard: View {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.brandPink)
+
+                // Favorite heart button
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: onFavoriteToggle) {
+                            Image(systemName: isFavorite ? "heart.fill" : "heart")
+                                .foregroundColor(isFavorite ? .red : .white)
+                                .font(.system(size: 18))
+                                .padding(6)
+                                .background(Color.black.opacity(0.3))
+                                .clipShape(Circle())
+                        }
+                    }
+                    Spacer()
+                }
+                .frame(width: 100, height: 100)
+                .padding(4)
 
                 if item.isSignature {
                     VStack {

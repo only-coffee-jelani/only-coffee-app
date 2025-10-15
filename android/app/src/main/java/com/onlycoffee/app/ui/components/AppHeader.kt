@@ -41,53 +41,40 @@ fun AppHeader(
     title: String,
     modifier: Modifier = Modifier
 ) {
-    Column {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(GradientStart, GradientEnd)
-                    )
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(GradientStart, GradientEnd)
                 )
-                .padding(Spacing.screenPadding)
+            )
+            .padding(horizontal = Spacing.md, vertical = Spacing.sm)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
-                Spacer(modifier = Modifier.height(Spacing.xl))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = TextOnPrimary,
-                            fontWeight = FontWeight.SemiBold
-                        )
-
-                        Text(
-                            text = "Welcome back to Only Coffee",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextOnPrimary.copy(alpha = 0.8f)
-                        )
-                    }
-
-                    // Only Coffee Logo
-                    Image(
-                        painter = painterResource(R.drawable.logo),
-                        contentDescription = "Only Coffee Logo",
-                        modifier = Modifier.size(60.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(Spacing.lg))
+            // Centered Logo (like iOS)
+            Box(
+                modifier = Modifier.weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.logo),
+                    contentDescription = "Only Coffee Logo",
+                    modifier = Modifier.size(40.dp)
+                )
             }
-        }
 
-        // Add spacing between header and next component
-        Spacer(modifier = Modifier.height(Spacing.md))
+            // Profile button on the right (like iOS)
+            Icon(
+                painter = painterResource(R.drawable.ic_profile),
+                contentDescription = "Profile",
+                tint = TextOnPrimary,
+                modifier = Modifier.size(28.dp)
+            )
+        }
     }
 }

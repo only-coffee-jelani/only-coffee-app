@@ -9,6 +9,7 @@
     <string name="nav_orders">Orders</string>
     <string name="nav_rewards">Rewards</string>
     <string name="nav_profile">Profile</string>
+    <string name="nav_locations">Locations</string>
     
     <!-- Home Screen -->
     <string name="good_morning">Good morning, %1$s!</string>
