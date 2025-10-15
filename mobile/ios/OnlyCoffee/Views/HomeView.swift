@@ -2,304 +2,246 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var authManager: AuthenticationManager
+    @State private var currentPromoSlide = 0
+
+    let promoSlides = ["promo1", "promo2", "promo3", "promo4", "promo5"]
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                // Hero Announcement
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("We do one thing.")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.brandPink)
-                    Text("Coffee. Perfectly.")
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.primary)
+            VStack(spacing: 0) {
+                // Top Sign-In Card (30% height, full width)
+                ZStack {
+                    // Background coffee cup image
+                    Image(systemName: "cup.and.saucer.fill")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(height: UIScreen.main.bounds.height * 0.3)
+                        .foregroundColor(.brandLight.opacity(0.3))
+                        .clipped()
 
-                    Text("No distractions. No compromises. Just expertly crafted coffee, every single time.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                        .padding(.top, 4)
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    // Gradient overlay for text readability
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.black.opacity(0.5), Color.black.opacity(0.2)]),
+                        startPoint: .bottom,
+                        endPoint: .top
+                    )
 
-                // Signature Item - Waffolino
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "star.fill")
-                            .foregroundColor(.yellow)
-                        Text("SIGNATURE ITEM")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.brandPink)
-                    }
-
-                    Text("The Waffolino")
-                        .font(.title2)
-                        .fontWeight(.bold)
-
-                    Text("Our signature espresso served in a crispy waffle cone. Bold, innovative, and unmistakably Only Coffee.")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-
-                    HStack {
-                        Text("$8.50")
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.brandPink)
-
-                        Spacer()
-
-                        Button(action: {
-                            // Navigate to menu or add to cart
-                        }) {
-                            Text("Order Now")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 12)
-                                .background(Color.brandPink)
-                                .cornerRadius(8)
-                        }
-                    }
-                    .padding(.top, 8)
-                }
-                .padding()
-                .background(Color.brandLight.opacity(0.1))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.brandPink.opacity(0.3), lineWidth: 1)
-                )
-
-                // Rewards Section
-                if authManager.isAuthenticated {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "gift.fill")
-                                .foregroundColor(.brandPink)
-                            Text("YOUR REWARDS")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.brandPink)
-                        }
-
-                        Text("100 points")
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(.brandPink)
-
-                        Text("You're 50 points away from a free drink!")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-
-                        Button(action: {
-                            // Navigate to rewards
-                        }) {
-                            HStack {
-                                Text("View Rewards")
-                                    .fontWeight(.semibold)
-                                Image(systemName: "arrow.right")
+                    // Sign In / Join Now Content
+                    VStack(spacing: 16) {
+                        if authManager.isAuthenticated, let user = authManager.currentUser {
+                            // Authenticated view
+                            VStack(spacing: 8) {
+                                Text("Welcome back,")
+                                    .font(.title3)
+                                    .foregroundColor(.white)
+                                Text(user.fullName)
+                                    .font(.title.bold())
+                                    .foregroundColor(.white)
+                                Text("100 Points Available")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.9))
                             }
-                            .foregroundColor(.brandPink)
-                        }
-                        .padding(.top, 4)
-                    }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-                } else {
-                    // Rewards CTA for non-logged in users
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Image(systemName: "gift.fill")
-                                .foregroundColor(.brandPink)
-                            Text("JOIN REWARDS")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .foregroundColor(.brandPink)
-                        }
+                        } else {
+                            // Not authenticated
+                            VStack(spacing: 12) {
+                                Text("Join Only Coffee")
+                                    .font(.system(size: 32, weight: .bold))
+                                    .foregroundColor(.white)
 
-                        Text("Earn points with every purchase")
-                            .font(.title3)
-                            .fontWeight(.bold)
+                                Text("Earn rewards on every order")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.9))
 
-                        Text("Sign in to start earning rewards on every coffee you buy.")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-
-                        NavigationLink(destination: LoginView()) {
-                            HStack {
-                                Text("Sign In")
-                                    .fontWeight(.semibold)
-                                Image(systemName: "arrow.right")
+                                NavigationLink(destination: LoginView()) {
+                                    Text("Sign In / Join Now")
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: 250)
+                                        .padding()
+                                        .background(Color.brandPink)
+                                        .cornerRadius(25)
+                                }
                             }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.brandPink)
-                            .cornerRadius(8)
                         }
-                        .padding(.top, 4)
                     }
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                }
+                .frame(height: UIScreen.main.bounds.height * 0.3)
+
+                // Promotional Carousel (No title, 5 slides)
+                TabView(selection: $currentPromoSlide) {
+                    ForEach(0..<5) { index in
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 0)
+                                .fill(LinearGradient(
+                                    gradient: Gradient(colors: [Color.brandPink.opacity(0.7), Color.brandAccent.opacity(0.5)]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ))
+
+                            VStack {
+                                Image(systemName: "cup.and.saucer.fill")
+                                    .font(.system(size: 60))
+                                    .foregroundColor(.white)
+
+                                Text("Special Offer \(index + 1)")
+                                    .font(.title2.bold())
+                                    .foregroundColor(.white)
+
+                                Text("Limited time only")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.9))
+                            }
+                        }
+                        .tag(index)
+                    }
+                }
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .frame(height: 200)
+                .onAppear {
+                    // Auto-scroll carousel
+                    Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+                        withAnimation {
+                            currentPromoSlide = (currentPromoSlide + 1) % 5
+                        }
+                    }
                 }
 
-                // Menu Highlights
+                // Two Quick Action Cards (50% width each, 15% height)
+                HStack(spacing: 12) {
+                    // Order Now Card
+                    NavigationLink(destination: MenuBrowseView()) {
+                        QuickActionCard(
+                            title: "Order Now",
+                            icon: "storefront.fill",
+                            backgroundColor: Color.brandLight.opacity(0.3)
+                        )
+                    }
+
+                    // Refer Friends Card
+                    QuickActionCard(
+                        title: "Refer Friends",
+                        icon: "person.2.fill",
+                        backgroundColor: Color.brandAccent.opacity(0.3)
+                    )
+                }
+                .frame(height: UIScreen.main.bounds.height * 0.15)
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+
+                // Promotions Section (Scrollable)
                 VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("MENU HIGHLIGHTS")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.brandPink)
+                    Text("Promotions")
+                        .font(.title2.bold())
+                        .foregroundColor(.primary)
+                        .padding(.horizontal)
 
-                        Spacer()
+                    // Promotion Card 1: Invite a friend
+                    PromotionCard(
+                        title: "Invite a friend, get a free coffee",
+                        description: "Share the love and earn rewards",
+                        buttonText: "Share Now",
+                        iconName: "gift.fill",
+                        backgroundColor: Color.brandPink.opacity(0.1)
+                    )
 
-                        NavigationLink(destination: StoresView()) {
-                            HStack {
-                                Text("View Stores & Menu")
-                                    .font(.caption)
-                                    .fontWeight(.semibold)
-                                Image(systemName: "arrow.right")
-                                    .font(.caption)
-                            }
-                            .foregroundColor(.brandPink)
-                        }
-                    }
+                    // Promotion Card 2: Join Daily Club
+                    PromotionCard(
+                        title: "Join the Daily Club",
+                        description: "Subscribe for daily coffee perks",
+                        buttonText: "Order Now",
+                        iconName: "star.fill",
+                        backgroundColor: Color.brandAccent.opacity(0.1)
+                    )
 
-                    // Popular Items Grid
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        MenuHighlightCard(
-                            name: "Espresso",
-                            price: "$4.50",
-                            icon: "cup.and.saucer.fill",
-                            description: "Classic, bold"
-                        )
-
-                        MenuHighlightCard(
-                            name: "Cappuccino",
-                            price: "$5.50",
-                            icon: "cup.and.saucer.fill",
-                            description: "Perfectly balanced"
-                        )
-
-                        MenuHighlightCard(
-                            name: "Americano",
-                            price: "$4.50",
-                            icon: "cup.and.saucer.fill",
-                            description: "Bold & smooth"
-                        )
-
-                        MenuHighlightCard(
-                            name: "Latte",
-                            price: "$6.00",
-                            icon: "cup.and.saucer.fill",
-                            description: "Creamy classic"
-                        )
-                    }
+                    // Promotion Card 3: Business Catering
+                    PromotionCard(
+                        title: "Business / Event Catering",
+                        description: "Perfect for your next meeting or event",
+                        buttonText: "Order Now",
+                        iconName: "building.2.fill",
+                        backgroundColor: Color.brandLight.opacity(0.2)
+                    )
                 }
-                .padding()
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .padding(.vertical)
 
-                // Current Offers
-                VStack(alignment: .leading, spacing: 12) {
-                    HStack {
-                        Image(systemName: "tag.fill")
-                            .foregroundColor(.brandPink)
-                        Text("CURRENT OFFERS")
-                            .font(.caption)
-                            .fontWeight(.bold)
-                            .foregroundColor(.brandPink)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "clock.fill")
-                                .foregroundColor(.brandAccent)
-                            Text("Happy Hour: 2-4 PM")
-                                .font(.headline)
-                        }
-                        Text("$1 off all drinks")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(Color.brandLight.opacity(0.1))
-                    .cornerRadius(8)
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Image(systemName: "star.fill")
-                                .foregroundColor(.yellow)
-                            Text("New Member Bonus")
-                                .font(.headline)
-                        }
-                        Text("Sign up and get 50 bonus points")
-                            .font(.body)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(Color.brandLight.opacity(0.1))
-                    .cornerRadius(8)
-                }
-                .padding()
-                .background(Color(.systemBackground))
-                .cornerRadius(12)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-
-                // Bottom Spacing
+                // Bottom spacing
                 Spacer()
-                    .frame(height: 80)
+                    .frame(height: 60)
             }
-            .padding()
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Only Coffee")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-struct MenuHighlightCard: View {
-    let name: String
-    let price: String
+// Quick Action Card Component
+struct QuickActionCard: View {
+    let title: String
     let icon: String
-    let description: String
+    let backgroundColor: Color
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(.brandPink)
+        ZStack {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(backgroundColor)
 
-            Text(name)
-                .font(.headline)
-                .fontWeight(.bold)
+            VStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 40))
+                    .foregroundColor(.brandPink)
+
+                Text(title)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+            }
+        }
+    }
+}
+
+// Promotion Card Component
+struct PromotionCard: View {
+    let title: String
+    let description: String
+    let buttonText: String
+    let iconName: String
+    let backgroundColor: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: iconName)
+                    .font(.title)
+                    .foregroundColor(.brandPink)
+
+                Spacer()
+            }
+
+            Text(title)
+                .font(.title3.bold())
+                .foregroundColor(.primary)
 
             Text(description)
-                .font(.caption)
+                .font(.subheadline)
                 .foregroundColor(.secondary)
 
-            Text(price)
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .foregroundColor(.brandPink)
-                .padding(.top, 4)
+            Button(action: {
+                // Action handler
+            }) {
+                Text(buttonText)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.brandPink)
+                    .cornerRadius(12)
+            }
+            .padding(.top, 4)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
-        .background(Color.brandLight.opacity(0.1))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.brandPink.opacity(0.2), lineWidth: 1)
-        )
+        .background(backgroundColor)
+        .cornerRadius(16)
+        .padding(.horizontal)
     }
 }
 

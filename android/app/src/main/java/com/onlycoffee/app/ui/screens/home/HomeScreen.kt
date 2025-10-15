@@ -1,5 +1,6 @@
 package com.onlycoffee.app.ui.screens.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,54 +13,63 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.HorizontalPagerIndicator
+import com.google.accompanist.pager.rememberPagerState
 import com.onlycoffee.app.R
-import com.onlycoffee.app.data.model.MenuItem
-import com.onlycoffee.app.data.model.Store
-import com.onlycoffee.app.ui.components.MenuItemCard
-import com.onlycoffee.app.ui.components.QuickActionCard
-import com.onlycoffee.app.ui.components.StoreCard
+import com.onlycoffee.app.ui.components.AppHeader
 import com.onlycoffee.app.ui.theme.BackgroundPrimary
 import com.onlycoffee.app.ui.theme.BrandAccent
 import com.onlycoffee.app.ui.theme.BrandPrimary
-import com.onlycoffee.app.ui.theme.GradientEnd
-import com.onlycoffee.app.ui.theme.GradientStart
+import com.onlycoffee.app.ui.theme.CardBackground
+import com.onlycoffee.app.ui.theme.CornerRadius
 import com.onlycoffee.app.ui.theme.OnlyCoffeeTheme
 import com.onlycoffee.app.ui.theme.Spacing
 import com.onlycoffee.app.ui.theme.TextOnPrimary
 import com.onlycoffee.app.ui.theme.TextPrimary
 import com.onlycoffee.app.ui.theme.TextSecondary
+import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -67,217 +77,360 @@ fun HomeScreen(
         contentPadding = PaddingValues(bottom = Spacing.lg)
     ) {
         item {
-            // Header Section
-            HeaderSection(
-                userName = uiState.userName,
-                loyaltyPoints = uiState.loyaltyPoints
+            // App Header
+            AppHeader(title = "Home")
+        }
+
+        item {
+            // Top Sign-In Card (30% height, full width)
+            SignInCard(
+                screenHeight = screenHeight,
+                onSignInClick = { navController.navigate("profile") }
             )
         }
-        
+
         item {
-            Spacer(modifier = Modifier.height(Spacing.lg))
+            // Promotional Carousel (No title, 5 slides)
+            PromoCarousel()
         }
-        
+
         item {
-            // Quick Actions
-            QuickActionsSection(
-                onOrderAheadClick = { navController.navigate("menu") },
-                onFindStoresClick = { navController.navigate("stores") }
-            )
+            Spacer(modifier = Modifier.height(Spacing.md))
         }
-        
+
         item {
-            Spacer(modifier = Modifier.height(Spacing.lg))
-        }
-        
-        item {
-            // Nearby Stores Section
-            SectionHeader(
-                title = stringResource(R.string.nearby_stores),
-                actionText = stringResource(R.string.see_all),
-                onActionClick = { navController.navigate("stores") }
-            )
-        }
-        
-        item {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
+            // Two Quick Action Cards (50% width each)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Spacing.screenPadding),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                items(uiState.nearbyStores) { store ->
-                    StoreCard(
-                        store = store,
-                        onStoreClick = { /* Navigate to store details */ }
-                    )
-                }
+                QuickActionCard(
+                    title = "Order Now",
+                    icon = R.drawable.ic_location,
+                    backgroundColor = BrandPrimary.copy(alpha = 0.1f),
+                    modifier = Modifier.weight(1f),
+                    onClick = { navController.navigate("menu") }
+                )
+
+                QuickActionCard(
+                    title = "Refer Friends",
+                    icon = R.drawable.ic_profile,
+                    backgroundColor = BrandAccent.copy(alpha = 0.1f),
+                    modifier = Modifier.weight(1f),
+                    onClick = { /* Handle refer friends */ }
+                )
             }
         }
-        
+
         item {
-            Spacer(modifier = Modifier.height(Spacing.lg))
+            Spacer(modifier = Modifier.height(Spacing.xl))
         }
-        
+
         item {
-            // Featured Items Section
-            SectionHeader(
-                title = stringResource(R.string.featured_items),
-                actionText = stringResource(R.string.view_menu),
-                onActionClick = { navController.navigate("menu") }
+            // Promotions Section Title
+            Text(
+                text = "Promotions",
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = Spacing.screenPadding)
             )
         }
-        
+
         item {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
-                horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-            ) {
-                items(uiState.featuredItems) { item ->
-                    MenuItemCard(
-                        menuItem = item,
-                        onItemClick = { menuItem ->
-                            navController.navigate("product_detail/${menuItem.id}")
-                        }
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(Spacing.md))
+        }
+
+        item {
+            // Promotion Card 1: Invite a friend
+            PromotionCard(
+                title = "Invite a friend, get a free coffee",
+                description = "Share the love and earn rewards",
+                buttonText = "Share Now",
+                icon = R.drawable.ic_rewards,
+                backgroundColor = BrandPrimary.copy(alpha = 0.1f),
+                onButtonClick = { /* Handle share */ }
+            )
+        }
+
+        item {
+            // Promotion Card 2: Join Daily Club
+            PromotionCard(
+                title = "Join the Daily Club",
+                description = "Subscribe for daily coffee perks",
+                buttonText = "Order Now",
+                icon = R.drawable.ic_star,
+                backgroundColor = BrandAccent.copy(alpha = 0.1f),
+                onButtonClick = { navController.navigate("menu") }
+            )
+        }
+
+        item {
+            // Promotion Card 3: Business Catering
+            PromotionCard(
+                title = "Business / Event Catering",
+                description = "Perfect for your next meeting or event",
+                buttonText = "Order Now",
+                icon = R.drawable.ic_coffee,
+                backgroundColor = CardBackground,
+                onButtonClick = { navController.navigate("menu") }
+            )
         }
     }
 }
 
 @Composable
-private fun HeaderSection(
-    userName: String,
-    loyaltyPoints: Int
+fun SignInCard(
+    screenHeight: androidx.compose.ui.unit.Dp,
+    onSignInClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .height(screenHeight * 0.3f)
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(GradientStart, GradientEnd)
+                    colors = listOf(
+                        BrandPrimary.copy(alpha = 0.8f),
+                        BrandAccent.copy(alpha = 0.6f)
+                    )
                 )
-            )
-            .padding(Spacing.screenPadding)
+            ),
+        contentAlignment = Alignment.Center
     ) {
-        Column {
-            Spacer(modifier = Modifier.height(Spacing.xl))
-            
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        // Background coffee cup icon
+        Icon(
+            painter = painterResource(R.drawable.ic_coffee),
+            contentDescription = null,
+            tint = Color.White.copy(alpha = 0.2f),
+            modifier = Modifier.size(200.dp)
+        )
+
+        // Sign In Content
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(Spacing.lg)
+        ) {
+            Text(
+                text = "Join Only Coffee",
+                style = MaterialTheme.typography.headlineLarge,
+                color = TextOnPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 32.sp
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.sm))
+
+            Text(
+                text = "Earn rewards on every order",
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextOnPrimary.copy(alpha = 0.9f)
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.lg))
+
+            Button(
+                onClick = onSignInClick,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = TextOnPrimary
+                ),
+                shape = RoundedCornerShape(25.dp),
+                modifier = Modifier.padding(horizontal = Spacing.xl)
             ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.good_morning, userName),
-                        style = MaterialTheme.typography.headlineMedium,
-                        color = TextOnPrimary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    
-                    Text(
-                        text = stringResource(R.string.welcome_back),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextOnPrimary.copy(alpha = 0.8f)
-                    )
-                }
-                
-                // Loyalty Points Badge
-                Card(
-                    shape = RoundedCornerShape(Spacing.lg),
-                    colors = CardDefaults.cardColors(
-                        containerColor = BrandAccent
-                    )
+                Text(
+                    text = "Sign In / Join Now",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = BrandPrimary,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = Spacing.lg, vertical = Spacing.xs)
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun PromoCarousel() {
+    val pagerState = rememberPagerState()
+
+    // Auto-scroll
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(3000)
+            val nextPage = (pagerState.currentPage + 1) % 5
+            pagerState.animateScrollToPage(nextPage)
+        }
+    }
+
+    Column {
+        HorizontalPager(
+            count = 5,
+            state = pagerState,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+        ) { page ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                BrandPrimary.copy(alpha = 0.7f),
+                                BrandAccent.copy(alpha = 0.5f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        modifier = Modifier.padding(
-                            horizontal = Spacing.md,
-                            vertical = Spacing.sm
-                        ),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_star),
-                            contentDescription = null,
-                            tint = TextPrimary,
-                            modifier = Modifier.size(Spacing.md)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(Spacing.xs))
-                        
-                        Text(
-                            text = loyaltyPoints.toString(),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
+                    Icon(
+                        painter = painterResource(R.drawable.ic_coffee),
+                        contentDescription = null,
+                        tint = TextOnPrimary,
+                        modifier = Modifier.size(60.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(Spacing.md))
+
+                    Text(
+                        text = "Special Offer ${page + 1}",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = TextOnPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "Limited time only",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextOnPrimary.copy(alpha = 0.9f)
+                    )
                 }
             }
-            
-            Spacer(modifier = Modifier.height(Spacing.lg))
+        }
+
+        // Page indicator
+        HorizontalPagerIndicator(
+            pagerState = pagerState,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .padding(Spacing.sm),
+            activeColor = BrandPrimary,
+            inactiveColor = TextSecondary.copy(alpha = 0.3f)
+        )
+    }
+}
+
+@Composable
+fun QuickActionCard(
+    title: String,
+    icon: Int,
+    backgroundColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.height(100.dp),
+        shape = RoundedCornerShape(CornerRadius.card),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(Spacing.md),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = title,
+                tint = BrandPrimary,
+                modifier = Modifier.size(40.dp)
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.sm))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                color = TextPrimary,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
 
 @Composable
-private fun QuickActionsSection(
-    onOrderAheadClick: () -> Unit,
-    onFindStoresClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = Spacing.screenPadding),
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md)
-    ) {
-        QuickActionCard(
-            title = stringResource(R.string.order_ahead),
-            subtitle = stringResource(R.string.skip_the_line),
-            iconRes = R.drawable.ic_coffee,
-            onClick = onOrderAheadClick,
-            modifier = Modifier.weight(1f)
-        )
-        
-        QuickActionCard(
-            title = stringResource(R.string.find_stores),
-            subtitle = stringResource(R.string.locate_nearby),
-            iconRes = R.drawable.ic_location,
-            onClick = onFindStoresClick,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-private fun SectionHeader(
+fun PromotionCard(
     title: String,
-    actionText: String,
-    onActionClick: () -> Unit
+    description: String,
+    buttonText: String,
+    icon: Int,
+    backgroundColor: Color,
+    onButtonClick: () -> Unit
 ) {
-    Row(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = Spacing.screenPadding),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = Spacing.screenPadding, vertical = Spacing.xs),
+        shape = RoundedCornerShape(CornerRadius.card),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.headlineSmall,
-            color = TextPrimary,
-            fontWeight = FontWeight.SemiBold
-        )
-        
-        Text(
-            text = actionText,
-            style = MaterialTheme.typography.labelMedium,
-            color = BrandPrimary,
-            fontWeight = FontWeight.Medium
-        )
+        Column(
+            modifier = Modifier.padding(Spacing.lg)
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = BrandPrimary,
+                modifier = Modifier.size(40.dp)
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.md))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = TextPrimary,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.xs))
+
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
+
+            Spacer(modifier = Modifier.height(Spacing.md))
+
+            Button(
+                onClick = onButtonClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BrandPrimary
+                ),
+                shape = RoundedCornerShape(CornerRadius.button)
+            ) {
+                Text(
+                    text = buttonText,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(vertical = Spacing.xs)
+                )
+            }
+        }
     }
-    
-    Spacer(modifier = Modifier.height(Spacing.md))
 }
 
 @Preview(showBackground = true)

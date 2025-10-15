@@ -45,7 +45,7 @@ struct StoresView: View {
                     }
                 }
             }
-            .navigationTitle("Coffee Stores")
+            .navigationTitle("Locations")
             .task {
                 await viewModel.loadNearbyStores()
             }
