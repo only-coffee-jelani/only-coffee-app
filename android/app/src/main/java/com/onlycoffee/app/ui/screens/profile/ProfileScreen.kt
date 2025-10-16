@@ -43,9 +43,6 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(BackgroundPrimary)
     ) {
-        // App Header
-        AppHeader(title = stringResource(R.string.profile))
-
         // Content
         Column(
             modifier = Modifier

@@ -13,6 +13,9 @@ import { RewardsModule } from './modules/rewards/rewards.module';
 import { GiftsModule } from './modules/gifts/gifts.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { HealthModule } from './modules/health/health.module';
+import { UploadModule } from './modules/upload/upload.module';
+import { PromotionsModule } from './modules/promotions/promotions.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -47,6 +50,9 @@ import { HealthModule } from './modules/health/health.module';
     RewardsModule,
     GiftsModule,
     ReviewsModule,
+    UploadModule,
+    PromotionsModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

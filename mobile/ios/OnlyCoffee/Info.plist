@@ -46,7 +46,7 @@
 		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>New Exception Domain</key>
+			<key>only-coffee-prod.eba-p3bfu2px.us-east-1.elasticbeanstalk.com</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>

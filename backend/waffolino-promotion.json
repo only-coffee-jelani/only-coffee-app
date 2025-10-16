@@ -1,0 +1,12 @@
+{
+  "title": "Fall Special: Waffolino",
+  "description": "Try our signature Waffolino - a perfect blend of espresso and waffle flavors",
+  "promotionType": "launch_modal",
+  "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch.webp",
+  "targetMenuItemId": "waffolino",
+  "startDate": "2025-10-01T00:00:00Z",
+  "endDate": "2025-12-31T23:59:59Z",
+  "isActive": true,
+  "displayDuration": 3,
+  "sortOrder": 0
+}

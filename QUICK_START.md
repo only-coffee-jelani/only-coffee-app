@@ -1,404 +1,163 @@
 # Only Coffee - Quick Start Guide
 
-Get the Only Coffee full stack app up and running in 5 minutes!
+Get up and running in 10 minutes!
 
-## Prerequisites
+## Prerequisites Checklist
 
-Ensure you have the following installed:
-- **Node.js 20 LTS** - [Download](https://nodejs.org/)
-- **Docker Desktop** - [Download](https://www.docker.com/products/docker-desktop)
-- **Xcode 15.0+** - For iOS development (macOS only)
+- [ ] Node.js v18+ installed
+- [ ] PostgreSQL 14+ installed and running
+- [ ] Redis 6+ installed and running
+- [ ] AWS account with S3 access
+- [ ] Stripe account (test mode is fine)
 
-## 🚀 One-Command Startup (Recommended)
+## Step-by-Step Setup
 
-From the project root, run:
+### 1️⃣ Environment Configuration (2 min)
 
 ```bash
-./start-all.sh
+# Copy environment template
+cp .env.template backend/services/gateway/.env
+
+# Edit the file and replace these critical values:
+# - DB_PASSWORD (your PostgreSQL password)
+# - REDIS_PASSWORD (your Redis password)
+# - JWT_SECRET (generate: openssl rand -base64 64)
+# - JWT_REFRESH_SECRET (generate: openssl rand -base64 64)
+# - STRIPE_SECRET_KEY (from Stripe dashboard)
+# - AWS_ACCESS_KEY_ID (from AWS IAM)
+# - AWS_SECRET_ACCESS_KEY (from AWS IAM)
 ```
 
-This will:
-1. Start Docker services (PostgreSQL, Redis, pgAdmin, Redis Commander)
-2. Install dependencies if needed
-3. Run database migrations
-4. Start the Gateway API
-5. Open the iOS app in Xcode
-
-**That's it!** Your full stack is now running.
-
----
-
-## 📋 Alternative: Step-by-Step Manual Setup
-
-### Step 1: Clone and Setup
+### 2️⃣ Database Setup (2 min)
 
 ```bash
-# Navigate to the project
-cd only-coffee-app-repo
+# Create database
+psql -U postgres -c "CREATE DATABASE only_coffee;"
 
-# Install all dependencies (this may take a few minutes)
-cd backend
+# Install dependencies and run migrations
+cd backend/services/gateway
 npm install
-```
-
-### Step 2: Start Database Services
-
-```bash
-# Start PostgreSQL 16.4 and Redis 8.2 with Docker
-docker-compose up -d postgres redis
-
-# Verify services are running
-docker ps
-```
-
-You should see:
-- `only-coffee-postgres` on port 5432
-- `only-coffee-redis` on port 6379
-
-### Step 3: Run Database Migrations
-
-```bash
-# Run migrations to create all tables
 npm run migration:run
 ```
 
-This creates:
-- 9 core tables (users, stores, orders, etc.)
-- Proper indexes and foreign keys
-- Monthly partitions for orders and rewards
-- All database constraints
-
-### Step 4: Start the Gateway API
+### 3️⃣ Start Backend (1 min)
 
 ```bash
-# Navigate to the Gateway service
-cd services/gateway
-
-# Start in development mode with hot reload
+cd backend/services/gateway
 npm run start:dev
 ```
 
-The API will start on **http://localhost:3000**
+Server will be running at `http://localhost:3000`
 
-### Step 5: Open iOS App
+### 4️⃣ iOS App (2 min)
 
-```bash
-# From project root
-./start-ios.sh
-```
-
-Or manually:
 ```bash
 cd mobile/ios
 open OnlyCoffee.xcodeproj
+# Press Cmd+R to build and run
 ```
 
-Then in Xcode:
-1. Select your Team (Signing & Capabilities)
-2. Select iPhone 15 Pro simulator
-3. Press ⌘R to build and run
+### 5️⃣ Android App (2 min)
 
----
+1. Open Android Studio
+2. Import project from `android/` folder
+3. Click Run ▶️
 
-## 🛠️ Startup Scripts Reference
+## Verify Setup
 
-### Full Stack
-```bash
-./start-all.sh      # Start everything (Docker + Backend + iOS)
-./stop-all.sh       # Stop all services cleanly
-```
-
-### Backend Only
-```bash
-./start-backend.sh  # Start Docker + Backend API only
-```
-
-### iOS Only
-```bash
-./start-ios.sh      # Open iOS app in Xcode (checks backend status)
-```
-
----
-
-## ✅ Test the API
-
-### Health Check
+Test the API:
 ```bash
 curl http://localhost:3000/api/v1/health
+# Should return: {"status":"ok"}
 ```
 
-### View API Documentation
-Open your browser: **http://localhost:3000/api/docs**
+## Common Issues & Quick Fixes
 
-### Register a User
+### PostgreSQL not running
 ```bash
-curl -X POST http://localhost:3000/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "SecurePass123!",
-    "firstName": "John",
-    "lastName": "Doe"
-  }'
+# macOS
+brew services start postgresql@14
+
+# Linux
+sudo systemctl start postgresql
 ```
 
-### Login
+### Redis not running
 ```bash
-curl -X POST http://localhost:3000/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "test@example.com",
-    "password": "SecurePass123!"
-  }'
+# macOS
+brew services start redis
+
+# Linux
+sudo systemctl start redis-server
 ```
 
-Save the `accessToken` from the response.
-
-### Get User Profile
+### Port 3000 already in use
 ```bash
-curl http://localhost:3000/api/v1/users/me \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+# Find and kill the process
+lsof -ti:3000 | xargs kill -9
+
+# Or change PORT in .env
+echo "PORT=3001" >> backend/services/gateway/.env
 ```
 
-## Optional: Database Admin Tools
-
-### pgAdmin (PostgreSQL GUI)
+### Database connection failed
 ```bash
-# Start pgAdmin
-docker-compose up -d pgadmin
+# Verify PostgreSQL is accessible
+psql -U postgres -c "SELECT version();"
 
-# Access at: http://localhost:5050
-# Login: admin@onlycoffee.com / admin
+# Check .env has correct DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD
 ```
 
-### Redis Commander (Redis GUI)
+### JWT secret not set
 ```bash
-# Start Redis Commander
-docker-compose up -d redis-commander
-
-# Access at: http://localhost:8081
+# Generate a secret and add to .env
+echo "JWT_SECRET=$(openssl rand -base64 64)" >> backend/services/gateway/.env
+echo "JWT_REFRESH_SECRET=$(openssl rand -base64 64)" >> backend/services/gateway/.env
 ```
 
-## 🌐 Service URLs
+## Essential Commands
 
-Once started, these services are available:
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| Gateway API | http://localhost:3000/api/v1 | Main REST API |
-| API Docs | http://localhost:3000/api/docs | Swagger UI |
-| Health Check | http://localhost:3000/api/v1/health | API status |
-| pgAdmin | http://localhost:5050 | PostgreSQL GUI (admin@onlycoffee.com / admin) |
-| Redis Commander | http://localhost:8081 | Redis GUI |
-
-## 📡 Available API Endpoints (53 total)
-
-### Authentication
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/v1/auth/register` | Register new user | No |
-| POST | `/api/v1/auth/login` | Login user | No |
-| POST | `/api/v1/auth/refresh` | Refresh token | No |
-
-### Users
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/v1/users/me` | Get profile | Yes |
-| PUT | `/api/v1/users/me` | Update profile | Yes |
-| GET | `/api/v1/users/me/loyalty` | Get loyalty info | Yes |
-
-### Stores
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/v1/stores/nearby` | Find nearby stores | No |
-| GET | `/api/v1/stores/:id` | Get store details | No |
-| GET | `/api/v1/stores/:id/menu` | Get store menu | No |
-
-### Orders
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/v1/orders` | Create order | Yes |
-| GET | `/api/v1/orders` | Get user orders | Yes |
-| GET | `/api/v1/orders/:id` | Get order details | Yes |
-| POST | `/api/v1/orders/:id/confirm` | Confirm payment | Yes |
-
-### Gift Cards
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/v1/gifts` | Create gift card | Yes |
-| POST | `/api/v1/gifts/redeem` | Redeem gift card | Yes |
-| GET | `/api/v1/gifts/balance/:code` | Check balance | No |
-
-### Reviews
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/api/v1/reviews` | Create review | Yes |
-| GET | `/api/v1/reviews/store/:id` | Get store reviews | No |
-| GET | `/api/v1/reviews/store/:id/stats` | Get review stats | No |
-
-### Rewards
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/v1/rewards/balance` | Get points balance | Yes |
-| GET | `/api/v1/rewards/transactions` | Get transaction history | Yes |
-| POST | `/api/v1/rewards/redeem/:id` | Redeem reward | Yes |
-
-### Health
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/v1/health` | Health check | No |
-
-**Full API documentation**: http://localhost:3000/api/docs
-
-## Troubleshooting
-
-### Port Already in Use
+### Backend
 ```bash
-# Check what's using port 3000
-lsof -i :3000
-
-# Kill the process
-kill -9 <PID>
+npm run start:dev      # Start development server
+npm run test          # Run tests
+npm run migration:run # Run database migrations
+npm run lint          # Check code style
 ```
 
-### Database Connection Error
+### Database
 ```bash
-# Check if PostgreSQL is running
-docker ps | grep postgres
-
-# View PostgreSQL logs
-docker logs only-coffee-postgres
+npm run migration:create -- -n MigrationName  # Create migration
+npm run migration:run                         # Run migrations
+npm run migration:revert                      # Rollback last migration
 ```
 
-### Redis Connection Error
-```bash
-# Check if Redis is running
-docker ps | grep redis
+## What's Next?
 
-# View Redis logs
-docker logs only-coffee-redis
-```
-
-### Migration Errors
-```bash
-# Revert last migration
-npm run migration:revert
-
-# Re-run migration
-npm run migration:run
-```
-
-## Development Commands
-
-```bash
-# Backend root
-npm run lint              # Lint all code
-npm run format            # Format code
-npm test                  # Run tests
-npm run build             # Build all services
-
-# Gateway service
-npm run start:dev         # Development with hot reload
-npm run start:debug       # Debug mode
-npm run build             # Production build
-npm run start:prod        # Production mode
-```
-
-## Environment Variables
-
-The Gateway service uses these key environment variables (see `backend/services/gateway/.env`):
-
-```env
-# Application
-NODE_ENV=development
-PORT=3000
-
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=postgres
-DB_DATABASE=only_coffee
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=redis_password
-
-# JWT
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_EXPIRES_IN=15m
-```
-
-## 📱 iOS App Setup
-
-See detailed iOS setup instructions: `mobile/ios/SETUP.md`
-
-### Quick iOS Checklist
-1. Open project: `./start-ios.sh` or `open mobile/ios/OnlyCoffee.xcodeproj`
-2. Select your Team in Signing & Capabilities
-3. Select iPhone 15 Pro simulator
-4. Press ⌘R to build and run
-
-### iOS Features
-- SwiftUI with MVVM architecture
-- 28 Swift files with full functionality
-- Authentication with secure token storage
-- Store discovery with MapKit
-- Menu browsing and customization
-- Shopping cart management
-- Order history and tracking
-- Rewards and loyalty points
-- Profile management
-- Gift card support
-- Stripe payment integration ready
-
-## 📊 Project Status
-
-| Module | Status | Endpoints | Notes |
-|--------|--------|-----------|-------|
-| Authentication | ✅ Complete | 3 | JWT with RS256 |
-| Users | ✅ Complete | 6 | Profile, preferences, loyalty |
-| Stores | ✅ Complete | 8 | Nearby search, details, hours |
-| Menu | ✅ Complete | 10 | Items, categories, modifiers |
-| Orders | ✅ Complete | 10 | Create, track, Toast POS integration |
-| Rewards | ✅ Complete | 8 | Points, tiers, redemption |
-| Gift Cards | ✅ Complete | 8 | Create, redeem, balance |
-| Reviews | ✅ Complete | 10 | CRUD, moderation, stats |
-| iOS App | ✅ Complete | 28 files | Full SwiftUI implementation |
-
-**Total**: 53 API endpoints, 100% backend complete
-
-## 🎯 Next Steps
-
-1. **Test the Full Flow**
-   - Start backend: `./start-backend.sh`
-   - Open iOS app: `./start-ios.sh`
-   - Sign up → Find stores → Browse menu → Place order
-
-2. **Add Test Data**
-   - Create stores via API or database
-   - Add menu items and categories
-   - Create test users
-
-3. **Complete Integrations**
-   - Add Stripe publishable key
-   - Configure Toast POS credentials
-   - Test payment flow
-
-4. **Production Preparation**
-   - Update API endpoint in iOS app
-   - Configure production database
-   - Deploy backend services
-   - Submit iOS app to App Store
+1. Read `SETUP_GUIDE.md` for detailed documentation
+2. Check `AWS_S3_SETUP_GUIDE.md` for S3 configuration
+3. Review `.env.template` comments for all configuration options
+4. Join the team Slack/Discord for support
 
 ## Need Help?
 
-- **API Docs**: http://localhost:3000/api/docs
-- **Project Status**: See `PROJECT_STATUS.md`
-- **Technical Spec**: See `target_tech_spec.txt`
-- **Backend README**: See `backend/README.md`
+- 📖 Full docs: See `SETUP_GUIDE.md`
+- 🐛 Found a bug: Create a GitHub issue
+- 💬 Questions: Contact the team
+
+## Production Deployment
+
+**Not ready for production?** Follow `SETUP_GUIDE.md` for production deployment instructions.
+
+**Ready for production?** Make sure to:
+- [ ] Set `NODE_ENV=production`
+- [ ] Use production Stripe keys
+- [ ] Use strong JWT secrets
+- [ ] Enable SSL for database
+- [ ] Set `DB_SYNCHRONIZE=false`
+- [ ] Configure AWS Elastic Beanstalk
+- [ ] Set up monitoring and logging
 
 ---
 
-**Happy Coding! ☕️**
+🎉 **Happy Coding!** Welcome to the Only Coffee team!

@@ -117,6 +117,14 @@ class OrdersViewModel @Inject constructor(
     fun isFavorite(storeId: String): Boolean {
         return _uiState.value.favoriteStoreIds.contains(storeId)
     }
+
+    fun saveSelectedStore(store: Store) {
+        _uiState.value = _uiState.value.copy(
+            selectedStore = store
+        )
+        // TODO: Save to SharedPreferences or local storage
+        // For now, just update the state
+    }
 }
 
 data class OrdersUiState(

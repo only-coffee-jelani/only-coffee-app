@@ -1,0 +1,565 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000010000000000000001 /* OnlyCoffeeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000020000000000000001 /* OnlyCoffeeApp.swift */; };
+		A00000030000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000040000000000000001 /* ContentView.swift */; };
+		A00000050000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000060000000000000001 /* Assets.xcassets */; };
+		A00000070000000000000001 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000080000000000000001 /* Theme.swift */; };
+		A00000090000000000000001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000100000000000000001 /* MainTabView.swift */; };
+		A00000110000000000000001 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000120000000000000001 /* HomeView.swift */; };
+		A00000130000000000000001 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000140000000000000001 /* LoginView.swift */; };
+		A00000150000000000000001 /* SignupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000160000000000000001 /* SignupView.swift */; };
+		A00000170000000000000001 /* RewardsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000180000000000000001 /* RewardsView.swift */; };
+		A00000190000000000000001 /* MenuBrowseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000200000000000000001 /* MenuBrowseView.swift */; };
+		A00000210000000000000001 /* MenuItemDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000220000000000000001 /* MenuItemDetailView.swift */; };
+		A00000230000000000000001 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000240000000000000001 /* MenuView.swift */; };
+		A00000250000000000000001 /* CartView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000260000000000000001 /* CartView.swift */; };
+		A00000270000000000000001 /* CheckoutView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000280000000000000001 /* CheckoutView.swift */; };
+		A00000290000000000000001 /* OrdersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000300000000000000001 /* OrdersView.swift */; };
+		A00000310000000000000001 /* StoresView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000320000000000000001 /* StoresView.swift */; };
+		A00000330000000000000001 /* StoresViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000340000000000000001 /* StoresViewModel.swift */; };
+		A00000350000000000000001 /* StoreListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000360000000000000001 /* StoreListView.swift */; };
+		A00000370000000000000001 /* StoreMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000380000000000000001 /* StoreMapView.swift */; };
+		A00000390000000000000001 /* StoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000400000000000000001 /* StoreDetailView.swift */; };
+		A00000410000000000000001 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000420000000000000001 /* ProfileView.swift */; };
+		A00000430000000000000001 /* LaunchModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000440000000000000001 /* LaunchModalView.swift */; };
+		A00000990000000000000001 /* InviteFriendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00001000000000000000001 /* InviteFriendView.swift */; };
+		A00000450000000000000001 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000460000000000000001 /* AuthenticationManager.swift */; };
+		A00000470000000000000001 /* CartManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000480000000000000001 /* CartManager.swift */; };
+		A00000490000000000000001 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000500000000000000001 /* KeychainManager.swift */; };
+		A00000510000000000000001 /* OAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000520000000000000001 /* OAuthManager.swift */; };
+		A00000530000000000000001 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000540000000000000001 /* Auth.swift */; };
+		A00000550000000000000001 /* CartItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000560000000000000001 /* CartItem.swift */; };
+		A00000570000000000000001 /* MenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000580000000000000001 /* MenuItem.swift */; };
+		A00000590000000000000001 /* Order.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000600000000000000001 /* Order.swift */; };
+		A00000610000000000000001 /* Promotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000620000000000000001 /* Promotion.swift */; };
+		A00000630000000000000001 /* Store.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000640000000000000001 /* Store.swift */; };
+		A00000650000000000000001 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000660000000000000001 /* User.swift */; };
+		A00000670000000000000001 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000680000000000000001 /* APIClient.swift */; };
+		A00000690000000000000001 /* Endpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000700000000000000001 /* Endpoints.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A00000710000000000000001 /* OnlyCoffee.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OnlyCoffee.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A00000020000000000000001 /* OnlyCoffeeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlyCoffeeApp.swift; sourceTree = "<group>"; };
+		A00000040000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A00000060000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A00000080000000000000001 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		A00000720000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A00000730000000000000001 /* OnlyCoffee.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OnlyCoffee.entitlements; sourceTree = "<group>"; };
+		A00000100000000000000001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A00000120000000000000001 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		A00000140000000000000001 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		A00000160000000000000001 /* SignupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignupView.swift; sourceTree = "<group>"; };
+		A00000180000000000000001 /* RewardsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardsView.swift; sourceTree = "<group>"; };
+		A00000200000000000000001 /* MenuBrowseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBrowseView.swift; sourceTree = "<group>"; };
+		A00000220000000000000001 /* MenuItemDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemDetailView.swift; sourceTree = "<group>"; };
+		A00000240000000000000001 /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
+		A00000260000000000000001 /* CartView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartView.swift; sourceTree = "<group>"; };
+		A00000280000000000000001 /* CheckoutView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckoutView.swift; sourceTree = "<group>"; };
+		A00000300000000000000001 /* OrdersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersView.swift; sourceTree = "<group>"; };
+		A00000320000000000000001 /* StoresView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoresView.swift; sourceTree = "<group>"; };
+		A00000340000000000000001 /* StoresViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoresViewModel.swift; sourceTree = "<group>"; };
+		A00000360000000000000001 /* StoreListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreListView.swift; sourceTree = "<group>"; };
+		A00000380000000000000001 /* StoreMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreMapView.swift; sourceTree = "<group>"; };
+		A00000400000000000000001 /* StoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreDetailView.swift; sourceTree = "<group>"; };
+		A00000420000000000000001 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		A00000440000000000000001 /* LaunchModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchModalView.swift; sourceTree = "<group>"; };
+		A00001000000000000000001 /* InviteFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteFriendView.swift; sourceTree = "<group>"; };
+		A00000460000000000000001 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
+		A00000480000000000000001 /* CartManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartManager.swift; sourceTree = "<group>"; };
+		A00000500000000000000001 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
+		A00000520000000000000001 /* OAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthManager.swift; sourceTree = "<group>"; };
+		A00000540000000000000001 /* Auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth.swift; sourceTree = "<group>"; };
+		A00000560000000000000001 /* CartItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartItem.swift; sourceTree = "<group>"; };
+		A00000580000000000000001 /* MenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItem.swift; sourceTree = "<group>"; };
+		A00000600000000000000001 /* Order.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Order.swift; sourceTree = "<group>"; };
+		A00000620000000000000001 /* Promotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Promotion.swift; sourceTree = "<group>"; };
+		A00000640000000000000001 /* Store.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Store.swift; sourceTree = "<group>"; };
+		A00000660000000000000001 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		A00000680000000000000001 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		A00000700000000000000001 /* Endpoints.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Endpoints.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A00000740000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A00000750000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A00000760000000000000001 /* OnlyCoffee */,
+				A00000770000000000000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A00000760000000000000001 /* OnlyCoffee */ = {
+			isa = PBXGroup;
+			children = (
+				A00000720000000000000001 /* Info.plist */,
+				A00000730000000000000001 /* OnlyCoffee.entitlements */,
+				A00000020000000000000001 /* OnlyCoffeeApp.swift */,
+				A00000040000000000000001 /* ContentView.swift */,
+				A00000080000000000000001 /* Theme.swift */,
+				A00000780000000000000001 /* Views */,
+				A00000790000000000000001 /* Managers */,
+				A00000800000000000000001 /* Models */,
+				A00000810000000000000001 /* Networking */,
+				A00000060000000000000001 /* Assets.xcassets */,
+			);
+			path = OnlyCoffee;
+			sourceTree = "<group>";
+		};
+		A00000770000000000000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A00000710000000000000001 /* OnlyCoffee.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A00000780000000000000001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A00000100000000000000001 /* MainTabView.swift */,
+				A00000120000000000000001 /* HomeView.swift */,
+				A00000440000000000000001 /* LaunchModalView.swift */,
+				A00001000000000000000001 /* InviteFriendView.swift */,
+				A00000820000000000000001 /* Auth */,
+				A00000830000000000000001 /* Menu */,
+				A00000840000000000000001 /* Orders */,
+				A00000850000000000000001 /* Rewards */,
+				A00000860000000000000001 /* Stores */,
+				A00000870000000000000001 /* Profile */,
+				A00000880000000000000001 /* Cart */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A00000820000000000000001 /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				A00000140000000000000001 /* LoginView.swift */,
+				A00000160000000000000001 /* SignupView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		A00000830000000000000001 /* Menu */ = {
+			isa = PBXGroup;
+			children = (
+				A00000200000000000000001 /* MenuBrowseView.swift */,
+				A00000220000000000000001 /* MenuItemDetailView.swift */,
+				A00000240000000000000001 /* MenuView.swift */,
+			);
+			path = Menu;
+			sourceTree = "<group>";
+		};
+		A00000840000000000000001 /* Orders */ = {
+			isa = PBXGroup;
+			children = (
+				A00000300000000000000001 /* OrdersView.swift */,
+			);
+			path = Orders;
+			sourceTree = "<group>";
+		};
+		A00000850000000000000001 /* Rewards */ = {
+			isa = PBXGroup;
+			children = (
+				A00000180000000000000001 /* RewardsView.swift */,
+			);
+			path = Rewards;
+			sourceTree = "<group>";
+		};
+		A00000860000000000000001 /* Stores */ = {
+			isa = PBXGroup;
+			children = (
+				A00000320000000000000001 /* StoresView.swift */,
+				A00000340000000000000001 /* StoresViewModel.swift */,
+				A00000360000000000000001 /* StoreListView.swift */,
+				A00000380000000000000001 /* StoreMapView.swift */,
+				A00000400000000000000001 /* StoreDetailView.swift */,
+			);
+			path = Stores;
+			sourceTree = "<group>";
+		};
+		A00000870000000000000001 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				A00000420000000000000001 /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		A00000880000000000000001 /* Cart */ = {
+			isa = PBXGroup;
+			children = (
+				A00000260000000000000001 /* CartView.swift */,
+				A00000280000000000000001 /* CheckoutView.swift */,
+			);
+			path = Cart;
+			sourceTree = "<group>";
+		};
+		A00000790000000000000001 /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				A00000460000000000000001 /* AuthenticationManager.swift */,
+				A00000480000000000000001 /* CartManager.swift */,
+				A00000500000000000000001 /* KeychainManager.swift */,
+				A00000520000000000000001 /* OAuthManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		A00000800000000000000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A00000540000000000000001 /* Auth.swift */,
+				A00000560000000000000001 /* CartItem.swift */,
+				A00000580000000000000001 /* MenuItem.swift */,
+				A00000600000000000000001 /* Order.swift */,
+				A00000620000000000000001 /* Promotion.swift */,
+				A00000640000000000000001 /* Store.swift */,
+				A00000660000000000000001 /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A00000810000000000000001 /* Networking */ = {
+			isa = PBXGroup;
+			children = (
+				A00000680000000000000001 /* APIClient.swift */,
+				A00000700000000000000001 /* Endpoints.swift */,
+			);
+			path = Networking;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A00000890000000000000001 /* OnlyCoffee */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A00000900000000000000001 /* Build configuration list for PBXNativeTarget "OnlyCoffee" */;
+			buildPhases = (
+				A00000910000000000000001 /* Sources */,
+				A00000740000000000000001 /* Frameworks */,
+				A00000920000000000000001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = OnlyCoffee;
+			productName = OnlyCoffee;
+			productReference = A00000710000000000000001 /* OnlyCoffee.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A00000930000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A00000890000000000000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A00000940000000000000001 /* Build configuration list for PBXProject "OnlyCoffee" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A00000750000000000000001;
+			productRefGroup = A00000770000000000000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A00000890000000000000001 /* OnlyCoffee */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A00000920000000000000001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000050000000000000001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A00000910000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000010000000000000001 /* OnlyCoffeeApp.swift in Sources */,
+				A00000030000000000000001 /* ContentView.swift in Sources */,
+				A00000070000000000000001 /* Theme.swift in Sources */,
+				A00000090000000000000001 /* MainTabView.swift in Sources */,
+				A00000110000000000000001 /* HomeView.swift in Sources */,
+				A00000130000000000000001 /* LoginView.swift in Sources */,
+				A00000150000000000000001 /* SignupView.swift in Sources */,
+				A00000170000000000000001 /* RewardsView.swift in Sources */,
+				A00000190000000000000001 /* MenuBrowseView.swift in Sources */,
+				A00000210000000000000001 /* MenuItemDetailView.swift in Sources */,
+				A00000230000000000000001 /* MenuView.swift in Sources */,
+				A00000250000000000000001 /* CartView.swift in Sources */,
+				A00000270000000000000001 /* CheckoutView.swift in Sources */,
+				A00000290000000000000001 /* OrdersView.swift in Sources */,
+				A00000310000000000000001 /* StoresView.swift in Sources */,
+				A00000330000000000000001 /* StoresViewModel.swift in Sources */,
+				A00000350000000000000001 /* StoreListView.swift in Sources */,
+				A00000370000000000000001 /* StoreMapView.swift in Sources */,
+				A00000390000000000000001 /* StoreDetailView.swift in Sources */,
+				A00000410000000000000001 /* ProfileView.swift in Sources */,
+				A00000430000000000000001 /* LaunchModalView.swift in Sources */,
+				A00000990000000000000001 /* InviteFriendView.swift in Sources */,
+				A00000450000000000000001 /* AuthenticationManager.swift in Sources */,
+				A00000470000000000000001 /* CartManager.swift in Sources */,
+				A00000490000000000000001 /* KeychainManager.swift in Sources */,
+				A00000510000000000000001 /* OAuthManager.swift in Sources */,
+				A00000530000000000000001 /* Auth.swift in Sources */,
+				A00000550000000000000001 /* CartItem.swift in Sources */,
+				A00000570000000000000001 /* MenuItem.swift in Sources */,
+				A00000590000000000000001 /* Order.swift in Sources */,
+				A00000610000000000000001 /* Promotion.swift in Sources */,
+				A00000630000000000000001 /* Store.swift in Sources */,
+				A00000650000000000000001 /* User.swift in Sources */,
+				A00000670000000000000001 /* APIClient.swift in Sources */,
+				A00000690000000000000001 /* Endpoints.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A00000950000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A00000960000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A00000970000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = OnlyCoffee/OnlyCoffee.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OnlyCoffee/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onlycoffee.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A00000980000000000000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = OnlyCoffee/OnlyCoffee.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = OnlyCoffee/Info.plist;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.onlycoffee.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A00000900000000000000001 /* Build configuration list for PBXNativeTarget "OnlyCoffee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000970000000000000001 /* Debug */,
+				A00000980000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A00000940000000000000001 /* Build configuration list for PBXProject "OnlyCoffee" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A00000950000000000000001 /* Debug */,
+				A00000960000000000000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A00000930000000000000001 /* Project object */;
+}

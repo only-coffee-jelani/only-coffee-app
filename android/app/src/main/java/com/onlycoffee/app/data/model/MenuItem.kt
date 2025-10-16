@@ -22,9 +22,12 @@ data class MenuItem(
     val isFeatured: Boolean = false,
     val isPopular: Boolean = false
 ) : Parcelable {
-    
+
     val formattedPrice: String
         get() = "$${String.format("%.2f", basePrice)}"
+
+    val calories: Int?
+        get() = nutritionInfo?.calories
     
     companion object {
         val sampleItems = listOf(
