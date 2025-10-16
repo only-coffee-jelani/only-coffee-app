@@ -81,3 +81,5 @@ pgdata/
 # Cache
 .cache/
 *.tmp
+MASTER.env
+S3_SETUP_COMPLETED.md

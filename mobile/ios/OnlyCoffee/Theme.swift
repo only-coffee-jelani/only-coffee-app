@@ -67,6 +67,6 @@ struct BrandHeader: View {
                 .padding(.trailing, 16)
             }
         }
-        .frame(height: 48)
+        .frame(height: 56)
     }
 }

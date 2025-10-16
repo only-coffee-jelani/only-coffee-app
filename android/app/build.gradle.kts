@@ -21,6 +21,9 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // API URL Configuration
+        buildConfigField("String", "API_BASE_URL", "\"http://only-coffee-prod.us-east-1.elasticbeanstalk.com/api/v1\"")
     }
 
     buildTypes {
@@ -50,6 +53,7 @@ android {
     
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     
     composeOptions {
@@ -116,9 +120,12 @@ dependencies {
     
     // Permissions
     implementation("com.google.accompanist:accompanist-permissions:0.32.0")
-    
+
     // System UI Controller
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+
+    // Pager
+    implementation("com.google.accompanist:accompanist-pager:0.32.0")
 
     // Google Maps
     implementation("com.google.maps.android:maps-compose:4.3.3")

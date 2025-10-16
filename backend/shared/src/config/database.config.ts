@@ -13,7 +13,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_DATABASE || 'only_coffee',
     entities: [path.join(__dirname, '../database/entities/**/*.entity{.ts,.js}')],
-    migrations: [path.join(__dirname, '../../database/migrations/**/*{.ts,.js}')],
+    migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
     synchronize: !isProduction && process.env.DB_SYNCHRONIZE === 'true',
     logging: !isProduction && process.env.DB_LOGGING === 'true',
     ssl: isProduction ? { rejectUnauthorized: false } : false,
@@ -34,7 +34,7 @@ export const dataSourceOptions: DataSourceOptions = {
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'only_coffee',
   entities: [path.join(__dirname, '../database/entities/**/*.entity{.ts,.js}')],
-  migrations: [path.join(__dirname, '../../database/migrations/**/*{.ts,.js}')],
+  migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
   synchronize: false,
   logging: process.env.DB_LOGGING === 'true',
 };

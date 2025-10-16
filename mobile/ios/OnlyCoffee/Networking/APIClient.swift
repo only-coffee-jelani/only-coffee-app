@@ -37,20 +37,35 @@ enum APIError: Error, LocalizedError {
 class APIClient {
     static let shared = APIClient()
 
-    // For iOS simulator, use localhost. For real device, use your machine's local IP
-    // You can also use ngrok or deploy to a server
-    #if targetEnvironment(simulator)
-    private let baseURL = "http://localhost:3000/api/v1"
-    #else
-    // Replace with your actual backend URL or use environment variable
-    private let baseURL = "http://192.168.1.100:3000/api/v1"
-    #endif
+    // Production Elastic Beanstalk URL
+    private let baseURL = "http://only-coffee-prod.eba-p3bfu2px.us-east-1.elasticbeanstalk.com/api/v1"
 
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
 
     private init() {
-        decoder.dateDecodingStrategy = .iso8601
+        // Configure date formatter to handle ISO8601 with fractional seconds
+        decoder.dateDecodingStrategy = .custom({ decoder in
+            let container = try decoder.singleValueContainer()
+            let dateString = try container.decode(String.self)
+
+            let formatter = ISO8601DateFormatter()
+
+            // Try with fractional seconds first
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = formatter.date(from: dateString) {
+                return date
+            }
+
+            // Fallback to without fractional seconds
+            formatter.formatOptions = [.withInternetDateTime]
+            if let date = formatter.date(from: dateString) {
+                return date
+            }
+
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode date string \(dateString)")
+        })
+
         encoder.dateEncodingStrategy = .iso8601
         decoder.keyDecodingStrategy = .convertFromSnakeCase
         encoder.keyEncodingStrategy = .convertToSnakeCase

@@ -2,7 +2,9 @@ import SwiftUI
 
 struct MenuBrowseView: View {
     @State private var selectedCategory: String = "Hot Coffee"
-    @State private var favoriteItems: Set<String> = []
+    @State private var selectedStore: Store? = nil
+    @State private var showingLocationPicker = false
+    @State private var searchText: String = ""
 
     let categories = [
         "Hot Coffee",
@@ -205,8 +207,81 @@ struct MenuBrowseView: View {
         ]
     ]
 
+    // Filtered menu items based on search
+    var filteredMenuItems: [MenuItemData] {
+        let items = menuItems[selectedCategory] ?? []
+        if searchText.isEmpty {
+            return items
+        }
+        return items.filter { item in
+            item.name.localizedCaseInsensitiveContains(searchText) ||
+            item.description.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
+            // Location Selector
+            Button(action: {
+                showingLocationPicker = true
+            }) {
+                HStack {
+                    Image(systemName: "mappin.and.ellipse")
+                        .foregroundColor(.brandPink)
+
+                    if let store = selectedStore {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(store.name)
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.primary)
+                            Text(store.address)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        Text("Select a location to view menu")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.brandPink)
+                }
+                .padding()
+                .background(Color.brandLight.opacity(0.1))
+            }
+            .sheet(isPresented: $showingLocationPicker) {
+                StoresView()
+            }
+
+            Divider()
+
+            // Search Bar (matching Android)
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(.secondary)
+
+                TextField("Search menu items", text: $searchText)
+                    .textFieldStyle(.plain)
+
+                if !searchText.isEmpty {
+                    Button(action: {
+                        searchText = ""
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(Color(.systemBackground))
+
+            Divider()
+
             // Category selector
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
@@ -235,18 +310,27 @@ struct MenuBrowseView: View {
             // Menu items
             ScrollView {
                 LazyVStack(spacing: 16) {
-                    ForEach(menuItems[selectedCategory] ?? [], id: \.name) { item in
-                        MenuItemCard(
-                            item: item,
-                            isFavorite: favoriteItems.contains(item.name),
-                            onFavoriteToggle: {
-                                if favoriteItems.contains(item.name) {
-                                    favoriteItems.remove(item.name)
-                                } else {
-                                    favoriteItems.insert(item.name)
-                                }
-                            }
-                        )
+                    ForEach(filteredMenuItems, id: \.name) { item in
+                        MenuItemCard(item: item)
+                    }
+
+                    // Empty state when no items found
+                    if filteredMenuItems.isEmpty {
+                        VStack(spacing: 16) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 48))
+                                .foregroundColor(.secondary)
+
+                            Text(searchText.isEmpty ? "No items available" : "No items found")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+
+                            Text(searchText.isEmpty ? "Check back later" : "Try a different search")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 60)
                     }
                 }
                 .padding()
@@ -260,8 +344,6 @@ struct MenuBrowseView: View {
 
 struct MenuItemCard: View {
     let item: MenuItemData
-    let isFavorite: Bool
-    let onFavoriteToggle: () -> Void
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -274,24 +356,6 @@ struct MenuItemCard: View {
                 Image(systemName: "cup.and.saucer.fill")
                     .font(.system(size: 40))
                     .foregroundColor(.brandPink)
-
-                // Favorite heart button
-                VStack {
-                    HStack {
-                        Spacer()
-                        Button(action: onFavoriteToggle) {
-                            Image(systemName: isFavorite ? "heart.fill" : "heart")
-                                .foregroundColor(isFavorite ? .red : .white)
-                                .font(.system(size: 18))
-                                .padding(6)
-                                .background(Color.black.opacity(0.3))
-                                .clipShape(Circle())
-                        }
-                    }
-                    Spacer()
-                }
-                .frame(width: 100, height: 100)
-                .padding(4)
 
                 if item.isSignature {
                     VStack {

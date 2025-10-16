@@ -62,26 +62,85 @@ import com.onlycoffee.app.ui.theme.TextSecondary
 @Composable
 fun MenuScreen(
     navController: NavController,
-    viewModel: MenuViewModel = hiltViewModel()
+    viewModel: MenuViewModel = hiltViewModel(),
+    ordersViewModel: com.onlycoffee.app.ui.screens.orders.OrdersViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val ordersUiState by ordersViewModel.uiState.collectAsState()
     var searchText by remember { mutableStateOf("") }
-    
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundPrimary)
-    ) {
-        // App Header
-        AppHeader(title = stringResource(R.string.menu))
 
-        // Content
-        LazyColumn(
+    // Check if location is selected, if not navigate to select location screen
+    androidx.compose.runtime.LaunchedEffect(ordersUiState.selectedStore) {
+        if (ordersUiState.selectedStore == null) {
+            navController.navigate("select_location") {
+                popUpTo("menu") { inclusive = false }
+            }
+        }
+    }
+
+    // Content
+    LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(BackgroundPrimary),
             contentPadding = PaddingValues(bottom = Spacing.lg)
         ) {
+            item {
+                // Location Selector
+                ordersUiState.selectedStore?.let { store ->
+                    androidx.compose.material3.Card(
+                        onClick = { navController.navigate("select_location") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Spacing.screenPadding),
+                        shape = RoundedCornerShape(CornerRadius.card),
+                        colors = androidx.compose.material3.CardDefaults.cardColors(
+                            containerColor = BrandPrimary.copy(alpha = 0.1f)
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(Spacing.md),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_location),
+                                contentDescription = null,
+                                tint = BrandPrimary,
+                                modifier = Modifier.size(IconSize.md)
+                            )
+
+                            androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(Spacing.sm))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = store.name,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary
+                                )
+                                Text(
+                                    text = store.address.formattedAddress,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
+                            }
+
+                            Text(
+                                text = ">",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = BrandPrimary
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Spacer(modifier = Modifier.height(Spacing.md))
+            }
+
             item {
                 // Search Bar
                 OutlinedTextField(
@@ -217,7 +276,6 @@ fun MenuScreen(
                 }
             }
         }
-    }
 }
 
 @Preview(showBackground = true)

@@ -43,9 +43,6 @@ fun RewardsScreen(
             .fillMaxSize()
             .background(BackgroundPrimary)
     ) {
-        // App Header
-        AppHeader(title = stringResource(R.string.rewards))
-
         // Content
         Column(
             modifier = Modifier

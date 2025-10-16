@@ -64,6 +64,9 @@ fun OnlyCoffeeNavigation(
             composable(BottomNavItem.Locations.route) {
                 com.onlycoffee.app.ui.screens.locations.LocationsScreen(navController = navController)
             }
+            composable("select_location") {
+                com.onlycoffee.app.ui.screens.locations.SelectLocationScreen(navController = navController)
+            }
             composable("product_detail/{menuItemId}") { backStackEntry ->
                 val menuItemId = backStackEntry.arguments?.getString("menuItemId")
                 val menuItem = MenuItem.sampleItems.find { it.id == menuItemId }
@@ -87,7 +90,7 @@ fun OnlyCoffeeBottomNavigation(
         BottomNavItem.Menu,
         BottomNavItem.Rewards,
         BottomNavItem.Orders,
-        BottomNavItem.Locations
+        BottomNavItem.Profile
     )
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -151,7 +154,7 @@ sealed class BottomNavItem(
     object Menu : BottomNavItem(
         route = "menu",
         titleRes = R.string.nav_menu,
-        iconRes = R.drawable.ic_menu
+        iconRes = R.drawable.ic_coffee
     )
     
     object Orders : BottomNavItem(

@@ -130,9 +130,6 @@ fun OrdersScreen(
             .fillMaxSize()
             .background(BackgroundPrimary)
     ) {
-        // App Header
-        AppHeader(title = "Orders")
-
         // Content
         LazyColumn(
             modifier = Modifier

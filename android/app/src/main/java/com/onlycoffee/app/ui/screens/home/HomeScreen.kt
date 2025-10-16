@@ -1,7 +1,9 @@
 package com.onlycoffee.app.ui.screens.home
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,15 +42,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.HorizontalPagerIndicator
-import com.google.accompanist.pager.rememberPagerState
 import com.onlycoffee.app.R
-import com.onlycoffee.app.ui.components.AppHeader
 import com.onlycoffee.app.ui.theme.BackgroundPrimary
 import com.onlycoffee.app.ui.theme.BrandAccent
 import com.onlycoffee.app.ui.theme.BrandPrimary
@@ -61,7 +60,6 @@ import com.onlycoffee.app.ui.theme.TextPrimary
 import com.onlycoffee.app.ui.theme.TextSecondary
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -74,21 +72,8 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundPrimary),
-        contentPadding = PaddingValues(bottom = Spacing.lg)
+        contentPadding = PaddingValues(top = Spacing.md, bottom = Spacing.lg)
     ) {
-        item {
-            // App Header
-            AppHeader(title = "Home")
-        }
-
-        item {
-            // Top Sign-In Card (30% height, full width)
-            SignInCard(
-                screenHeight = screenHeight,
-                onSignInClick = { navController.navigate("profile") }
-            )
-        }
-
         item {
             // Promotional Carousel (No title, 5 slides)
             PromoCarousel()
@@ -178,6 +163,18 @@ fun HomeScreen(
                 onButtonClick = { navController.navigate("menu") }
             )
         }
+
+        item {
+            // Locations Card
+            PromotionCard(
+                title = "Find a Location",
+                description = "Discover Only Coffee stores near you",
+                buttonText = "View Locations",
+                icon = R.drawable.ic_location,
+                backgroundColor = BrandAccent.copy(alpha = 0.15f),
+                onButtonClick = { navController.navigate("locations") }
+            )
+        }
     }
 }
 
@@ -252,10 +249,10 @@ fun SignInCard(
     }
 }
 
-@OptIn(ExperimentalPagerApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PromoCarousel() {
-    val pagerState = rememberPagerState()
+    val pagerState = rememberPagerState(pageCount = { 5 })
 
     // Auto-scroll
     LaunchedEffect(Unit) {
@@ -268,7 +265,6 @@ fun PromoCarousel() {
 
     Column {
         HorizontalPager(
-            count = 5,
             state = pagerState,
             modifier = Modifier
                 .fillMaxWidth()
@@ -316,15 +312,25 @@ fun PromoCarousel() {
             }
         }
 
-        // Page indicator
-        HorizontalPagerIndicator(
-            pagerState = pagerState,
+        // Simple page indicator
+        Row(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
                 .padding(Spacing.sm),
-            activeColor = BrandPrimary,
-            inactiveColor = TextSecondary.copy(alpha = 0.3f)
-        )
+            horizontalArrangement = Arrangement.Center
+        ) {
+            repeat(5) { index ->
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .size(8.dp)
+                        .background(
+                            color = if (index == pagerState.currentPage) BrandPrimary else TextSecondary.copy(alpha = 0.3f),
+                            shape = CircleShape
+                        )
+                )
+            }
+        }
     }
 }
 

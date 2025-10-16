@@ -6,57 +6,51 @@ struct MainTabView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
-                // Logo header with profile button - Fixed at top
-                BrandHeader()
+            TabView(selection: $selectedTab) {
+                // Home
+                HomeView()
+                    .tabItem {
+                        Label("Home", systemImage: "house.fill")
+                    }
+                    .tag(0)
 
-                // Tab content below header
-                TabView(selection: $selectedTab) {
-                    // Home
-                    HomeView()
-                        .tabItem {
-                            Label("Home", systemImage: "house.fill")
-                        }
-                        .tag(0)
+                // Menu
+                MenuBrowseView()
+                    .tabItem {
+                        Label("Menu", systemImage: "cup.and.saucer.fill")
+                    }
+                    .tag(1)
 
-                    // Menu
-                    MenuBrowseView()
-                        .tabItem {
-                            Label("Menu", systemImage: "cup.and.saucer.fill")
-                        }
-                        .tag(1)
+                // Rewards
+                RewardsView()
+                    .tabItem {
+                        Label("Rewards", systemImage: "star.fill")
+                    }
+                    .tag(2)
 
-                    // Rewards
-                    RewardsView()
-                        .tabItem {
-                            Label("Rewards", systemImage: "star.fill")
-                        }
-                        .tag(2)
+                // Orders
+                OrdersView()
+                    .tabItem {
+                        Label("Orders", systemImage: "list.bullet.clipboard")
+                    }
+                    .tag(3)
 
-                    // Orders
-                    OrdersView()
-                        .tabItem {
-                            Label("Orders", systemImage: "list.bullet.clipboard")
-                        }
-                        .tag(3)
-
-                    // Locations
-                    StoresView()
-                        .tabItem {
-                            Label("Locations", systemImage: "map")
-                        }
-                        .tag(4)
-                }
-                .accentColor(.brandPink)
+                // Profile
+                ProfileView()
+                    .tabItem {
+                        Label("Profile", systemImage: "person.fill")
+                    }
+                    .tag(4)
             }
-            .ignoresSafeArea(edges: .top)
-            .overlay(alignment: .topTrailing) {
-                // Cart badge
-                if cartManager.itemCount > 0 {
-                    CartBadge(count: cartManager.itemCount)
-                        .padding(.trailing, 60)
-                        .padding(.top, 8)
-                }
+            .accentColor(.brandPink)
+            .onAppear {
+                // Make tab bar opaque with solid background
+                let appearance = UITabBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.backgroundColor = UIColor.systemBackground
+
+                UITabBar.appearance().standardAppearance = appearance
+                UITabBar.appearance().scrollEdgeAppearance = appearance
             }
         }
         .navigationViewStyle(.stack)
