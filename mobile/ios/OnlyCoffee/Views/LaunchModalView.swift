@@ -15,45 +15,32 @@ struct LaunchModalView: View {
 
     var body: some View {
         ZStack {
-            // Full-screen promotional image
-            AsyncImage(url: URL(string: promotion.imageUrl)) { phase in
-                switch phase {
-                case .empty:
+            // Pink background matching the image
+            Color(red: 0.96, green: 0.73, blue: 0.75)
+                .ignoresSafeArea()
+
+            // Full-screen promotional image with caching (scaled to 95%)
+            CachedAsyncImage(
+                url: URL(string: promotion.imageUrl),
+                content: { image in
+                    GeometryReader { geometry in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: geometry.size.width * 0.95, height: geometry.size.height * 0.95)
+                            .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    }
+                    .ignoresSafeArea()
+                },
+                placeholder: {
                     ZStack {
-                        Color.black
+                        Color(red: 0.96, green: 0.73, blue: 0.75)
                         ProgressView()
                             .tint(.white)
                     }
                     .ignoresSafeArea()
-                case .success(let image):
-                    GeometryReader { geometry in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                            .clipped()
-                    }
-                    .ignoresSafeArea()
-                case .failure(let error):
-                    ZStack {
-                        Color.red.opacity(0.3)
-                        VStack {
-                            Image(systemName: "photo")
-                                .font(.system(size: 60))
-                                .foregroundColor(.white)
-                            Text("Failed to load image")
-                                .foregroundColor(.white)
-                            Text("\(error.localizedDescription)")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                        }
-                    }
-                    .ignoresSafeArea()
-                @unknown default:
-                    Color.black
-                        .ignoresSafeArea()
                 }
-            }
+            )
             .onTapGesture {
                 // Navigate to menu item if targetMenuItemId exists
                 if let menuItemId = promotion.targetMenuItemId {
@@ -63,26 +50,29 @@ struct LaunchModalView: View {
             }
 
             // Skip button in top right
-            VStack {
-                HStack {
-                    Spacer()
+            GeometryReader { geometry in
+                VStack {
+                    HStack {
+                        Spacer()
 
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Text("Skip \(timeRemaining)")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.white.opacity(0.9))
-                            .clipShape(Capsule())
-                            .shadow(radius: 4)
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Text("Skip \(timeRemaining)s")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
+                                .background(Color.white.opacity(0.9))
+                                .clipShape(Capsule())
+                                .shadow(radius: 4)
+                        }
+                        .padding(.horizontal, 16)
+                        .offset(y: 0)
                     }
-                    .padding(16)
-                }
 
-                Spacer()
+                    Spacer()
+                }
             }
         }
         .onAppear {

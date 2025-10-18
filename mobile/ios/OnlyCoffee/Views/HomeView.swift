@@ -57,19 +57,79 @@ struct HomeView: View {
 
                 // Quick Action Cards (matching Android 2x 50% layout)
                 HStack(spacing: 12) {
-                    QuickActionCard(
-                        icon: "cup.and.saucer.fill",
-                        title: "Order Now",
-                        subtitle: "Browse menu",
-                        destination: AnyView(MenuBrowseView())
-                    )
+                    // Order Now Card with image
+                    NavigationLink(destination: MenuBrowseView()) {
+                        CachedAsyncImage(
+                            url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/order-now-card.webp"),
+                            content: { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            },
+                            placeholder: {
+                                // Fallback
+                                VStack(spacing: 12) {
+                                    Image(systemName: "cup.and.saucer.fill")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(.brandPink)
 
-                    QuickActionCard(
-                        icon: "map.fill",
-                        title: "Find Stores",
-                        subtitle: "Locate nearby",
-                        destination: AnyView(StoresView())
-                    )
+                                    VStack(spacing: 4) {
+                                        Text("Order Now")
+                                            .font(.headline)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primary)
+
+                                        Text("Browse menu")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 24)
+                                .background(Color(.systemBackground))
+                            }
+                        )
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    }
+
+                    // Refer Friends Card with image
+                    NavigationLink(destination: InviteFriendView()) {
+                        CachedAsyncImage(
+                            url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/refer-friends-card.webp"),
+                            content: { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                            },
+                            placeholder: {
+                                // Fallback
+                                VStack(spacing: 12) {
+                                    Image(systemName: "heart.fill")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(.brandPink)
+
+                                    VStack(spacing: 4) {
+                                        Text("Refer Friends")
+                                            .font(.headline)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primary)
+
+                                        Text("Share the love")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 24)
+                                .background(Color(.systemBackground))
+                            }
+                        )
+                        .frame(maxWidth: .infinity)
+                        .cornerRadius(16)
+                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    }
                 }
                 .padding(.horizontal)
 
@@ -396,13 +456,14 @@ struct MenuHighlightCard: View {
 struct WelcomeCard: View {
     var body: some View {
         NavigationLink(destination: LoginView()) {
-            AsyncImage(url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/welcome-card.webp")) { phase in
-                switch phase {
-                case .success(let image):
+            CachedAsyncImage(
+                url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/welcome-card.webp"),
+                content: { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                case .failure(_):
+                },
+                placeholder: {
                     // Fallback to original design
                     VStack(spacing: 16) {
                         Spacer()
@@ -424,12 +485,8 @@ struct WelcomeCard: View {
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(.systemBackground))
-                case .empty:
-                    Color(.systemBackground)
-                @unknown default:
-                    Color(.systemBackground)
                 }
-            }
+            )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 20))
@@ -441,13 +498,14 @@ struct WelcomeCard: View {
 struct InviteFriendCard: View {
     var body: some View {
         NavigationLink(destination: InviteFriendView()) {
-            AsyncImage(url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/invite-friend-card.webp")) { phase in
-                switch phase {
-                case .success(let image):
+            CachedAsyncImage(
+                url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/share-drink-promo.webp"),
+                content: { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                case .failure(_), .empty:
+                },
+                placeholder: {
                     // Fallback
                     ZStack {
                         LinearGradient(
@@ -477,10 +535,8 @@ struct InviteFriendCard: View {
                         }
                         .padding()
                     }
-                @unknown default:
-                    Color.brandLight.opacity(0.2)
                 }
-            }
+            )
             .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
