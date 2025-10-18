@@ -9,54 +9,30 @@ struct InviteFriendView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                // Pink background for status bar and top banner area
+                VStack(spacing: 0) {
+                    Color(red: 1.0, green: 0.725, blue: 0.820)
+                        .frame(height: geometry.safeAreaInsets.top + 44)
+                    Spacer()
+                }
+                .ignoresSafeArea()
+
                 // Scrollable Content
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Top Banner (5% of screen)
-                        HStack {
-                            Button(action: {
-                                presentationMode.wrappedValue.dismiss()
-                            }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 18, weight: .semibold))
-                                    Text("Back")
-                                        .font(.body)
-                                }
-                                .foregroundColor(.brandPink)
-                            }
+                        // Spacer for fixed header
+                        Color.clear
+                            .frame(height: geometry.safeAreaInsets.top + 44)
 
-                            Spacer()
-
-                            Text("Only Friends Share Coffee")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundColor(.brandPink)
-
-                            Spacer()
-
-                            // Invisible placeholder for centering
-                            HStack(spacing: 4) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .semibold))
-                                Text("Back")
-                                    .font(.body)
-                            }
-                            .opacity(0)
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 12)
-                        .frame(height: geometry.size.height * 0.05)
-                        .background(Color.white)
-
-                        // Hero Image (55% of screen)
-                        AsyncImage(url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/invite-hero-placeholder.webp")) { phase in
-                            switch phase {
-                            case .success(let image):
+                        // Hero Image (55% of screen) with caching
+                        CachedAsyncImage(
+                            url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/invite-hero-v5.webp"),
+                            content: { image in
                                 image
                                     .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                            case .failure(_), .empty:
+                                    .aspectRatio(contentMode: .fill)
+                            },
+                            placeholder: {
                                 // Placeholder
                                 ZStack {
                                     Color.brandLight.opacity(0.2)
@@ -73,12 +49,11 @@ struct InviteFriendView: View {
                                             .foregroundColor(.secondary)
                                     }
                                 }
-                            @unknown default:
-                                Color.brandLight.opacity(0.2)
                             }
-                        }
-                        .frame(height: geometry.size.height * 0.55)
+                        )
+                        .frame(width: geometry.size.width, height: geometry.size.height * 0.55)
                         .clipped()
+                        .edgesIgnoringSafeArea(.horizontal)
 
                         // Rewards Card (20% of screen)
                         VStack(alignment: .leading, spacing: 12) {
@@ -88,14 +63,15 @@ struct InviteFriendView: View {
                                 .foregroundColor(.primary)
 
                             HStack(spacing: 16) {
-                                // Reward Image Placeholder
-                                AsyncImage(url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/free-drink-reward.webp")) { phase in
-                                    switch phase {
-                                    case .success(let image):
+                                // Reward Image with caching
+                                CachedAsyncImage(
+                                    url: URL(string: "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/free-drink-reward.webp"),
+                                    content: { image in
                                         image
                                             .resizable()
                                             .aspectRatio(contentMode: .fit)
-                                    case .failure(_), .empty:
+                                    },
+                                    placeholder: {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 12)
                                                 .fill(Color.brandPink.opacity(0.1))
@@ -103,10 +79,8 @@ struct InviteFriendView: View {
                                                 .font(.system(size: 32))
                                                 .foregroundColor(.brandPink)
                                         }
-                                    @unknown default:
-                                        Color.brandLight.opacity(0.2)
                                     }
-                                }
+                                )
                                 .frame(width: 80, height: 80)
                                 .cornerRadius(12)
 
@@ -129,35 +103,33 @@ struct InviteFriendView: View {
                         .background(Color.brandPink.opacity(0.05))
                         .cornerRadius(16)
                         .padding(.horizontal)
-                        .padding(.top, 16)
+                        .padding(.top, 8)
 
                         // Invitation Record Card (20% of screen)
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
                             Text("Invitation Record")
                                 .font(.title3)
                                 .fontWeight(.bold)
                                 .foregroundColor(.primary)
 
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Successful Invites")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-
-                                    Text("\(successfulInvites)")
-                                        .font(.system(size: 36, weight: .bold))
-                                        .foregroundColor(.brandPink)
-                                }
+                            HStack(alignment: .center, spacing: 12) {
+                                Text("Successful Invites")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
 
                                 Spacer()
+
+                                Text("\(successfulInvites)")
+                                    .font(.system(size: 40, weight: .bold))
+                                    .foregroundColor(.brandPink)
 
                                 Image(systemName: "person.3.fill")
                                     .font(.system(size: 40))
                                     .foregroundColor(.brandPink.opacity(0.3))
                             }
                         }
-                        .padding()
-                        .frame(minHeight: geometry.size.height * 0.20)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.white)
                         .cornerRadius(16)
@@ -210,6 +182,56 @@ struct InviteFriendView: View {
                             .frame(height: 100)
                     }
                 }
+
+                // Fixed Header (Back Button) - Never Scrolls
+                VStack(spacing: 0) {
+                    Spacer()
+                        .frame(height: geometry.safeAreaInsets.top)
+
+                    HStack {
+                        Button(action: {
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 18, weight: .semibold))
+                                Text("Back")
+                                    .font(.body)
+                            }
+                            .foregroundColor(.white)
+                        }
+
+                        Spacer()
+
+                        Text("Only Friends Share Coffee")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+
+                        Spacer()
+
+                        // Invisible placeholder for centering
+                        HStack(spacing: 4) {
+                            Image(systemName: "chevron.left")
+                                .font(.system(size: 18, weight: .semibold))
+                            Text("Back")
+                                .font(.body)
+                        }
+                        .opacity(0)
+                    }
+                    .padding(.horizontal)
+                    .frame(height: 44)
+
+                    Spacer()
+                }
+                .frame(maxHeight: .infinity, alignment: .top)
+                .background(
+                    VStack(spacing: 0) {
+                        Color(red: 1.0, green: 0.725, blue: 0.820)
+                            .frame(height: geometry.safeAreaInsets.top + 44)
+                        Spacer()
+                    }
+                )
 
                 // Pinned Bottom Button
                 VStack {

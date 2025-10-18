@@ -53,7 +53,7 @@ fun OnlyCoffeeApp() {
             title = "Fall Special: Waffolino",
             description = "Try our signature Waffolino - a perfect blend of espresso and waffle flavors",
             promotionType = com.onlycoffee.app.data.model.PromotionType.LAUNCH_MODAL,
-            imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch.webp",
+            imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v2.webp",
             targetMenuItemId = null,
             targetUrl = null,
             startDate = "2025-10-01T00:00:00Z",

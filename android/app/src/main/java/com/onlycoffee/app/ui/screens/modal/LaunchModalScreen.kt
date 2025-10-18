@@ -18,8 +18,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.onlycoffee.app.data.model.Promotion
+import com.onlycoffee.app.ui.components.CachedAsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -56,9 +56,9 @@ fun LaunchModalScreen(
                 }
             }
     ) {
-        // Full-screen promotional image
-        AsyncImage(
-            model = promotion.imageUrl,
+        // Full-screen promotional image with caching
+        CachedAsyncImage(
+            url = promotion.imageUrl,
             contentDescription = promotion.title,
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop

@@ -4,14 +4,24 @@ import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import com.onlycoffee.app.utils.ImageCacheManager
 import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
-class OnlyCoffeeApplication : Application() {
-    
+class OnlyCoffeeApplication : Application(), ImageLoaderFactory {
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannels()
+    }
+
+    /**
+     * Create a custom ImageLoader with offline caching support
+     */
+    override fun newImageLoader(): ImageLoader {
+        return ImageCacheManager.createImageLoader(this)
     }
     
     private fun createNotificationChannels() {
