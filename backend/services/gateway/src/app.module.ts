@@ -16,6 +16,12 @@ import { HealthModule } from './modules/health/health.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { PromoCodesModule } from './modules/promo-codes/promo-codes.module';
+import { CouponsModule } from './modules/coupons/coupons.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -53,6 +59,12 @@ import { AdminModule } from './modules/admin/admin.module';
     UploadModule,
     PromotionsModule,
     AdminModule,
+    PromoCodesModule,
+    CouponsModule,
+    NotificationsModule,
+    TasksModule,
+    AnalyticsModule,
+    LoyaltyModule,
   ],
 })
 export class AppModule {}

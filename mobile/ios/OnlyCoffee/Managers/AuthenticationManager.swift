@@ -11,12 +11,8 @@ class AuthenticationManager: ObservableObject {
 
     private let apiClient = APIClient.shared
     private let keychainManager = KeychainManager.shared
-    let oauthManager = OAuthManager.shared
 
     private init() {
-        // Connect OAuth manager
-        oauthManager.authManager = self
-
         // Check if user is already logged in
         if keychainManager.getAccessToken() != nil {
             isAuthenticated = true
@@ -131,4 +127,94 @@ class AuthenticationManager: ObservableObject {
         keychainManager.saveAccessToken(response.accessToken)
         keychainManager.saveRefreshToken(response.refreshToken)
     }
+
+    // MARK: - Phone Authentication
+
+    /// Send verification code to phone number
+    func sendVerificationCode(phone: String, marketingOptIn: Bool = false) async throws {
+        let request = SendCodeRequest(phone: phone, marketingOptIn: marketingOptIn)
+        let _: SendCodeResponse = try await apiClient.request(
+            endpoint: "/api/v1/auth/send-code",
+            method: .post,
+            body: request,
+            requiresAuth: false
+        )
+    }
+
+    /// Verify code and authenticate user
+    func verifyCode(phone: String, code: String) async throws -> VerifyCodeResponse {
+        let request = VerifyCodeRequest(phone: phone, code: code)
+        let response: VerifyCodeResponse = try await apiClient.request(
+            endpoint: "/api/v1/auth/verify-code",
+            method: .post,
+            body: request,
+            requiresAuth: false
+        )
+
+        // Save tokens
+        keychainManager.saveAccessToken(response.accessToken)
+        keychainManager.saveRefreshToken(response.refreshToken)
+
+        // Update state
+        currentUser = response.user
+        isAuthenticated = true
+
+        return response
+    }
+
+    /// Complete user profile after phone verification
+    func completeProfile(email: String?, firstName: String?, lastName: String?) async throws {
+        let request = CompleteProfileRequest(
+            email: email,
+            firstName: firstName,
+            lastName: lastName
+        )
+        let response: CompleteProfileResponse = try await apiClient.request(
+            endpoint: "/api/v1/auth/complete-profile",
+            method: .post,
+            body: request,
+            requiresAuth: true
+        )
+
+        // Update current user with new profile data
+        currentUser = response.user
+    }
+}
+
+// MARK: - Phone Auth Request/Response Models
+
+struct SendCodeRequest: Codable {
+    let phone: String
+    let marketingOptIn: Bool
+}
+
+struct SendCodeResponse: Codable {
+    let success: Bool
+    let message: String
+    let expiresIn: Int
+}
+
+struct VerifyCodeRequest: Codable {
+    let phone: String
+    let code: String
+}
+
+struct VerifyCodeResponse: Codable {
+    let user: User
+    let accessToken: String
+    let refreshToken: String
+    let expiresIn: Int
+    let isNewUser: Bool
+}
+
+struct CompleteProfileRequest: Codable {
+    let email: String?
+    let firstName: String?
+    let lastName: String?
+}
+
+struct CompleteProfileResponse: Codable {
+    let user: User
+    let success: Bool
+    let message: String
 }

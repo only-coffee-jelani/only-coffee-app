@@ -101,6 +101,7 @@ struct CreateOrderRequest: Codable {
     let orderType: OrderType
     let pickupTime: String // "ASAP" or ISO8601 date string
     let specialInstructions: String?
+    let couponId: String?
 }
 
 struct CreateOrderItem: Codable {

@@ -5,6 +5,7 @@ struct CheckoutView: View {
     @StateObject private var viewModel = CheckoutViewModel()
     @State private var pickupTime = "ASAP"
     @State private var specialInstructions = ""
+    @State private var showingCouponSelector = false
 
     var body: some View {
         ScrollView {
@@ -47,6 +48,54 @@ struct CheckoutView: View {
                     }
                 }
 
+                // Coupon section
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Coupon")
+                            .font(.headline)
+
+                        Button(action: {
+                            showingCouponSelector = true
+                        }) {
+                            HStack {
+                                Image(systemName: "ticket.fill")
+                                    .foregroundColor(.orange)
+
+                                if let coupon = cartManager.selectedCoupon {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(coupon.displayValue)
+                                            .font(.subheadline)
+                                            .fontWeight(.semibold)
+                                            .foregroundColor(.primary)
+                                        Text(coupon.label)
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                } else {
+                                    Text("Add a coupon")
+                                        .foregroundColor(.primary)
+                                }
+
+                                Spacer()
+
+                                if cartManager.selectedCoupon != nil {
+                                    Text("-\(String(format: "$%.2f", cartManager.discountAmount))")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.green)
+                                }
+
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                                    .font(.caption)
+                            }
+                            .padding()
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                    }
+                }
+
                 // Special instructions
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
@@ -80,6 +129,16 @@ struct CheckoutView: View {
                             Text("Subtotal")
                             Spacer()
                             Text(String(format: "$%.2f", cartManager.subtotal))
+                        }
+
+                        // Show discount if coupon applied
+                        if cartManager.discountAmount > 0 {
+                            HStack {
+                                Text("Discount")
+                                Spacer()
+                                Text("-\(String(format: "$%.2f", cartManager.discountAmount))")
+                                    .foregroundColor(.green)
+                            }
                         }
 
                         HStack {
@@ -141,6 +200,10 @@ struct CheckoutView: View {
             .padding()
         }
         .navigationTitle("Checkout")
+        .sheet(isPresented: $showingCouponSelector) {
+            CouponSelectorView()
+                .environmentObject(cartManager)
+        }
         .alert("Order Placed!", isPresented: $viewModel.showingSuccess) {
             Button("OK") {
                 cartManager.clearCart()
@@ -176,7 +239,8 @@ class CheckoutViewModel: ObservableObject {
                 items: orderItems,
                 orderType: .pickup,
                 pickupTime: pickupTime,
-                specialInstructions: specialInstructions
+                specialInstructions: specialInstructions,
+                couponId: cartManager.selectedCoupon?.id
             )
 
             let _: Order = try await apiClient.request(
@@ -190,6 +254,10 @@ class CheckoutViewModel: ObservableObject {
 
         } catch let error as APIError {
             errorMessage = error.errorDescription
+            // If coupon error, suggest removing it
+            if let desc = error.errorDescription, desc.contains("coupon") || desc.contains("Coupon") {
+                errorMessage = "\(desc)\n\nTry removing the coupon and placing the order again."
+            }
         } catch {
             errorMessage = "Failed to place order"
         }

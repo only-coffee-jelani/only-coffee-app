@@ -20,27 +20,53 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.onlycoffee.app.ui.navigation.OnlyCoffeeNavigation
 import com.onlycoffee.app.ui.theme.OnlyCoffeeTheme
+import com.onlycoffee.app.managers.PushNotificationManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var pushNotificationManager: PushNotificationManager
+
+    private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install splash screen
         installSplashScreen()
-        
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
+        // Initialize push notifications
+        initializePushNotifications()
+
         setContent {
             OnlyCoffeeTheme {
-                OnlyCoffeeApp()
+                OnlyCoffeeApp(pushNotificationManager)
+            }
+        }
+    }
+
+    private fun initializePushNotifications() {
+        activityScope.launch {
+            pushNotificationManager.checkPermissionStatus()
+
+            // Request token if permission is granted
+            if (pushNotificationManager.permissionGranted.value) {
+                pushNotificationManager.requestToken()
             }
         }
     }
 }
 
 @Composable
-fun OnlyCoffeeApp() {
+fun OnlyCoffeeApp(pushNotificationManager: PushNotificationManager) {
     val navController = rememberNavController()
     var activePromotion by remember { mutableStateOf<Promotion?>(null) }
 
