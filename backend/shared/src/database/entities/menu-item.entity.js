@@ -33,7 +33,7 @@ __decorate([
 ], MenuItem.prototype, "storeId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], MenuItem.prototype, "toastItemId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
@@ -41,7 +41,7 @@ __decorate([
 ], MenuItem.prototype, "name", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], MenuItem.prototype, "description", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: MenuCategory }),
@@ -53,7 +53,7 @@ __decorate([
 ], MenuItem.prototype, "basePrice", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 500, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], MenuItem.prototype, "imageUrl", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', default: [] }),
@@ -93,7 +93,7 @@ __decorate([
 ], MenuItem.prototype, "updatedAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], MenuItem.prototype, "lastSyncedAt", void 0);
 exports.MenuItem = MenuItem = __decorate([
     (0, typeorm_1.Entity)('menu_items'),

@@ -23,7 +23,8 @@ android {
         }
 
         // API URL Configuration
-        buildConfigField("String", "API_BASE_URL", "\"http://only-coffee-prod.us-east-1.elasticbeanstalk.com/api/v1\"")
+        // Use 10.0.2.2 for emulator to access host machine's localhost
+        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:3000/api/v1\"")
     }
 
     buildTypes {

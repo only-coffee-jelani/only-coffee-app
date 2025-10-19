@@ -26,7 +26,7 @@ let PaymentService = PaymentService_1 = class PaymentService {
             this.logger.warn('Stripe secret key not configured');
         }
         this.stripe = new stripe_1.default(secretKey, {
-            apiVersion: '2024-10-28.acacia',
+            apiVersion: '2024-06-20',
             typescript: true,
         });
     }

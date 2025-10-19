@@ -49,43 +49,43 @@ __decorate([
 ], GiftCard.prototype, "senderUserId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], GiftCard.prototype, "recipientUserId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], GiftCard.prototype, "recipientEmail", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], GiftCard.prototype, "recipientPhone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Number)
 ], GiftCard.prototype, "amount", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Number)
 ], GiftCard.prototype, "remainingBalance", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Number)
 ], GiftCard.prototype, "maxRedeemValue", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], GiftCard.prototype, "message", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], GiftCard.prototype, "stripePaymentIntentId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], GiftCard.prototype, "redeemedAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], GiftCard.prototype, "redeemedOrderId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz' }),

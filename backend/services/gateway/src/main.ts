@@ -16,10 +16,13 @@ async function bootstrap() {
   // Security
   app.use(helmet());
 
-  // CORS
+  // CORS - Allow admin dashboard and other origins
   app.enableCors({
-    origin: configService.get('CORS_ORIGIN', '*').split(','),
+    origin: configService.get('CORS_ORIGIN', '*').split(',').map(o => o.trim()),
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200,
   });
 
   // Global validation pipe

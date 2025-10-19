@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
+        <!-- Google Maps domains -->
         <domain includeSubdomains="true">maps.googleapis.com</domain>
         <domain includeSubdomains="true">maps.google.com</domain>
         <domain includeSubdomains="true">maps.gstatic.com</domain>
@@ -12,5 +13,10 @@
         <domain includeSubdomains="true">mts1.googleapis.com</domain>
         <domain includeSubdomains="true">mts2.googleapis.com</domain>
         <domain includeSubdomains="true">mts3.googleapis.com</domain>
+
+        <!-- Local development server (emulator) -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
     </domain-config>
 </network-security-config>

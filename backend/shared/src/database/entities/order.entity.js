@@ -67,11 +67,11 @@ __decorate([
 ], Order.prototype, "status", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Order.prototype, "toastOrderId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Order.prototype, "toastCheckId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
@@ -95,11 +95,11 @@ __decorate([
 ], Order.prototype, "total", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: PaymentMethod, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Order.prototype, "paymentMethod", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Order.prototype, "stripePaymentIntentId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 0 }),
@@ -111,11 +111,11 @@ __decorate([
 ], Order.prototype, "pointsRedeemed", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], Order.prototype, "pickupTime", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 500, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Order.prototype, "specialInstructions", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
@@ -123,11 +123,11 @@ __decorate([
 ], Order.prototype, "deliveryInfo", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], Order.prototype, "completedAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], Order.prototype, "cancelledAt", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),

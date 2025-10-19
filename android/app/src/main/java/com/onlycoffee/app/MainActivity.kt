@@ -15,53 +15,63 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.onlycoffee.app.data.model.Promotion
+import com.onlycoffee.app.data.model.SplashScreen
+import com.onlycoffee.app.data.repository.SplashScreenRepository
 import com.onlycoffee.app.ui.screens.modal.LaunchModalScreen
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.navigation.compose.rememberNavController
 import com.onlycoffee.app.ui.navigation.OnlyCoffeeNavigation
 import com.onlycoffee.app.ui.theme.OnlyCoffeeTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import android.util.Log
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var splashScreenRepository: SplashScreenRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install splash screen
         installSplashScreen()
-        
+
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
+
         setContent {
             OnlyCoffeeTheme {
-                OnlyCoffeeApp()
+                OnlyCoffeeApp(splashScreenRepository)
             }
         }
     }
 }
 
 @Composable
-fun OnlyCoffeeApp() {
+fun OnlyCoffeeApp(
+    splashScreenRepository: SplashScreenRepository
+) {
     val navController = rememberNavController()
-    var activePromotion by remember { mutableStateOf<Promotion?>(null) }
+    var activeSplashScreen by remember { mutableStateOf<SplashScreen?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    // Fetch active launch modal promotion on app start
+    // Fetch active splash screen from API on app start
     LaunchedEffect(Unit) {
-        // Hardcoded Waffolino promotion for now
-        // TODO: Replace with actual API call
-        activePromotion = Promotion(
-            id = "1",
-            title = "Fall Special: Waffolino",
-            description = "Try our signature Waffolino - a perfect blend of espresso and waffle flavors",
-            promotionType = com.onlycoffee.app.data.model.PromotionType.LAUNCH_MODAL,
-            imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v2.webp",
-            targetMenuItemId = null,
-            targetUrl = null,
-            startDate = "2025-10-01T00:00:00Z",
-            endDate = "2025-12-31T23:59:59Z",
-            isActive = true,
-            displayDuration = 3,
-            sortOrder = 0
-        )
+        try {
+            Log.d("SplashScreen", "Starting to fetch splash screen...")
+            val splashScreen = withContext(Dispatchers.IO) {
+                splashScreenRepository.getCurrentSplashScreen()
+            }
+            activeSplashScreen = splashScreen
+            Log.d("SplashScreen", "Fetched splash screen: $splashScreen")
+        } catch (e: Exception) {
+            Log.e("SplashScreen", "Error fetching splash screen", e)
+            e.printStackTrace()
+            // If API fails, no splash screen will be shown
+        } finally {
+            isLoading = false
+        }
     }
 
     Scaffold(
@@ -72,13 +82,13 @@ fun OnlyCoffeeApp() {
             modifier = Modifier.padding(innerPadding)
         )
 
-        // Launch modal overlay
-        if (activePromotion != null) {
+        // Launch modal overlay - show splash screen if available
+        if (activeSplashScreen != null) {
             LaunchModalScreen(
-                promotion = activePromotion!!,
-                onDismiss = { activePromotion = null },
+                splashScreen = activeSplashScreen!!,
+                onDismiss = { activeSplashScreen = null },
                 onNavigateToMenuItem = { menuItemId ->
-                    activePromotion = null
+                    activeSplashScreen = null
                     navController.navigate("product/$menuItemId")
                 },
                 navController = navController

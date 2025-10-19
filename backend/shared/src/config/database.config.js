@@ -38,6 +38,7 @@ const typeorm_1 = require("typeorm");
 const path = __importStar(require("path"));
 const getDatabaseConfig = () => {
     const isProduction = process.env.NODE_ENV === 'production';
+    const useSSL = process.env.DB_SSL === 'true' || isProduction;
     return {
         type: 'postgres',
         host: process.env.DB_HOST || 'localhost',
@@ -46,10 +47,10 @@ const getDatabaseConfig = () => {
         password: process.env.DB_PASSWORD || 'postgres',
         database: process.env.DB_DATABASE || 'only_coffee',
         entities: [path.join(__dirname, '../database/entities/**/*.entity{.ts,.js}')],
-        migrations: [path.join(__dirname, '../../database/migrations/**/*{.ts,.js}')],
+        migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
         synchronize: !isProduction && process.env.DB_SYNCHRONIZE === 'true',
         logging: !isProduction && process.env.DB_LOGGING === 'true',
-        ssl: isProduction ? { rejectUnauthorized: false } : false,
+        ssl: useSSL ? { rejectUnauthorized: false } : false,
         extra: {
             max: parseInt(process.env.DB_POOL_MAX || '20', 10),
             min: parseInt(process.env.DB_POOL_MIN || '2', 10),
@@ -67,7 +68,7 @@ exports.dataSourceOptions = {
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_DATABASE || 'only_coffee',
     entities: [path.join(__dirname, '../database/entities/**/*.entity{.ts,.js}')],
-    migrations: [path.join(__dirname, '../../database/migrations/**/*{.ts,.js}')],
+    migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
     synchronize: false,
     logging: process.env.DB_LOGGING === 'true',
 };

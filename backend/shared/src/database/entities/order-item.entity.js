@@ -26,7 +26,7 @@ __decorate([
 ], OrderItem.prototype, "orderId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], OrderItem.prototype, "menuItemId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
@@ -34,7 +34,7 @@ __decorate([
 ], OrderItem.prototype, "itemName", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], OrderItem.prototype, "toastItemId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 1 }),
@@ -58,7 +58,7 @@ __decorate([
 ], OrderItem.prototype, "modifiers", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], OrderItem.prototype, "specialInstructions", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => order_entity_1.Order, (order) => order.items, { onDelete: 'CASCADE' }),
@@ -68,7 +68,7 @@ __decorate([
 __decorate([
     (0, typeorm_1.ManyToOne)(() => menu_item_entity_1.MenuItem, { nullable: true }),
     (0, typeorm_1.JoinColumn)({ name: 'menuItemId' }),
-    __metadata("design:type", Object)
+    __metadata("design:type", menu_item_entity_1.MenuItem)
 ], OrderItem.prototype, "menuItem", void 0);
 exports.OrderItem = OrderItem = __decorate([
     (0, typeorm_1.Entity)('order_items'),

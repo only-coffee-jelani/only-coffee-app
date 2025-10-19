@@ -23,4 +23,6 @@ __exportStar(require("./rewards-ledger.entity"), exports);
 __exportStar(require("./gift-card.entity"), exports);
 __exportStar(require("./delivery-order.entity"), exports);
 __exportStar(require("./review.entity"), exports);
+__exportStar(require("./promotion.entity"), exports);
+__exportStar(require("./splash-screen.entity"), exports);
 //# sourceMappingURL=index.js.map

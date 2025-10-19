@@ -6,6 +6,7 @@ import {
   BadRequestException,
   ParseFilePipeBuilder,
   HttpStatus,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiConsumes, ApiBody } from '@nestjs/swagger';
@@ -15,6 +16,57 @@ import { UploadService } from './upload.service';
 @Controller('upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Upload image to S3 with dynamic folder' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+        folder: {
+          type: 'string',
+          description: 'Folder path in S3 (e.g., promotions, menu-items, stores)',
+        },
+      },
+    },
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: /(jpg|jpeg|png|webp|gif)$/,
+        })
+        .addMaxSizeValidator({
+          maxSize: 10 * 1024 * 1024, // 10MB
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file: Express.Multer.File,
+    @Body('folder') folder: string = 'uploads',
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    if (!folder) {
+      folder = 'uploads';
+    }
+
+    const imageUrl = await this.uploadService.uploadImage(file, folder);
+
+    return {
+      url: imageUrl,
+      message: 'Image uploaded successfully',
+    };
+  }
 
   @Post('menu-item-image')
   @ApiOperation({ summary: 'Upload menu item image' })

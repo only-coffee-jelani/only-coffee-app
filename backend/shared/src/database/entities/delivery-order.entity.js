@@ -51,7 +51,7 @@ __decorate([
 ], DeliveryOrder.prototype, "status", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "externalDeliveryId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 500 }),
@@ -79,11 +79,11 @@ __decorate([
 ], DeliveryOrder.prototype, "deliveryLongitude", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "recipientName", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "recipientPhone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
@@ -91,31 +91,31 @@ __decorate([
 ], DeliveryOrder.prototype, "deliveryFee", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Number)
 ], DeliveryOrder.prototype, "quotedFee", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Number)
 ], DeliveryOrder.prototype, "estimatedDurationMinutes", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], DeliveryOrder.prototype, "estimatedDeliveryTime", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "courierName", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "courierPhone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 500, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "trackingUrl", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], DeliveryOrder.prototype, "deliveryInstructions", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
@@ -123,15 +123,15 @@ __decorate([
 ], DeliveryOrder.prototype, "metadata", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], DeliveryOrder.prototype, "pickedUpAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], DeliveryOrder.prototype, "deliveredAt", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], DeliveryOrder.prototype, "cancelledAt", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),

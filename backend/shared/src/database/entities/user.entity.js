@@ -35,12 +35,11 @@ __decorate([
 ], User.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
-    (0, typeorm_1.Index)(),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], User.prototype, "phone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
@@ -52,11 +51,11 @@ __decorate([
 ], User.prototype, "lastName", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], User.prototype, "passwordHash", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'date', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], User.prototype, "birthDate", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER }),
@@ -88,15 +87,15 @@ __decorate([
 ], User.prototype, "phoneVerified", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], User.prototype, "auth0Id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], User.prototype, "stripeCustomerId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], User.prototype, "lastLoginAt", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),

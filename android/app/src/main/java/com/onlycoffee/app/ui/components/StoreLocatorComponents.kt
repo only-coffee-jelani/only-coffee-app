@@ -269,12 +269,12 @@ fun StoreLocatorMap(
             modifier = Modifier.fillMaxWidth(),
             cameraPositionState = cameraPositionState,
             properties = MapProperties(
-                isMyLocationEnabled = true, // Always enable to show user location
+                isMyLocationEnabled = false, // Disable to avoid permission crash
                 mapType = MapType.NORMAL
             ),
             uiSettings = MapUiSettings(
                 zoomControlsEnabled = true,
-                myLocationButtonEnabled = true, // Always show my location button
+                myLocationButtonEnabled = false, // Disable to avoid permission crash
                 mapToolbarEnabled = false,
                 compassEnabled = true,
                 rotationGesturesEnabled = true,
