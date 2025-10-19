@@ -12,6 +12,7 @@ import {
 import { User } from './user.entity';
 import { Store } from './store.entity';
 import { OrderItem } from './order-item.entity';
+import { CouponGrant } from './coupon-grant.entity';
 
 export enum OrderStatus {
   INITIATED = 'initiated',
@@ -80,6 +81,12 @@ export class Order {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   deliveryFee: number;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  discountAmount: number;
+
+  @Column({ type: 'uuid', nullable: true })
+  appliedCouponId: string | null;
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
@@ -127,4 +134,8 @@ export class Order {
 
   @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
   items: OrderItem[];
+
+  @ManyToOne(() => CouponGrant, { nullable: true })
+  @JoinColumn({ name: 'appliedCouponId' })
+  appliedCoupon: CouponGrant | null;
 }

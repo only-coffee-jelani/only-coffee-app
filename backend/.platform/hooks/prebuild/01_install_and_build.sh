@@ -4,16 +4,16 @@ set -e
 cd /var/app/staging
 
 echo "Installing production dependencies..."
-# Install dependencies at root AND in workspaces (production only)
-npm install --omit=dev
-npm install --omit=dev --workspaces
+# Install only production dependencies (no building needed, using pre-built artifacts)
+npm install --omit=dev --legacy-peer-deps
+npm install --omit=dev --workspaces --legacy-peer-deps
 
 echo "Verifying pre-built artifacts..."
 
 if [ ! -f "services/gateway/dist/services/gateway/src/main.js" ]; then
   echo "ERROR: Gateway main.js not found!"
   echo "Available files:"
-  find services/gateway/dist -type f | head -20
+  find services/gateway/dist -type f 2>/dev/null | head -20
   exit 1
 fi
 

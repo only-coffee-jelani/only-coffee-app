@@ -26,6 +26,7 @@ import com.onlycoffee.app.ui.screens.orders.OrdersScreen
 import com.onlycoffee.app.ui.screens.product.ProductDetailScreen
 import com.onlycoffee.app.ui.screens.profile.ProfileScreen
 import com.onlycoffee.app.ui.screens.rewards.RewardsScreen
+import com.onlycoffee.app.ui.screens.coupons.MyCouponsScreen
 import com.onlycoffee.app.ui.theme.BrandPrimary
 import com.onlycoffee.app.ui.theme.OnlyCoffeeTextStyles
 import com.onlycoffee.app.ui.theme.TextSecondary
@@ -66,6 +67,9 @@ fun OnlyCoffeeNavigation(
             }
             composable("select_location") {
                 com.onlycoffee.app.ui.screens.locations.SelectLocationScreen(navController = navController)
+            }
+            composable("coupons") {
+                MyCouponsScreen()
             }
             composable("product_detail/{menuItemId}") { backStackEntry ->
                 val menuItemId = backStackEntry.arguments?.getString("menuItemId")

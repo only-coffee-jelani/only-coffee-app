@@ -8,3 +8,15 @@ export * from './gift-card.entity';
 export * from './delivery-order.entity';
 export * from './review.entity';
 export * from './promotion.entity';
+export * from './promo-code.entity';
+export * from './coupon-grant.entity';
+export * from './program-event.entity';
+
+// Loyalty System Entities
+export * from './user-streak.entity';
+export * from './streak-visit.entity';
+export * from './streak-saver-token.entity';
+export * from './streak-reward.entity';
+export * from './anniversary-reward.entity';
+export * from './user-tier-history.entity';
+export * from './tier-perk.entity';

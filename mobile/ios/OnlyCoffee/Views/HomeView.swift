@@ -55,6 +55,43 @@ struct HomeView: View {
                         stopCarouselTimer()
                     }
 
+                    // Coupon Promo Banner (if authenticated)
+                    if authManager.isAuthenticated {
+                        NavigationLink(destination: MyCouponsView()) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "ticket.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.orange)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("My Coupons")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(.primary)
+                                    Text("Check your active coupons & discounts")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding()
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.orange.opacity(0.1), Color.orange.opacity(0.05)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.horizontal)
+                    }
+
                 // Quick Action Cards (matching Android 2x 50% layout)
                 HStack(spacing: 12) {
                     // Order Now Card with image

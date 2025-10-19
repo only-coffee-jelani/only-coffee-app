@@ -14,8 +14,8 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     database: process.env.DB_DATABASE || 'only_coffee',
     entities: [path.join(__dirname, '../database/entities/**/*.entity{.ts,.js}')],
     migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
-    synchronize: !isProduction && process.env.DB_SYNCHRONIZE === 'true',
-    logging: !isProduction && process.env.DB_LOGGING === 'true',
+    synchronize: process.env.DB_SYNCHRONIZE === 'true',
+    logging: process.env.DB_LOGGING === 'true',
     ssl: isProduction ? { rejectUnauthorized: false } : false,
     extra: {
       max: parseInt(process.env.DB_POOL_MAX || '20', 10),
