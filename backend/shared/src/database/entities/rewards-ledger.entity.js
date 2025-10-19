@@ -33,7 +33,7 @@ __decorate([
 ], RewardsLedger.prototype, "userId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], RewardsLedger.prototype, "orderId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'enum', enum: RewardTransactionType }),
@@ -49,11 +49,11 @@ __decorate([
 ], RewardsLedger.prototype, "balanceAfter", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Number)
 ], RewardsLedger.prototype, "orderAmount", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 500, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], RewardsLedger.prototype, "description", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
@@ -61,7 +61,7 @@ __decorate([
 ], RewardsLedger.prototype, "metadata", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], RewardsLedger.prototype, "expiresAt", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),

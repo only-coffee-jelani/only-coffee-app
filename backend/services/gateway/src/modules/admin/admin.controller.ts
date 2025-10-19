@@ -1,4 +1,4 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { Public } from '../auth/decorators/public.decorator';
@@ -7,6 +7,14 @@ import { Public } from '../auth/decorators/public.decorator';
 @Controller('admin')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
+
+  @Post('login')
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Admin login' })
+  async login(@Body() body: { email: string; password: string }) {
+    return this.adminService.login(body.email, body.password);
+  }
 
   @Post('run-migrations')
   @Public()

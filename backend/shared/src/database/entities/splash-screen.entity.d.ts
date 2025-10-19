@@ -1,0 +1,33 @@
+export declare class SplashScreen {
+    id: string;
+    title: string;
+    description: string | null;
+    imageUrl: string;
+    imageSizeBytes: number | null;
+    displayDuration: number;
+    startDate: Date | null;
+    endDate: Date | null;
+    isActive: boolean;
+    impressions: number;
+    clicks: number;
+    skips: number;
+    ctr: number;
+    skipRate: number;
+    associatedOrders: number;
+    associatedRevenue: number;
+    conversionRate: number;
+    averageOrderValue: number;
+    uniqueUsersShown: number;
+    uniqueUsersClicked: number;
+    averageViewTime: number;
+    lastImpressionAt: Date | null;
+    lastClickAt: Date | null;
+    targetMenuItemId: string | null;
+    targetUrl: string | null;
+    notes: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    replacedAt: Date | null;
+    replacedById: string | null;
+    createdById: string | null;
+}

@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
@@ -37,33 +38,23 @@ fun CachedAsyncImage(
 ) {
     val context = LocalContext.current
 
-    val painter = rememberAsyncImagePainter(
+    AsyncImage(
         model = ImageRequest.Builder(context)
             .data(url)
             .crossfade(true)
-            // Enable disk caching
-            .diskCacheKey(url)
-            // Enable memory caching
-            .memoryCacheKey(url)
             .build(),
-        onLoading = onLoading,
-        onSuccess = onSuccess,
-        onError = onError
-    )
-
-    Image(
-        painter = when (painter.state) {
-            is AsyncImagePainter.State.Loading -> placeholder ?: painter
-            is AsyncImagePainter.State.Error -> error ?: painter
-            is AsyncImagePainter.State.Empty -> fallback ?: painter
-            is AsyncImagePainter.State.Success -> painter
-        },
         contentDescription = contentDescription,
         modifier = modifier,
         alignment = alignment,
         contentScale = contentScale,
         alpha = alpha,
-        colorFilter = colorFilter
+        colorFilter = colorFilter,
+        placeholder = placeholder,
+        error = error,
+        fallback = fallback,
+        onLoading = onLoading,
+        onSuccess = onSuccess,
+        onError = onError
     )
 }
 
@@ -80,37 +71,13 @@ fun CachedAsyncImage(
     error: @Composable (() -> Unit)? = null,
     content: @Composable ((AsyncImagePainter.State) -> Unit)? = null
 ) {
-    val context = LocalContext.current
-
-    val painter = rememberAsyncImagePainter(
-        model = ImageRequest.Builder(context)
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
             .data(url)
             .crossfade(true)
-            // Enable disk caching
-            .diskCacheKey(url)
-            // Enable memory caching
-            .memoryCacheKey(url)
-            .build()
+            .build(),
+        contentDescription = contentDescription,
+        modifier = modifier,
+        contentScale = contentScale
     )
-
-    if (content != null) {
-        content(painter.state)
-    } else {
-        when (painter.state) {
-            is AsyncImagePainter.State.Loading -> {
-                placeholder?.invoke()
-            }
-            is AsyncImagePainter.State.Error -> {
-                error?.invoke()
-            }
-            is AsyncImagePainter.State.Success, is AsyncImagePainter.State.Empty -> {
-                Image(
-                    painter = painter,
-                    contentDescription = contentDescription,
-                    modifier = modifier,
-                    contentScale = contentScale
-                )
-            }
-        }
-    }
 }

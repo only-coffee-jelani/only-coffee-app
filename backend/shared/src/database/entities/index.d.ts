@@ -7,3 +7,5 @@ export * from './rewards-ledger.entity';
 export * from './gift-card.entity';
 export * from './delivery-order.entity';
 export * from './review.entity';
+export * from './promotion.entity';
+export * from './splash-screen.entity';

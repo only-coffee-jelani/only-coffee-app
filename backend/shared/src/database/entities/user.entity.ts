@@ -31,7 +31,6 @@ export class User {
   id: string;
 
   @Column({ type: 'varchar', length: 255 })
-  @Index()
   email: string;
 
   @Column({ type: 'varchar', length: 20, nullable: true })

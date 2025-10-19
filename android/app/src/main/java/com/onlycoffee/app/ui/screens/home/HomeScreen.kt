@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,25 +85,23 @@ fun HomeScreen(
         }
 
         item {
-            // Two Quick Action Cards (50% width each)
+            // Two Quick Action Cards (50% width each) with S3 images
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = Spacing.screenPadding),
                 horizontalArrangement = Arrangement.spacedBy(Spacing.md)
             ) {
-                QuickActionCard(
+                QuickActionCardWithImage(
                     title = "Order Now",
-                    icon = R.drawable.ic_location,
-                    backgroundColor = BrandPrimary.copy(alpha = 0.1f),
+                    imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/order-now-card.webp",
                     modifier = Modifier.weight(1f),
                     onClick = { navController.navigate("menu") }
                 )
 
-                QuickActionCard(
+                QuickActionCardWithImage(
                     title = "Refer Friends",
-                    icon = R.drawable.ic_profile,
-                    backgroundColor = BrandAccent.copy(alpha = 0.1f),
+                    imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/refer-friends-card.webp",
                     modifier = Modifier.weight(1f),
                     onClick = { /* Handle refer friends */ }
                 )
@@ -252,13 +251,21 @@ fun SignInCard(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PromoCarousel() {
-    val pagerState = rememberPagerState(pageCount = { 5 })
+    val promotionalImages = listOf(
+        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch.webp",
+        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v2.webp",
+        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v3.webp",
+        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/share-drink-promo.webp",
+        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/welcome-card.webp"
+    )
+
+    val pagerState = rememberPagerState(pageCount = { promotionalImages.size })
 
     // Auto-scroll
     LaunchedEffect(Unit) {
         while (true) {
             delay(3000)
-            val nextPage = (pagerState.currentPage + 1) % 5
+            val nextPage = (pagerState.currentPage + 1) % promotionalImages.size
             pagerState.animateScrollToPage(nextPage)
         }
     }
@@ -274,41 +281,20 @@ fun PromoCarousel() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
-                    .background(
-                        brush = Brush.linearGradient(
-                            colors = listOf(
-                                BrandPrimary.copy(alpha = 0.7f),
-                                BrandAccent.copy(alpha = 0.5f)
-                            )
-                        )
-                    ),
+                    .background(BrandPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_coffee),
-                        contentDescription = null,
-                        tint = TextOnPrimary,
-                        modifier = Modifier.size(60.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(Spacing.md))
-
-                    Text(
-                        text = "Special Offer ${page + 1}",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = TextOnPrimary,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = "Limited time only",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = TextOnPrimary.copy(alpha = 0.9f)
-                    )
-                }
+                coil.compose.AsyncImage(
+                    model = promotionalImages[page],
+                    contentDescription = "Promotion ${page + 1}",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(CornerRadius.card)),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.ic_coffee),
+                    error = painterResource(R.drawable.ic_coffee)
+                )
             }
         }
 
@@ -319,7 +305,7 @@ fun PromoCarousel() {
                 .padding(Spacing.sm),
             horizontalArrangement = Arrangement.Center
         ) {
-            repeat(5) { index ->
+            repeat(promotionalImages.size) { index ->
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
@@ -370,6 +356,37 @@ fun QuickActionCard(
                 color = TextPrimary,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun QuickActionCardWithImage(
+    title: String,
+    imageUrl: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.height(100.dp),
+        shape = RoundedCornerShape(CornerRadius.card),
+        colors = CardDefaults.cardColors(containerColor = CardBackground)
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            coil.compose.AsyncImage(
+                model = imageUrl,
+                contentDescription = title,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(CornerRadius.card)),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(R.drawable.ic_coffee),
+                error = painterResource(R.drawable.ic_coffee)
             )
         }
     }

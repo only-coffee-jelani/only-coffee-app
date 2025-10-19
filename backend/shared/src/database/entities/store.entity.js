@@ -36,7 +36,7 @@ __decorate([
 ], Store.prototype, "type", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Store.prototype, "toastLocationId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 500 }),
@@ -64,11 +64,11 @@ __decorate([
 ], Store.prototype, "longitude", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 20, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Store.prototype, "phone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Store.prototype, "email", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', default: {} }),

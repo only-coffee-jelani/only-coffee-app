@@ -4,6 +4,7 @@ import * as path from 'path';
 
 export const getDatabaseConfig = (): TypeOrmModuleOptions => {
   const isProduction = process.env.NODE_ENV === 'production';
+  const useSSL = process.env.DB_SSL === 'true' || isProduction;
 
   return {
     type: 'postgres',
@@ -16,7 +17,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
     synchronize: !isProduction && process.env.DB_SYNCHRONIZE === 'true',
     logging: !isProduction && process.env.DB_LOGGING === 'true',
-    ssl: isProduction ? { rejectUnauthorized: false } : false,
+    ssl: useSSL ? { rejectUnauthorized: false } : false,
     extra: {
       max: parseInt(process.env.DB_POOL_MAX || '20', 10),
       min: parseInt(process.env.DB_POOL_MIN || '2', 10),

@@ -30,7 +30,7 @@ __decorate([
 ], Review.prototype, "storeId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Review.prototype, "orderId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int' }),
@@ -38,7 +38,7 @@ __decorate([
 ], Review.prototype, "rating", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Review.prototype, "comment", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'jsonb', default: [] }),
@@ -58,11 +58,11 @@ __decorate([
 ], Review.prototype, "helpfulCount", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", String)
 ], Review.prototype, "responseText", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Object)
+    __metadata("design:type", Date)
 ], Review.prototype, "responseAt", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
