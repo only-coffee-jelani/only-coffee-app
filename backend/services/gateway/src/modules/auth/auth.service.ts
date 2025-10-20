@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -270,13 +271,31 @@ export class AuthService {
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
 
-    await this.userRepository.save(user);
+    // Log profile update details for debugging
+    this.logger.log(
+      `Saving profile for user ${userId}: ${JSON.stringify({ email, firstName, lastName })}`,
+    );
 
-    this.logger.log(`Profile completed for user: ${userId}`);
+    try {
+      await this.userRepository.save(user);
+      this.logger.log(`Profile completed for user: ${userId}`);
+    } catch (error) {
+      this.logger.error(`Database save failed for user ${userId}:`, error);
+      throw new InternalServerErrorException('Failed to update profile');
+    }
 
     // Send welcome SMS if they opted in for marketing
+    // Don't let SMS failure break profile completion
     if (user.marketingOptIn && user.phone) {
-      await this.smsService.sendWelcomeSms(user.phone, user.firstName);
+      try {
+        await this.smsService.sendWelcomeSms(user.phone, user.firstName);
+      } catch (error) {
+        this.logger.error(
+          `Welcome SMS failed for ${user.phone}, but profile completed:`,
+          error,
+        );
+        // Continue - SMS failure is not critical
+      }
     }
 
     return {
