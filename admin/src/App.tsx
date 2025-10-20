@@ -8,9 +8,7 @@ import SplashScreenAnalytics from './pages/SplashScreenAnalytics';
 import CarouselManager from './pages/CarouselManager';
 import CarouselAnalytics from './pages/CarouselAnalytics';
 import MenuItemsManager from './pages/MenuItemsManager';
-import ImagesManager from './pages/ImagesManager';
 import StoresManager from './pages/StoresManager';
-import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import { useAuthStore } from './store/authStore';
@@ -34,9 +32,7 @@ function App() {
             <Route path="/carousel" element={<CarouselManager />} />
             <Route path="/carousel-analytics" element={<CarouselAnalytics />} />
             <Route path="/menu-items" element={<MenuItemsManager />} />
-            <Route path="/images" element={<ImagesManager />} />
             <Route path="/stores" element={<StoresManager />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

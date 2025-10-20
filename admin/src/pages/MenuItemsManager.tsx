@@ -1,127 +1,431 @@
-import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX } from 'react-icons/fi';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiLoader, FiImage, FiSearch, FiFilter, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ImageUploader from '../components/ImageUploader';
+import { useAuthStore } from '../store/authStore';
+
+const API_BASE = 'http://localhost:3000/api/v1';
 
 const MenuItemsManager = () => {
-  const [menuItems, setMenuItems] = useState([
-    { id: 1, name: 'Espresso', category: 'Coffee', price: 3.50, imageUrl: '', stores: [1, 2, 3] },
-    { id: 2, name: 'Cappuccino', category: 'Coffee', price: 4.50, imageUrl: '', stores: [1, 2] },
-  ]);
-
-  const [stores, setStores] = useState([
-    { id: 1, name: 'Downtown' },
-    { id: 2, name: 'Uptown' },
-    { id: 3, name: 'Airport' },
-  ]);
-
+  const { user } = useAuthStore();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const allergensDropdownRef = useRef<HTMLDivElement>(null);
+  const [menuItems, setMenuItems] = useState<any[]>([]);
+  const [stores, setStores] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: string | null; name: string }>({ show: false, id: null, name: '' });
+
+  // Search, Filter, Sort states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 100 });
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'category' | 'newest'>('newest');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [showStoresDropdown, setShowStoresDropdown] = useState(false);
+
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Coffee',
+    category: 'hot_coffee',
     description: '',
-    price: '',
+    basePrice: '',
     imageUrl: '',
-    stores: [] as number[],
+    selectedStores: [] as string[],
+    allergens: [] as string[],
   });
 
+  const allergensList = [
+    'Cereals containing gluten',
+    'Eggs',
+    'Soybeans',
+    'Milk',
+    'Peanuts and nuts',
+  ];
+
+  const [showAllergensDropdown, setShowAllergensDropdown] = useState(false);
+
+  // Fetch menu items and stores from backend
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // Handle click outside dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowStoresDropdown(false);
+      }
+      if (allergensDropdownRef.current && !allergensDropdownRef.current.contains(event.target as Node)) {
+        setShowAllergensDropdown(false);
+      }
+    };
+
+    if (showStoresDropdown || showAllergensDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showStoresDropdown, showAllergensDropdown]);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [menuResponse, storesResponse] = await Promise.all([
+        fetch(`${API_BASE}/menu-items`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch(`${API_BASE}/stores`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
+      ]);
+
+      if (!menuResponse.ok) throw new Error('Failed to fetch menu items');
+      if (!storesResponse.ok) throw new Error('Failed to fetch stores');
+
+      const menuData = await menuResponse.json();
+      const storesData = await storesResponse.json();
+
+      setMenuItems(menuData || []);
+      setStores(storesData || []);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast.error('Failed to load menu items');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddNew = () => {
-    setFormData({ name: '', category: 'Coffee', description: '', price: '', imageUrl: '', stores: [] });
+    setFormData({ name: '', category: 'hot_coffee', description: '', basePrice: '', imageUrl: '', selectedStores: [], allergens: [] });
     setEditingId(null);
     setShowForm(true);
   };
 
   const handleEdit = (item: any) => {
+    // Use the storeIds array directly from the item
+    const storesWithItem = item.storeIds || [];
+    const itemAllergens = item.allergens || [];
+
     setFormData({
       name: item.name,
       category: item.category,
       description: item.description || '',
-      price: item.price.toString(),
+      basePrice: item.basePrice.toString(),
       imageUrl: item.imageUrl || '',
-      stores: item.stores || [],
+      selectedStores: storesWithItem,
+      allergens: itemAllergens,
     });
     setEditingId(item.id);
     setShowForm(true);
   };
 
-  const handleSave = () => {
-    if (!formData.name || !formData.price) {
+  const handleSave = async () => {
+    if (!formData.name || !formData.basePrice) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    if (editingId) {
-      setMenuItems(menuItems.map(item =>
-        item.id === editingId
-          ? { ...item, ...formData, price: parseFloat(formData.price) }
-          : item
-      ));
-      toast.success('Menu item updated!');
-    } else {
-      setMenuItems([...menuItems, {
-        id: Math.max(...menuItems.map(i => i.id), 0) + 1,
-        ...formData,
-        price: parseFloat(formData.price),
-      }]);
-      toast.success('Menu item created!');
+    if (formData.selectedStores.length === 0) {
+      toast.error('Please select at least one store');
+      return;
     }
-    setShowForm(false);
+
+    try {
+      setSaving(true);
+      const token = localStorage.getItem('adminToken');
+
+      if (!token) {
+        toast.error('You are not logged in. Please log in first.');
+        return;
+      }
+
+      const payload = {
+        name: formData.name,
+        category: formData.category,
+        description: formData.description,
+        basePrice: parseFloat(formData.basePrice),
+        imageUrl: formData.imageUrl,
+        storeIds: formData.selectedStores,
+        allergens: formData.allergens,
+      };
+
+      if (editingId) {
+        // Update existing menu item with new storeIds
+        const response = await fetch(`${API_BASE}/menu-items/${editingId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to update menu item: ${response.status}`);
+        }
+
+        const updatedItem = await response.json();
+        setMenuItems(menuItems.map(item => item.id === editingId ? updatedItem : item));
+        toast.success('Menu item updated successfully!');
+      } else {
+        // Create new menu item with selected stores
+        const response = await fetch(`${API_BASE}/menu-items`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to create menu item: ${response.status}`);
+        }
+
+        const newItem = await response.json();
+        setMenuItems([newItem, ...menuItems]);
+        toast.success('Menu item created successfully!');
+      }
+      setShowForm(false);
+    } catch (error) {
+      console.error('Error saving menu item:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to save menu item');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    setMenuItems(menuItems.filter(item => item.id !== id));
-    toast.success('Menu item deleted');
+  const handleDelete = (id: string, name: string) => {
+    setDeleteModal({ show: true, id, name });
   };
 
-  const handleStoreToggle = (storeId: number) => {
-    setFormData(prev => ({
-      ...prev,
-      stores: prev.stores.includes(storeId)
-        ? prev.stores.filter(s => s !== storeId)
-        : [...prev.stores, storeId],
-    }));
+  const confirmDelete = async () => {
+    if (!deleteModal.id) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE}/menu-items/${deleteModal.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to delete menu item');
+
+      setMenuItems(menuItems.filter(item => item.id !== deleteModal.id));
+      setDeleteModal({ show: false, id: null, name: '' });
+      toast.success('Menu item deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      toast.error('Failed to delete menu item');
+    }
   };
+
+  const getCategoryLabel = (category: string) => {
+    const labels: Record<string, string> = {
+      'hot_coffee': 'Hot Coffee',
+      'iced_coffee': 'Iced Coffee',
+      'cold_brew': 'Cold Brew',
+      'signature': 'Signature',
+      'seasonal_specials': 'Seasonal Specials',
+      'chocolate': 'Chocolate',
+      'ice_cream': 'Ice Cream',
+      'add_ons': 'Add Ons',
+    };
+    return labels[category] || category;
+  };
+
+  // Filter and sort logic
+  const filteredAndSortedItems = useMemo(() => {
+    let filtered = menuItems.filter(item => {
+      // Search filter
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+      // Category filter
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+
+      // Price range filter
+      const price = Number(item.basePrice);
+      const matchesPrice = price >= priceRange.min && price <= priceRange.max;
+
+      return matchesSearch && matchesCategory && matchesPrice;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      let compareValue = 0;
+
+      switch (sortBy) {
+        case 'name':
+          compareValue = a.name.localeCompare(b.name);
+          break;
+        case 'price':
+          compareValue = Number(a.basePrice) - Number(b.basePrice);
+          break;
+        case 'category':
+          compareValue = a.category.localeCompare(b.category);
+          break;
+        case 'newest':
+          compareValue = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          break;
+      }
+
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return filtered;
+  }, [menuItems, searchTerm, selectedCategory, priceRange, sortBy, sortOrder]);
+
+  // Group items by category
+  const itemsByCategory = useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+
+    filteredAndSortedItems.forEach(item => {
+      if (!grouped[item.category]) {
+        grouped[item.category] = [];
+      }
+      grouped[item.category].push(item);
+    });
+
+    return grouped;
+  }, [filteredAndSortedItems]);
+
+  // Get all categories in order
+  const allCategories = [
+    'hot_coffee',
+    'iced_coffee',
+    'cold_brew',
+    'signature',
+    'seasonal_specials',
+    'chocolate',
+    'ice_cream',
+    'add_ons',
+  ];
+
+  // Group stores by type
+  const storesByType = useMemo(() => {
+    return {
+      coffee_shop: stores.filter(s => s.type === 'coffee_shop'),
+      mobile_coffee_bar: stores.filter(s => s.type === 'mobile_coffee_bar'),
+    };
+  }, [stores]);
+
+  // Handle check all stores
+  const handleCheckAllStores = (type: 'all' | 'coffee_shop' | 'mobile_coffee_bar') => {
+    if (type === 'all') {
+      setFormData({
+        ...formData,
+        selectedStores: stores.map(s => s.id),
+      });
+    } else if (type === 'coffee_shop') {
+      const coffeeShopIds = storesByType.coffee_shop.map(s => s.id);
+      const mobileIds = formData.selectedStores.filter(id =>
+        storesByType.mobile_coffee_bar.some(s => s.id === id)
+      );
+      setFormData({
+        ...formData,
+        selectedStores: [...coffeeShopIds, ...mobileIds],
+      });
+    } else if (type === 'mobile_coffee_bar') {
+      const mobileIds = storesByType.mobile_coffee_bar.map(s => s.id);
+      const coffeeShopIds = formData.selectedStores.filter(id =>
+        storesByType.coffee_shop.some(s => s.id === id)
+      );
+      setFormData({
+        ...formData,
+        selectedStores: [...coffeeShopIds, ...mobileIds],
+      });
+    }
+  };
+
+  // Handle uncheck all stores
+  const handleUncheckAllStores = (type: 'all' | 'coffee_shop' | 'mobile_coffee_bar') => {
+    if (type === 'all') {
+      setFormData({
+        ...formData,
+        selectedStores: [],
+      });
+    } else if (type === 'coffee_shop') {
+      setFormData({
+        ...formData,
+        selectedStores: formData.selectedStores.filter(id =>
+          storesByType.mobile_coffee_bar.some(s => s.id === id)
+        ),
+      });
+    } else if (type === 'mobile_coffee_bar') {
+      setFormData({
+        ...formData,
+        selectedStores: formData.selectedStores.filter(id =>
+          storesByType.coffee_shop.some(s => s.id === id)
+        ),
+      });
+    }
+  };
+
+  // Check if all stores of a type are selected
+  const areAllStoresSelected = (type: 'coffee_shop' | 'mobile_coffee_bar') => {
+    const storesOfType = storesByType[type];
+    return storesOfType.length > 0 && storesOfType.every(s => formData.selectedStores.includes(s.id));
+  };
+
+  const areAllStoresSelectedGlobally = stores.length > 0 && stores.every(s => formData.selectedStores.includes(s.id));
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Menu Items</h1>
-          <p className="text-gray-600 mt-2">Manage products, pricing, and store availability</p>
+    <div className="min-h-screen bg-gray-50 pb-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">Menu Items</h1>
+            <p className="text-gray-600 mt-2 text-lg">Manage products, pricing, and availability across all stores</p>
+          </div>
+          <button
+            onClick={handleAddNew}
+            className="px-6 py-3 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2 hover:opacity-90"
+            style={{ backgroundColor: '#ff93a3' }}
+          >
+            <FiPlus size={18} />
+            Add Menu Item
+          </button>
         </div>
-        <button
-          onClick={handleAddNew}
-          className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white transition-colors"
-          style={{ backgroundColor: '#ff93a3' }}
-        >
-          <FiPlus size={20} />
-          Add Menu Item
-        </button>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-8">
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+            <div className="sticky top-0 z-10 bg-gradient-to-r from-pink-50 to-orange-50 border-b-2 border-pink-100 p-8 flex items-center justify-between">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
                 {editingId ? 'Edit Menu Item' : 'Add Menu Item'}
               </h2>
-              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700">
+              <button onClick={() => setShowForm(false)} className="text-gray-500 hover:text-gray-700 p-2 hover:bg-white rounded-full transition-colors">
                 <FiX size={24} />
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-6">
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Item Name *</label>
+                <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Item Name *</label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                   placeholder="e.g., Cappuccino"
                 />
               </div>
@@ -129,26 +433,30 @@ const MenuItemsManager = () => {
               {/* Category & Price */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Category *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                   >
-                    <option>Coffee</option>
-                    <option>Tea</option>
-                    <option>Pastry</option>
-                    <option>Sandwich</option>
+                    <option value="hot_coffee">Hot Coffee</option>
+                    <option value="iced_coffee">Iced Coffee</option>
+                    <option value="cold_brew">Cold Brew</option>
+                    <option value="signature">Signature</option>
+                    <option value="seasonal_specials">Seasonal Specials</option>
+                    <option value="chocolate">Chocolate</option>
+                    <option value="ice_cream">Ice Cream</option>
+                    <option value="add_ons">Add Ons</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Price *</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Price ($) *</label>
                   <input
                     type="number"
                     step="0.01"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    value={formData.basePrice}
+                    onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                     placeholder="0.00"
                   />
                 </div>
@@ -156,59 +464,301 @@ const MenuItemsManager = () => {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                   placeholder="Item description..."
                 />
               </div>
 
               {/* Image */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Product Image</label>
                 <ImageUploader
                   onUpload={(url) => setFormData({ ...formData, imageUrl: url })}
                   folder="menu-items"
+                  imageUrl={formData.imageUrl}
                 />
               </div>
 
-              {/* Store Selection */}
+              {/* Allergens */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">Available at Stores</label>
-                <div className="space-y-2">
-                  {stores.map(store => (
-                    <label key={store.id} className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.stores.includes(store.id)}
-                        onChange={() => handleStoreToggle(store.id)}
-                        className="w-4 h-4 rounded"
-                        style={{ accentColor: '#ff93a3' }}
-                      />
-                      <span className="font-medium text-gray-700">{store.name}</span>
-                    </label>
-                  ))}
+                <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Allergens</label>
+
+                {/* Dropdown Checkbox */}
+                <div className="relative" ref={allergensDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowAllergensDropdown(!showAllergensDropdown)}
+                    className="w-full px-4 py-3 border-2 border-orange-300 rounded-xl bg-white text-left font-semibold text-gray-900 hover:bg-orange-50 transition-colors flex items-center justify-between"
+                  >
+                    <span>
+                      {formData.allergens.length === 0
+                        ? 'Select allergens...'
+                        : formData.allergens.length === allergensList.length
+                        ? 'All allergens selected'
+                        : `${formData.allergens.length} allergen${formData.allergens.length !== 1 ? 's' : ''} selected`}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 transition-transform ${showAllergensDropdown ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showAllergensDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-orange-300 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+                      {/* Check All Option */}
+                      <div className="p-4 border-b-2 border-orange-100 bg-gradient-to-r from-orange-50 to-yellow-50 sticky top-0">
+                        <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={formData.allergens.length === allergensList.length}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  allergens: [...allergensList],
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  allergens: [],
+                                });
+                              }
+                            }}
+                            className="w-5 h-5 rounded border-2 border-orange-300 cursor-pointer accent-orange-500"
+                          />
+                          <span className="font-bold text-gray-900">Check All</span>
+                        </label>
+                      </div>
+
+                      {/* Allergens List */}
+                      <div className="p-4 space-y-2">
+                        {allergensList.map(allergen => (
+                          <label key={allergen} className="flex items-center gap-3 cursor-pointer hover:bg-orange-50 p-2 rounded-lg transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={formData.allergens.includes(allergen)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setFormData({
+                                    ...formData,
+                                    allergens: [...formData.allergens, allergen],
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    allergens: formData.allergens.filter(a => a !== allergen),
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 rounded border-2 border-orange-300 cursor-pointer accent-orange-500"
+                            />
+                            <span className="text-sm text-gray-900">{allergen}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Available Stores */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Available At Stores</label>
+
+                {/* Dropdown Checkbox */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowStoresDropdown(!showStoresDropdown)}
+                    className="w-full px-4 py-3 border-2 border-pink-300 rounded-xl bg-white text-left font-semibold text-gray-900 hover:bg-pink-50 transition-colors flex items-center justify-between"
+                  >
+                    <span>
+                      {formData.selectedStores.length === 0
+                        ? 'Select stores...'
+                        : formData.selectedStores.length === stores.length
+                        ? 'All stores selected'
+                        : `${formData.selectedStores.length} store${formData.selectedStores.length !== 1 ? 's' : ''} selected`}
+                    </span>
+                    <svg
+                      className={`w-5 h-5 transition-transform ${showStoresDropdown ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    </svg>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {showStoresDropdown && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-pink-300 rounded-xl shadow-lg z-50 max-h-96 overflow-y-auto">
+                      {/* Check All Options */}
+                      <div className="p-4 border-b-2 border-pink-100 bg-gradient-to-r from-pink-50 to-orange-50 sticky top-0">
+                        <div className="space-y-3">
+                          {/* Check All */}
+                          <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={areAllStoresSelectedGlobally}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  handleCheckAllStores('all');
+                                } else {
+                                  handleUncheckAllStores('all');
+                                }
+                              }}
+                              className="w-5 h-5 rounded border-2 border-pink-300 cursor-pointer accent-pink-500"
+                            />
+                            <span className="font-bold text-gray-900">Check All</span>
+                          </label>
+
+                          {/* Check All Coffee Shops */}
+                          {storesByType.coffee_shop.length > 0 && (
+                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={areAllStoresSelected('coffee_shop')}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    handleCheckAllStores('coffee_shop');
+                                  } else {
+                                    handleUncheckAllStores('coffee_shop');
+                                  }
+                                }}
+                                className="w-5 h-5 rounded border-2 border-pink-300 cursor-pointer accent-pink-500"
+                              />
+                              <span className="font-bold text-gray-900">All Stores ({storesByType.coffee_shop.length})</span>
+                            </label>
+                          )}
+
+                          {/* Check All Mobile Coffee Bars */}
+                          {storesByType.mobile_coffee_bar.length > 0 && (
+                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
+                              <input
+                                type="checkbox"
+                                checked={areAllStoresSelected('mobile_coffee_bar')}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    handleCheckAllStores('mobile_coffee_bar');
+                                  } else {
+                                    handleUncheckAllStores('mobile_coffee_bar');
+                                  }
+                                }}
+                                className="w-5 h-5 rounded border-2 border-pink-300 cursor-pointer accent-pink-500"
+                              />
+                              <span className="font-bold text-gray-900">All Mobile Coffee Bars ({storesByType.mobile_coffee_bar.length})</span>
+                            </label>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Stores List */}
+                      <div className="p-4 space-y-4">
+                        {/* Coffee Shops */}
+                        {storesByType.coffee_shop.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Stores</h4>
+                            <div className="space-y-2 pl-4 border-l-4 border-pink-300">
+                              {storesByType.coffee_shop.map(store => (
+                                <label key={store.id} className="flex items-center gap-3 cursor-pointer hover:bg-pink-50 p-2 rounded-lg transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.selectedStores.includes(store.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          selectedStores: [...formData.selectedStores, store.id],
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          selectedStores: formData.selectedStores.filter(id => id !== store.id),
+                                        });
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded border-2 border-pink-300 cursor-pointer accent-pink-500"
+                                  />
+                                  <span className="text-sm text-gray-900">{store.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Mobile Coffee Bars */}
+                        {storesByType.mobile_coffee_bar.length > 0 && (
+                          <div>
+                            <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Mobile Coffee Bars</h4>
+                            <div className="space-y-2 pl-4 border-l-4 border-orange-300">
+                              {storesByType.mobile_coffee_bar.map(store => (
+                                <label key={store.id} className="flex items-center gap-3 cursor-pointer hover:bg-orange-50 p-2 rounded-lg transition-colors">
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.selectedStores.includes(store.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setFormData({
+                                          ...formData,
+                                          selectedStores: [...formData.selectedStores, store.id],
+                                        });
+                                      } else {
+                                        setFormData({
+                                          ...formData,
+                                          selectedStores: formData.selectedStores.filter(id => id !== store.id),
+                                        });
+                                      }
+                                    }}
+                                    className="w-4 h-4 rounded border-2 border-orange-300 cursor-pointer accent-orange-500"
+                                  />
+                                  <span className="text-sm text-gray-900">{store.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <div className="flex gap-3 pt-6 border-t-2 border-pink-100">
                 <button
                   onClick={() => setShowForm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"
+                  disabled={saving}
+                  className="flex-1 px-4 py-3 border-2 border-pink-200 rounded-xl font-bold text-gray-700 hover:bg-pink-50 transition-colors disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSave}
-                  className="flex-1 px-4 py-2 rounded-lg font-medium text-white flex items-center justify-center gap-2"
+                  disabled={saving}
+                  className="flex-1 px-4 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-50"
                   style={{ backgroundColor: '#ff93a3' }}
                 >
-                  <FiSave size={18} />
-                  Save Item
+                  {saving ? (
+                    <>
+                      <FiLoader size={18} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <FiSave size={18} />
+                      Save Item
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -216,43 +766,315 @@ const MenuItemsManager = () => {
         </div>
       )}
 
-      {/* Menu Items Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Price</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Stores</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {menuItems.map((item) => (
-              <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
-                <td className="px-6 py-4 font-medium text-gray-900">{item.name}</td>
-                <td className="px-6 py-4 text-gray-600">{item.category}</td>
-                <td className="px-6 py-4 font-semibold text-gray-900">${item.price.toFixed(2)}</td>
-                <td className="px-6 py-4 text-sm text-gray-600">{item.stores.length} store(s)</td>
-                <td className="px-6 py-4 flex gap-2">
-                  <button
-                    onClick={() => handleEdit(item)}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center min-h-96 max-w-6xl mx-auto">
+          <div className="text-center">
+            <FiLoader size={48} className="animate-spin text-pink-500 mx-auto mb-4" />
+            <p className="text-gray-600 font-semibold">Loading menu items...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Search, Filter & Sort Section */}
+      {!loading && (
+        <div className="max-w-6xl mx-auto mb-8">
+          <div className="bg-white rounded-3xl border border-gray-200 p-8 shadow-md hover:shadow-lg transition-shadow">
+            {/* Search Bar */}
+            <div className="mb-8">
+              <label className="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest">🔍 Search Items</label>
+              <div className="relative">
+                <FiSearch className="absolute left-4 top-3.5 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Search by name or description..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Filters Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {/* Category Filter */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest">📂 Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white transition-all"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="hot_coffee">Hot Coffee</option>
+                  <option value="iced_coffee">Iced Coffee</option>
+                  <option value="cold_brew">Cold Brew</option>
+                  <option value="signature">Signature</option>
+                  <option value="seasonal_specials">Seasonal Specials</option>
+                  <option value="chocolate">Chocolate</option>
+                  <option value="ice_cream">Ice Cream</option>
+                  <option value="add_ons">Add Ons</option>
+                </select>
+              </div>
+
+              {/* Price Range Filter */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest">💰 Price Range ($)</label>
+                <div className="flex gap-2 items-end">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      value={priceRange.min}
+                      onChange={(e) => setPriceRange({ ...priceRange, min: Number(e.target.value) })}
+                      placeholder="Min"
+                      className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
+                    />
+                  </div>
+                  <span className="text-gray-400 font-bold pb-3">–</span>
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      min="0"
+                      value={priceRange.max}
+                      onChange={(e) => setPriceRange({ ...priceRange, max: Number(e.target.value) })}
+                      placeholder="Max"
+                      className="w-full px-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sort Options */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-3 uppercase tracking-widest">↕️ Sort By</label>
+                <div className="flex gap-2 items-end">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white transition-all"
                   >
-                    <FiEdit2 size={18} />
-                  </button>
+                    <option value="newest">Newest</option>
+                    <option value="name">Name</option>
+                    <option value="price">Price</option>
+                    <option value="category">Category</option>
+                  </select>
                   <button
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="px-4 py-3 border border-gray-200 rounded-xl font-bold text-gray-700 hover:bg-pink-50 hover:border-pink-300 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+                    title={sortOrder === 'asc' ? 'Sort ascending' : 'Sort descending'}
                   >
-                    <FiTrash2 size={18} />
+                    {sortOrder === 'asc' ? <FiArrowUp size={18} /> : <FiArrowDown size={18} />}
                   </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+              <p className="text-sm font-semibold text-gray-600">
+                Showing <span className="text-pink-600 font-bold">{filteredAndSortedItems.length}</span> of <span className="text-pink-600 font-bold">{menuItems.length}</span> items
+              </p>
+              {(searchTerm || selectedCategory !== 'all' || priceRange.min > 0 || priceRange.max < 100 || sortBy !== 'newest') && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('all');
+                    setPriceRange({ min: 0, max: 100 });
+                    setSortBy('newest');
+                    setSortOrder('asc');
+                  }}
+                  className="text-sm font-bold text-pink-600 hover:text-pink-700 hover:bg-pink-50 px-3 py-1 rounded-lg transition-all"
+                >
+                  ✕ Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Menu Items by Category */}
+      {!loading && (
+        <div className="max-w-6xl mx-auto">
+          {menuItems.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-gray-200 shadow-md">
+              <div className="text-5xl mb-4">☕</div>
+              <p className="text-gray-600 text-lg font-medium mb-2">No menu items yet</p>
+              <p className="text-gray-500 text-sm">Create your first menu item to get started</p>
+            </div>
+          ) : filteredAndSortedItems.length === 0 ? (
+            <div className="text-center py-16 bg-white rounded-3xl border border-gray-200 shadow-md">
+              <div className="text-5xl mb-4">🔍</div>
+              <p className="text-gray-600 text-lg font-medium mb-2">No items match your filters</p>
+              <p className="text-gray-500 text-sm">Try adjusting your search criteria or filters</p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {allCategories.map(category => {
+                const items = itemsByCategory[category] || [];
+                if (items.length === 0) return null;
+
+                return (
+                  <div key={category} className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-md hover:shadow-xl transition-all duration-300">
+                    {/* Category Header */}
+                    <div className="bg-white px-8 py-6 border-b border-gray-200">
+                      <div>
+                        <h2 className="text-lg font-bold text-gray-900">{getCategoryLabel(category)}</h2>
+                        <p className="text-gray-500 text-sm mt-1 font-medium">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+
+                    {/* Category Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Name</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Price</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-64">Description</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Allergens</th>
+                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {items.map((item, index) => (
+                            <tr
+                              key={item.id}
+                              className={`border-b border-gray-100 transition-all duration-200 group ${
+                                index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-gray-50/50 hover:bg-blue-50/50'
+                              }`}
+                            >
+                              {/* Image */}
+                              <td className="px-6 py-5">
+                                {item.imageUrl ? (
+                                  <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all">
+                                    <img
+                                      src={item.imageUrl}
+                                      alt={item.name}
+                                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                    />
+                                  </div>
+                                ) : (
+                                  <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400 shadow-md group-hover:shadow-lg transition-all">
+                                    <FiImage size={24} />
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Name */}
+                              <td className="px-6 py-5">
+                                <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{item.name}</p>
+                              </td>
+
+                              {/* Price */}
+                              <td className="px-6 py-5">
+                                <span className="inline-block px-4 py-2 bg-gradient-to-r from-pink-100 to-orange-100 text-pink-700 rounded-full text-sm font-bold shadow-sm group-hover:shadow-md transition-shadow">
+                                  ${Number(item.basePrice).toFixed(2)}
+                                </span>
+                              </td>
+
+                              {/* Description */}
+                              <td className="px-6 py-5">
+                                <p className="text-sm text-gray-700 line-clamp-2 group-hover:text-gray-900 transition-colors font-medium">
+                                  {item.description || <span className="text-gray-400 italic">No description</span>}
+                                </p>
+                              </td>
+
+                              {/* Allergens */}
+                              <td className="px-6 py-5">
+                                {item.allergens && item.allergens.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {item.allergens.map((allergen, idx) => (
+                                      <span
+                                        key={idx}
+                                        className="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold shadow-sm group-hover:shadow-md transition-shadow"
+                                      >
+                                        {allergen}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-sm text-gray-500 font-medium">No allergens</span>
+                                )}
+                              </td>
+
+                              {/* Actions */}
+                              <td className="px-6 py-5">
+                                <div className="flex items-center justify-center gap-2">
+                                  <button
+                                    onClick={() => handleEdit(item)}
+                                    className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-all hover:shadow-md active:scale-95"
+                                    title="Edit"
+                                  >
+                                    <FiEdit2 size={18} />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDelete(item.id, item.name)}
+                                    className="p-2.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all hover:shadow-md active:scale-95"
+                                    title="Delete"
+                                  >
+                                    <FiTrash2 size={18} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-8 text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-full mb-4">
+                <FiTrash2 size={32} className="text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white">Delete Menu Item?</h2>
+            </div>
+
+            {/* Modal Body */}
+            <div className="px-6 py-6">
+              <p className="text-gray-600 text-center mb-2">
+                You're about to delete:
+              </p>
+              <p className="text-center text-lg font-bold text-gray-900 mb-6 px-4 py-3 bg-gray-50 rounded-lg border-2 border-gray-200">
+                "{deleteModal.name}"
+              </p>
+              <p className="text-gray-500 text-sm text-center">
+                This action cannot be undone. The menu item will be permanently removed from all stores.
+              </p>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+              <button
+                onClick={() => setDeleteModal({ show: false, id: null, name: '' })}
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-900 font-bold rounded-lg transition-all active:scale-95"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-lg transition-all active:scale-95 shadow-lg hover:shadow-xl"
+              >
+                Delete Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

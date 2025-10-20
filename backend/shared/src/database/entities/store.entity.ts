@@ -91,7 +91,4 @@ export class Store {
 
   @OneToMany(() => Review, (review) => review.store)
   reviews: Review[];
-
-  @OneToMany(() => MenuItem, (menuItem) => menuItem.storeId)
-  menuItems: MenuItem[];
 }

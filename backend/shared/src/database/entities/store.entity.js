@@ -15,9 +15,8 @@ const order_entity_1 = require("./order.entity");
 const review_entity_1 = require("./review.entity");
 var StoreType;
 (function (StoreType) {
-    StoreType["STORE"] = "store";
-    StoreType["TRUCK"] = "truck";
-    StoreType["KIOSK"] = "kiosk";
+    StoreType["COFFEE_SHOP"] = "coffee_shop";
+    StoreType["MOBILE_COFFEE_BAR"] = "mobile_coffee_bar";
 })(StoreType || (exports.StoreType = StoreType = {}));
 let Store = class Store {
 };
@@ -31,7 +30,7 @@ __decorate([
     __metadata("design:type", String)
 ], Store.prototype, "name", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: StoreType, default: StoreType.STORE }),
+    (0, typeorm_1.Column)({ type: 'enum', enum: StoreType, default: StoreType.COFFEE_SHOP }),
     __metadata("design:type", String)
 ], Store.prototype, "type", void 0);
 __decorate([

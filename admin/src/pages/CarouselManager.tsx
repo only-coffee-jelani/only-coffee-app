@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FiPlus, FiTrash2, FiSave, FiEye, FiLoader, FiEdit2, FiX } from 'react-icons/fi';
+import React, { useState, useEffect, useMemo } from 'react';
+import { FiPlus, FiTrash2, FiSave, FiLoader, FiEdit2, FiX, FiImage, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
-import ImageUploader, { ImageUploaderRef } from '../components/ImageUploader';
+import ImageUploader from '../components/ImageUploader';
 
 interface CarouselImage {
   id: string;
@@ -16,498 +16,581 @@ interface CarouselImage {
   startDate?: string;
   endDate?: string;
   viewCount?: number;
+  createdAt?: string;
 }
 
+const API_BASE = 'http://localhost:3000/api/v1';
+
 const CarouselManager = () => {
-  const { isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
   const [images, setImages] = useState<CarouselImage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [initialLoading, setInitialLoading] = useState(true);
-  const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
-  const [editFormData, setEditFormData] = useState<Partial<CarouselImage>>({});
-  const imageUploaderRef = useRef<ImageUploaderRef>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showFullImage, setShowFullImage] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: string | null; title: string }>({ show: false, id: null, title: '' });
 
-  // Fetch carousel images from backend
+  // Search, Filter, Sort states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'title' | 'position'>('position');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    imageUrl: '',
+    displayDuration: 3,
+    position: 0,
+    targetMenuItemId: '',
+    startDate: '',
+    endDate: '',
+    isActive: false,
+  });
+
   useEffect(() => {
-    const fetchCarouselImages = async () => {
-      try {
-        setInitialLoading(true);
-        const token = localStorage.getItem('adminToken');
+    fetchCarouselImages();
+  }, []);
 
-        if (!token) {
-          toast.error('Not authenticated. Please login first.');
-          setInitialLoading(false);
-          return;
-        }
-
-        const response = await fetch('http://localhost:3000/api/v1/carousel', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (response.status === 401) {
-          toast.error('Session expired. Please login again.');
-          localStorage.removeItem('adminToken');
-          localStorage.removeItem('adminUser');
-          setInitialLoading(false);
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch carousel images: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        setImages(data.data || []);
-      } catch (error) {
-        console.error('Error fetching carousel images:', error);
-        toast.error('Failed to load carousel images');
-      } finally {
-        setInitialLoading(false);
-      }
-    };
-
-    if (isAuthenticated) {
-      fetchCarouselImages();
-    }
-  }, [isAuthenticated]);
-
-  const handleAddImage = (url: string) => {
-    if (images.length >= 5) {
-      toast.error('Maximum 5 carousel images allowed');
-      return;
-    }
-    // Find the next available position (0-4)
-    const usedPositions = new Set(images.map(img => img.position));
-    let nextPosition = 0;
-    while (usedPositions.has(nextPosition) && nextPosition < 5) {
-      nextPosition++;
-    }
-
-    const newImage: CarouselImage = {
-      id: `temp-${Date.now()}`,
-      imageUrl: url,
-      title: `Carousel Image ${images.length + 1}`,
-      position: nextPosition,
-      isActive: true,
-      displayDuration: 3,
-    };
-    setImages([...images, newImage]);
-    toast.success('Image added to carousel!');
-  };
-
-  const handleRemoveImage = async (id: string) => {
-    if (images.length <= 1) {
-      toast.error('Carousel must have at least one image');
-      return;
-    }
-
+  const fetchCarouselImages = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3000/api/v1/carousel/${id}`, {
+      const response = await fetch(`${API_BASE}/carousel`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch carousel images');
+
+      const data = await response.json();
+      setImages(data.data || []);
+    } catch (error) {
+      console.error('Error fetching carousel images:', error);
+      toast.error('Failed to load carousel images');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter and sort carousel images
+  const filteredAndSortedImages = useMemo(() => {
+    let filtered = images.filter(image => {
+      // Search filter
+      const searchLower = searchTerm.toLowerCase();
+      const matchesSearch = image.title.toLowerCase().includes(searchLower) ||
+        (image.description && image.description.toLowerCase().includes(searchLower));
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' ||
+        (statusFilter === 'active' && image.isActive) ||
+        (statusFilter === 'inactive' && !image.isActive);
+
+      return matchesSearch && matchesStatus;
+    });
+
+    // Sort
+    filtered.sort((a, b) => {
+      let compareValue = 0;
+
+      switch (sortBy) {
+        case 'title':
+          compareValue = a.title.localeCompare(b.title);
+          break;
+        case 'position':
+          compareValue = a.position - b.position;
+          break;
+        case 'oldest':
+          compareValue = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+          break;
+        case 'newest':
+        default:
+          compareValue = new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return filtered;
+  }, [images, searchTerm, statusFilter, sortBy, sortOrder]);
+
+  const handleAddNew = () => {
+    setEditingId(null);
+    setFormData({
+      title: '',
+      description: '',
+      imageUrl: '',
+      displayDuration: 3,
+      position: images.length,
+      targetMenuItemId: '',
+      startDate: '',
+      endDate: '',
+      isActive: false,
+    });
+    setShowForm(true);
+  };
+
+  const handleEdit = (image: CarouselImage) => {
+    setEditingId(image.id);
+    setFormData({
+      title: image.title,
+      description: image.description || '',
+      imageUrl: image.imageUrl,
+      displayDuration: image.displayDuration,
+      position: image.position,
+      targetMenuItemId: image.targetMenuItemId || '',
+      startDate: image.startDate || '',
+      endDate: image.endDate || '',
+      isActive: image.isActive,
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = async (id: string, title: string) => {
+    setDeleteModal({ show: true, id, title });
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal.id) return;
+
+    try {
+      setSaving(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE}/carousel/${deleteModal.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete carousel image');
-      }
+      if (!response.ok) throw new Error('Failed to delete');
 
-      setImages(images.filter(img => img.id !== id));
-      toast.success('Image removed from carousel');
+      await fetchCarouselImages();
+      toast.success('Carousel image deleted!');
+      setDeleteModal({ show: false, id: null, title: '' });
     } catch (error) {
-      console.error('Error deleting carousel image:', error);
+      console.error('Error:', error);
       toast.error('Failed to delete carousel image');
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUpdateTitle = (id: string, title: string) => {
-    setImages(images.map(img => img.id === id ? { ...img, title } : img));
-  };
-
-  const handleEditImage = (image: CarouselImage) => {
-    setEditingImage(image);
-    setEditFormData({ ...image });
-  };
-
-  const handleCloseEditModal = () => {
-    setEditingImage(null);
-    setEditFormData({});
-  };
-
-  const handleEditFormChange = (field: keyof CarouselImage, value: any) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleSaveEdit = async () => {
-    if (!editingImage) return;
-
-    try {
-      setLoading(true);
-      const token = localStorage.getItem('adminToken');
-
-      // Only send allowed fields for update
-      const updatePayload = {
-        title: editFormData.title,
-        description: editFormData.description,
-        imageUrl: editFormData.imageUrl,
-        position: editFormData.position,
-        displayDuration: editFormData.displayDuration,
-        targetMenuItemId: editFormData.targetMenuItemId,
-        startDate: editFormData.startDate,
-        endDate: editFormData.endDate,
-        isActive: editFormData.isActive,
-      };
-
-      const response = await fetch(`http://localhost:3000/api/v1/carousel/${editingImage.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatePayload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
-        throw new Error(errorData.message || 'Failed to update carousel image');
-      }
-
-      // Update the image in the local state
-      setImages(images.map(img => img.id === editingImage.id ? { ...img, ...updatePayload } : img));
-      toast.success('Carousel image updated successfully!');
-      handleCloseEditModal();
-    } catch (error) {
-      console.error('Error updating carousel image:', error);
-      toast.error('Failed to update carousel image');
-    } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const handleSave = async () => {
-    setLoading(true);
+    if (!formData.title || !formData.imageUrl) {
+      toast.error('Title and image are required');
+      return;
+    }
+
     try {
+      setSaving(true);
       const token = localStorage.getItem('adminToken');
+      const dataToSave = {
+        ...formData,
+        startDate: formData.startDate || null,
+        endDate: formData.endDate || null,
+      };
 
-      // Save each image that has been modified or is new
-      for (const image of images) {
-        if (image.id.startsWith('temp-')) {
-          // Validate required fields for new images
-          if (!image.title || !image.title.trim()) {
-            toast.error('Title is required for new carousel images');
-            setLoading(false);
-            return;
-          }
-          if (!image.imageUrl) {
-            toast.error('Image is required for new carousel images');
-            setLoading(false);
-            return;
-          }
+      const url = editingId
+        ? `${API_BASE}/carousel/${editingId}`
+        : `${API_BASE}/carousel`;
 
-          // Create new carousel image - only send allowed fields
-          const payload = {
-            title: image.title,
-            description: image.description,
-            imageUrl: image.imageUrl,
-            position: image.position,
-            displayDuration: image.displayDuration,
-            targetMenuItemId: image.targetMenuItemId,
-            startDate: image.startDate,
-            endDate: image.endDate,
-            isActive: image.isActive,
-          };
-
-          const response = await fetch('http://localhost:3000/api/v1/carousel', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-          });
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('API Error:', errorData);
-            throw new Error(errorData.message || 'Failed to create carousel image');
-          }
-        } else {
-          // Update existing carousel image
-          const response = await fetch(`http://localhost:3000/api/v1/carousel/${image.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              title: image.title,
-              description: image.description,
-              imageUrl: image.imageUrl,
-              position: image.position,
-              displayDuration: image.displayDuration,
-              targetUrl: image.targetUrl,
-              targetMenuItemId: image.targetMenuItemId,
-              startDate: image.startDate,
-              endDate: image.endDate,
-            }),
-          });
-
-          if (!response.ok) throw new Error('Failed to update carousel image');
-        }
-      }
-
-      toast.success('Carousel updated successfully!');
-      // Reset the image uploader
-      imageUploaderRef.current?.reset();
-      // Refresh the carousel images
-      const response = await fetch('http://localhost:3000/api/v1/carousel', {
-        method: 'GET',
+      const response = await fetch(url, {
+        method: editingId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify(dataToSave),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setImages(data.data || []);
-      }
+      if (!response.ok) throw new Error('Failed to save');
+
+      await fetchCarouselImages();
+      setShowForm(false);
+      setEditingId(null);
+      setFormData({
+        title: '',
+        description: '',
+        imageUrl: '',
+        displayDuration: 3,
+        position: 0,
+        targetMenuItemId: '',
+        startDate: '',
+        endDate: '',
+        isActive: false,
+      });
+      toast.success(editingId ? 'Carousel image updated!' : 'Carousel image created!');
     } catch (error) {
-      console.error('Error saving carousel:', error);
-      toast.error('Failed to save carousel');
+      console.error('Save error:', error);
+      toast.error('Failed to save carousel image');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 p-8">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="mb-12 max-w-6xl mx-auto">
-        <div className="inline-block mb-4">
-          <span className="px-4 py-2 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold">Content Management</span>
-        </div>
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent mb-3">
-          Carousel Manager
-        </h1>
-        <p className="text-gray-600 text-lg">Manage the 5 promotional images displayed on the home screen</p>
-      </div>
-
-      {initialLoading ? (
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <FiLoader className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: '#ff93a3' }} />
-            <p className="text-gray-600">Loading carousel images...</p>
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900">Carousel Images</h1>
+            <p className="text-gray-600 mt-2 text-lg">Manage promotional carousel images for your app</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleAddNew}
+              className="px-6 py-3 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2 hover:opacity-90"
+              style={{ backgroundColor: '#ff93a3' }}
+            >
+              <FiPlus size={18} />
+              Add Carousel Image
+            </button>
           </div>
         </div>
-      ) : (
-        <div className="max-w-6xl mx-auto">
-          {/* Images List */}
-          <div>
-            <div className="bg-white rounded-3xl p-8 border-2 border-pink-100 hover:shadow-2xl transition-all duration-300">
-              <div className="flex items-center justify-between mb-8">
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto p-8">
+        {/* Form Modal */}
+        {showForm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-40 p-4 mb-8">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+              {/* Form Header */}
+              <div className="sticky top-0 z-50 bg-gradient-to-r from-pink-50 via-white to-pink-50 px-8 py-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Carousel Images</h2>
-                  <p className="text-sm text-gray-600 mt-1">{images.length} of 5 images</p>
+                  <h2 className="text-2xl font-bold text-gray-900">{editingId ? 'Edit Carousel Image' : 'Create New Carousel Image'}</h2>
                 </div>
-                {images.length < 5 && (
-                  <div className="w-full max-w-xs">
-                    <ImageUploader ref={imageUploaderRef} onUpload={handleAddImage} folder="promotions" />
-                  </div>
-                )}
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <FiX size={24} />
+                </button>
               </div>
 
-              <div className="space-y-4">
-                {images.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-gray-500">No carousel images yet. Add one to get started!</p>
-                  </div>
-                ) : (
-                  images.map((image, index) => (
-                    <div key={image.id} className="flex items-center gap-4 p-4 border-2 border-pink-100 rounded-2xl hover:border-pink-300 hover:bg-pink-50/30 transition-all min-w-0">
-                      <div className="flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden bg-gray-100 shadow-md">
-                        <img src={image.imageUrl} alt={image.title} className="w-full h-full object-cover" />
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <input
-                          type="text"
-                          value={image.title}
-                          onChange={(e) => handleUpdateTitle(image.id, e.target.value)}
-                          className="w-full px-4 py-2 border-2 border-pink-100 rounded-xl text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
-                          placeholder="Image title"
-                        />
-                        <p className="text-xs text-gray-500 mt-2 truncate">{image.imageUrl}</p>
-                      </div>
-
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-sm font-bold text-white bg-gradient-to-r from-pink-500 to-orange-500 px-3 py-1 rounded-full">#{index + 1}</span>
-                        <button
-                          onClick={() => handleEditImage(image)}
-                          className="p-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors flex-shrink-0"
-                          title="Edit image"
-                        >
-                          <FiEdit2 size={18} />
-                        </button>
-                        {(image.viewCount === undefined || image.viewCount === 0) && (
-                          <button
-                            onClick={() => handleRemoveImage(image.id)}
-                            className="p-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors flex-shrink-0"
-                            title="Delete image"
-                          >
-                            <FiTrash2 size={18} />
-                          </button>
-                        )}
-                      </div>
+              {/* Form Content */}
+              <form className="flex-1 overflow-y-auto p-8 space-y-6">
+                {/* Image Upload */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">Image</label>
+                  <ImageUploader
+                    onUpload={(url) => setFormData({ ...formData, imageUrl: url })}
+                    folder="carousel"
+                  />
+                  {formData.imageUrl && (
+                    <div className="mt-4 rounded-xl overflow-hidden bg-gray-100 h-48 flex items-center justify-center">
+                      <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-contain" />
                     </div>
-                  ))
-                )}
-              </div>
+                  )}
+                </div>
 
-              <button
-                onClick={handleSave}
-                disabled={loading}
-                className="w-full mt-8 py-4 rounded-2xl font-bold text-white transition-all flex items-center justify-center gap-2 hover:shadow-lg disabled:opacity-50"
-                style={{ backgroundColor: '#ff93a3' }}
-              >
-                <FiSave size={20} />
-                {loading ? 'Saving...' : 'Save Carousel'}
-              </button>
+                {/* Title */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Title *</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                    placeholder="Carousel image title"
+                  />
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white resize-none"
+                    placeholder="Image description"
+                    rows={3}
+                  />
+                </div>
+
+                {/* Position */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Position</label>
+                  <input
+                    type="number"
+                    value={formData.position}
+                    onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) })}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                    min="0"
+                    max="4"
+                  />
+                </div>
+
+                {/* Display Duration */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Display Duration (seconds)</label>
+                  <input
+                    type="number"
+                    value={formData.displayDuration}
+                    onChange={(e) => setFormData({ ...formData, displayDuration: parseInt(e.target.value) })}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                    min="1"
+                    max="30"
+                  />
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    min={new Date().toISOString().split('T')[0]}
+                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                  />
+                </div>
+
+                {/* Active Toggle */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Active Status</label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
+                    className={`relative w-full h-12 rounded-xl transition-all duration-300 flex items-center px-1 ${
+                      formData.isActive
+                        ? 'bg-gradient-to-r from-green-400 to-green-500'
+                        : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                    }`}
+                  >
+                    <span
+                      className={`absolute h-10 w-1/2 rounded-lg bg-white shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-sm ${
+                        formData.isActive ? 'right-1' : 'left-1'
+                      }`}
+                    >
+                      {formData.isActive ? '✓ Active' : 'Inactive'}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex gap-3 pt-6 border-t-2 border-pink-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowForm(false)}
+                    disabled={saving}
+                    className="flex-1 px-4 py-3 border-2 border-pink-200 rounded-xl font-bold text-gray-700 hover:bg-pink-50 transition-colors disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex-1 px-4 py-3 rounded-xl font-bold text-white flex items-center justify-center gap-2 hover:shadow-lg transition-all disabled:opacity-50"
+                    style={{ backgroundColor: '#ff93a3' }}
+                  >
+                    {saving ? (
+                      <>
+                        <FiLoader size={18} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <FiSave size={18} />
+                        Save
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
             </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center min-h-96">
+            <div className="text-center">
+              <FiLoader size={48} className="animate-spin text-pink-500 mx-auto mb-4" />
+              <p className="text-gray-600 font-semibold">Loading carousel images...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Carousel Images Table */}
+        {!loading && (
+          <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-md hover:shadow-lg transition-all">
+            {images.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-4">🎠</div>
+                <p className="text-gray-600 text-lg font-medium mb-2">No carousel images yet</p>
+                <p className="text-gray-500 text-sm">Create your first carousel image to get started</p>
+              </div>
+            ) : filteredAndSortedImages.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-5xl mb-4">🔍</div>
+                <p className="text-gray-600 text-lg font-medium mb-2">No carousel images match your filters</p>
+                <p className="text-gray-500 text-sm">Try adjusting your search criteria or filters</p>
+              </div>
+            ) : (
+              <>
+                {/* Table Header Section */}
+                <div className="px-8 py-6 border-b border-gray-200 bg-white">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">All Carousel Images</h3>
+                  <p className="text-sm text-gray-600">{filteredAndSortedImages.length} carousel image{filteredAndSortedImages.length !== 1 ? 's' : ''}</p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Position</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Title</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Duration</th>
+                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAndSortedImages.map((image, index) => (
+                        <tr
+                          key={image.id}
+                          className={`border-b border-gray-100 transition-all duration-200 group ${
+                            index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-gray-50/50 hover:bg-blue-50/50'
+                          }`}
+                        >
+                          <td className="px-6 py-5">
+                            <span className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-lg font-bold">
+                              #{image.position + 1}
+                            </span>
+                          </td>
+                          <td className="px-6 py-5">
+                            {image.imageUrl ? (
+                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all cursor-pointer" onClick={() => setShowFullImage(image.imageUrl)}>
+                                <img
+                                  src={image.imageUrl}
+                                  alt={image.title}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                />
+                              </div>
+                            ) : (
+                              <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400 shadow-md">
+                                <FiImage size={24} />
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-5">
+                            <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{image.title}</p>
+                          </td>
+                          <td className="px-6 py-5">
+                            <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-full text-sm font-bold">
+                              {image.displayDuration}s
+                            </span>
+                          </td>
+                          <td className="px-6 py-5">
+                            {image.isActive ? (
+                              <span className="inline-block px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-full text-sm font-bold border border-green-200 flex items-center gap-2 w-fit">
+                                <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></span>
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-block px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 rounded-full text-sm font-bold border border-gray-200">
+                                Inactive
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-5">
+                            <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleEdit(image)}
+                                className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <FiEdit2 size={18} />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(image.id, image.title)}
+                                className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <FiTrash2 size={18} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Full Image Viewer Modal */}
+      {showFullImage && (
+        <div className="fixed inset-0 bg-black/75 flex items-center justify-center z-50 p-4">
+          <button
+            onClick={() => setShowFullImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-50"
+          >
+            <FiX size={32} />
+          </button>
+          <div className="relative w-full h-full flex items-center justify-center">
+            <img
+              src={showFullImage}
+              alt="Full Size Carousel Image"
+              className="max-w-[90vw] max-h-[90vh] object-contain"
+            />
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
-      {editingImage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-3xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-bold text-gray-900">Edit Carousel Image</h2>
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">Delete Carousel Image?</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to delete <span className="font-semibold">"{deleteModal.title}"</span>? This action cannot be undone.</p>
+            <div className="flex gap-3">
               <button
-                onClick={handleCloseEditModal}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                onClick={() => setDeleteModal({ show: false, id: null, title: '' })}
+                disabled={saving}
+                className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
-                <FiX size={24} />
+                Cancel
               </button>
-            </div>
-
-            <div className="space-y-6">
-              {/* Image Preview */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">Image Preview</label>
-                <div className="w-full h-48 rounded-2xl overflow-hidden bg-gray-100 border-2 border-pink-100 flex items-center justify-center">
-                  <img
-                    src={editFormData.imageUrl || editingImage.imageUrl}
-                    alt={editFormData.title || editingImage.title}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Title */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
-                <input
-                  type="text"
-                  value={editFormData.title || ''}
-                  onChange={(e) => handleEditFormChange('title', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="Image title"
-                />
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
-                <textarea
-                  value={editFormData.description || ''}
-                  onChange={(e) => handleEditFormChange('description', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent resize-none"
-                  placeholder="Image description"
-                  rows={3}
-                />
-              </div>
-
-              {/* Image URL */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Image URL</label>
-                <input
-                  type="text"
-                  value={editFormData.imageUrl || ''}
-                  onChange={(e) => handleEditFormChange('imageUrl', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent font-mono text-sm"
-                  placeholder="https://..."
-                />
-              </div>
-
-              {/* Display Duration */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Display Duration (seconds)</label>
-                <input
-                  type="number"
-                  value={editFormData.displayDuration || 3}
-                  onChange={(e) => handleEditFormChange('displayDuration', parseInt(e.target.value))}
-                  className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  min="1"
-                  max="30"
-                />
-              </div>
-
-              {/* Active Status */}
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editFormData.isActive !== false}
-                    onChange={(e) => handleEditFormChange('isActive', e.target.checked)}
-                    className="w-5 h-5 rounded"
-                    style={{ accentColor: '#ff93a3' }}
-                  />
-                  <span className="text-sm font-semibold text-gray-700">Active</span>
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-6 border-t border-gray-200">
-                <button
-                  onClick={handleCloseEditModal}
-                  className="flex-1 py-3 px-4 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveEdit}
-                  disabled={loading}
-                  className="flex-1 py-3 px-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2 hover:shadow-lg disabled:opacity-50"
-                  style={{ backgroundColor: '#ff93a3' }}
-                >
-                  {loading ? (
-                    <>
-                      <FiLoader size={18} className="animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <FiSave size={18} />
-                      Save Changes
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={confirmDelete}
+                disabled={saving}
+                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {saving ? (
+                  <>
+                    <FiLoader size={18} className="animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <FiTrash2 size={18} />
+                    Delete
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
