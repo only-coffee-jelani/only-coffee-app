@@ -13,12 +13,14 @@ exports.MenuItem = exports.MenuCategory = void 0;
 const typeorm_1 = require("typeorm");
 var MenuCategory;
 (function (MenuCategory) {
-    MenuCategory["COFFEE"] = "coffee";
-    MenuCategory["ESPRESSO"] = "espresso";
-    MenuCategory["TEA"] = "tea";
-    MenuCategory["FOOD"] = "food";
-    MenuCategory["PASTRY"] = "pastry";
-    MenuCategory["MERCHANDISE"] = "merchandise";
+    MenuCategory["HOT_COFFEE"] = "hot_coffee";
+    MenuCategory["ICED_COFFEE"] = "iced_coffee";
+    MenuCategory["COLD_BREW"] = "cold_brew";
+    MenuCategory["SIGNATURE"] = "signature";
+    MenuCategory["SEASONAL_SPECIALS"] = "seasonal_specials";
+    MenuCategory["CHOCOLATE"] = "chocolate";
+    MenuCategory["ICE_CREAM"] = "ice_cream";
+    MenuCategory["ADD_ONS"] = "add_ons";
 })(MenuCategory || (exports.MenuCategory = MenuCategory = {}));
 let MenuItem = class MenuItem {
 };

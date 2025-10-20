@@ -8,24 +8,25 @@ import {
 } from 'typeorm';
 
 export enum MenuCategory {
-  COFFEE = 'coffee',
-  ESPRESSO = 'espresso',
-  TEA = 'tea',
-  FOOD = 'food',
-  PASTRY = 'pastry',
-  MERCHANDISE = 'merchandise',
+  HOT_COFFEE = 'hot_coffee',
+  ICED_COFFEE = 'iced_coffee',
+  COLD_BREW = 'cold_brew',
+  SIGNATURE = 'signature',
+  SEASONAL_SPECIALS = 'seasonal_specials',
+  CHOCOLATE = 'chocolate',
+  ICE_CREAM = 'ice_cream',
+  ADD_ONS = 'add_ons',
 }
 
 @Entity('menu_items')
-@Index(['storeId'])
 @Index(['category'])
 @Index(['toastItemId'])
 export class MenuItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'uuid' })
-  storeId: string;
+  @Column({ type: 'uuid', array: true, default: [] })
+  storeIds: string[];
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   toastItemId: string | null;

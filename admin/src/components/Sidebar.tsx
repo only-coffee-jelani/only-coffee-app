@@ -16,9 +16,7 @@ const Sidebar = () => {
     { path: '/carousel', label: 'Carousel', icon: FiSliders },
     { path: '/carousel-analytics', label: 'Carousel Analytics', icon: FiBarChart2 },
     { path: '/menu-items', label: 'Menu Items', icon: FiMenu },
-    { path: '/images', label: 'Images', icon: FiImage },
     { path: '/stores', label: 'Stores', icon: FiMapPin },
-    { path: '/analytics', label: 'Analytics', icon: FiBarChart2 },
     { path: '/settings', label: 'Settings', icon: FiSettings },
   ];
 

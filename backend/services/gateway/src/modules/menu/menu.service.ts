@@ -13,7 +13,7 @@ export class MenuService {
   async findByStore(storeId: string, category?: MenuCategory) {
     const query = this.menuItemRepository
       .createQueryBuilder('item')
-      .where('item.storeId = :storeId', { storeId })
+      .where(':storeId = ANY(item.storeIds)', { storeId })
       .andWhere('item.isActive = :isActive', { isActive: true })
       .andWhere('item.isAvailable = :isAvailable', { isAvailable: true })
       .orderBy('item.sortOrder', 'ASC')
@@ -62,7 +62,7 @@ export class MenuService {
   async searchMenu(storeId: string, searchTerm: string) {
     return this.menuItemRepository
       .createQueryBuilder('item')
-      .where('item.storeId = :storeId', { storeId })
+      .where(':storeId = ANY(item.storeIds)', { storeId })
       .andWhere('item.isActive = :isActive', { isActive: true })
       .andWhere('item.isAvailable = :isAvailable', { isAvailable: true })
       .andWhere(
@@ -74,11 +74,68 @@ export class MenuService {
   }
 
   async getCategories(storeId: string): Promise<MenuCategory[]> {
-    const items = await this.menuItemRepository.find({
-      where: { storeId, isActive: true, isAvailable: true },
-      select: ['category'],
-    });
+    const items = await this.menuItemRepository
+      .createQueryBuilder('item')
+      .where(':storeId = ANY(item.storeIds)', { storeId })
+      .andWhere('item.isActive = :isActive', { isActive: true })
+      .andWhere('item.isAvailable = :isAvailable', { isAvailable: true })
+      .select('item.category')
+      .getMany();
 
     return [...new Set(items.map((item) => item.category))];
+  }
+
+  // Admin methods
+  async findAll() {
+    // Get all menu items and deduplicate by name
+    const allItems = await this.menuItemRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    // Create a map to store unique items by name (keeping the first occurrence)
+    const uniqueItemsMap = new Map<string, any>();
+
+    for (const item of allItems) {
+      if (!uniqueItemsMap.has(item.name)) {
+        uniqueItemsMap.set(item.name, item);
+      }
+    }
+
+    // Convert map back to array and sort by creation date
+    return Array.from(uniqueItemsMap.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  async create(createMenuItemDto: any) {
+    const menuItem = this.menuItemRepository.create(createMenuItemDto);
+    return this.menuItemRepository.save(menuItem);
+  }
+
+  async update(id: string, updateMenuItemDto: any) {
+    const menuItem = await this.menuItemRepository.findOne({
+      where: { id },
+    });
+
+    if (!menuItem) {
+      throw new NotFoundException('Menu item not found');
+    }
+
+    Object.assign(menuItem, updateMenuItemDto);
+    return this.menuItemRepository.save(menuItem);
+  }
+
+  async delete(id: string) {
+    const menuItem = await this.menuItemRepository.findOne({
+      where: { id },
+    });
+
+    if (!menuItem) {
+      throw new NotFoundException('Menu item not found');
+    }
+
+    return this.menuItemRepository.remove(menuItem);
   }
 }

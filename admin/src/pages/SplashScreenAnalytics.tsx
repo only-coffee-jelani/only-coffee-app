@@ -91,17 +91,16 @@ const SplashScreenAnalytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 p-8">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="mb-12 max-w-6xl mx-auto">
-        <div className="inline-block mb-4">
-          <span className="px-4 py-2 bg-pink-100 text-pink-700 rounded-full text-sm font-semibold">Analytics Dashboard</span>
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900">Splash Screen Analytics</h1>
+          <p className="text-gray-600 mt-2 text-lg">Track performance and engagement metrics for your splash screens</p>
         </div>
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent mb-3">
-          Splash Screen Analytics
-        </h1>
-        <p className="text-gray-600 text-lg">Track performance and engagement metrics for your splash screens</p>
       </div>
+
+      <div className="max-w-7xl mx-auto px-8">
 
       {/* Splash Screens List */}
       <div className="space-y-8 max-w-6xl mx-auto">
@@ -113,13 +112,13 @@ const SplashScreenAnalytics = () => {
             {/* Header with Image Preview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
               {/* Image Preview */}
-              <div className="md:col-span-1">
+              <div className="md:col-span-1 flex justify-center">
                 <button
                   onClick={() => {
                     setSelectedScreen(screen);
                     setShowImageModal(true);
                   }}
-                  className="relative w-full aspect-[9/16] rounded-2xl overflow-hidden group cursor-pointer"
+                  className="relative w-32 aspect-[9/16] rounded-2xl overflow-hidden group cursor-pointer"
                 >
                   <img
                     src={screen.imageUrl}
@@ -233,6 +232,7 @@ const SplashScreenAnalytics = () => {
           <p className="text-white text-center mt-6 text-lg font-semibold">{selectedScreen.title}</p>
         </div>
       )}
+      </div>
     </div>
   );
 };

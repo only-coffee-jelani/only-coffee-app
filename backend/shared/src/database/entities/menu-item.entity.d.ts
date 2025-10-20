@@ -1,10 +1,12 @@
 export declare enum MenuCategory {
-    COFFEE = "coffee",
-    ESPRESSO = "espresso",
-    TEA = "tea",
-    FOOD = "food",
-    PASTRY = "pastry",
-    MERCHANDISE = "merchandise"
+    HOT_COFFEE = "hot_coffee",
+    ICED_COFFEE = "iced_coffee",
+    COLD_BREW = "cold_brew",
+    SIGNATURE = "signature",
+    SEASONAL_SPECIALS = "seasonal_specials",
+    CHOCOLATE = "chocolate",
+    ICE_CREAM = "ice_cream",
+    ADD_ONS = "add_ons"
 }
 export declare class MenuItem {
     id: string;

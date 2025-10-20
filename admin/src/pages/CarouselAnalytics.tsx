@@ -140,30 +140,16 @@ const CarouselAnalytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-orange-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">Carousel Analytics</h1>
-            <p className="text-gray-600 mt-2">Track performance of your promotional carousel images</p>
-          </div>
-          <div className="flex gap-3">
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value)}
-              className="px-4 py-2 border-2 border-pink-100 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-            >
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="year">This Year</option>
-            </select>
-            <button className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all">
-              <FiDownload size={18} />
-              Export Report
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-50 pb-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900">Carousel Analytics</h1>
+          <p className="text-gray-600 mt-2 text-lg">Track performance of your promotional carousel images</p>
         </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-8">
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

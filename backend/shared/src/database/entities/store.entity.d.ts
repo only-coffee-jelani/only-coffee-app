@@ -1,9 +1,8 @@
 import { Order } from './order.entity';
 import { Review } from './review.entity';
 export declare enum StoreType {
-    STORE = "store",
-    TRUCK = "truck",
-    KIOSK = "kiosk"
+    COFFEE_SHOP = "coffee_shop",
+    MOBILE_COFFEE_BAR = "mobile_coffee_bar"
 }
 export declare class Store {
     id: string;

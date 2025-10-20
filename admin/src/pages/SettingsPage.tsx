@@ -44,11 +44,16 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your admin account and application settings</p>
+    <div className="min-h-screen bg-gray-50 pb-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900">Settings</h1>
+          <p className="text-gray-600 mt-2 text-lg">Manage your admin account and application settings</p>
+        </div>
       </div>
+
+      <div className="max-w-7xl mx-auto px-8">
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Settings */}
@@ -214,6 +219,7 @@ const SettingsPage = () => {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
