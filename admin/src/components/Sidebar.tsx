@@ -14,6 +14,7 @@ const Sidebar = () => {
     { path: '/splash-screen', label: 'Splash Screen', icon: FiImage },
     { path: '/splash-screen-analytics', label: 'Splash Analytics', icon: FiBarChart2 },
     { path: '/carousel', label: 'Carousel', icon: FiSliders },
+    { path: '/carousel-analytics', label: 'Carousel Analytics', icon: FiBarChart2 },
     { path: '/menu-items', label: 'Menu Items', icon: FiMenu },
     { path: '/images', label: 'Images', icon: FiImage },
     { path: '/stores', label: 'Stores', icon: FiMapPin },

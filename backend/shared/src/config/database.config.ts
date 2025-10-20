@@ -22,7 +22,8 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
       max: parseInt(process.env.DB_POOL_MAX || '20', 10),
       min: parseInt(process.env.DB_POOL_MIN || '2', 10),
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 2000,
+      connectionTimeoutMillis: 10000,
+      statement_timeout: 30000,
     },
   };
 };

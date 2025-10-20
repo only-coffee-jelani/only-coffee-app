@@ -5,15 +5,17 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToMany,
+  JoinTable,
   Index,
 } from 'typeorm';
 import { Order } from './order.entity';
 import { Review } from './review.entity';
+import { MenuItem } from './menu-item.entity';
 
 export enum StoreType {
-  STORE = 'store',
-  TRUCK = 'truck',
-  KIOSK = 'kiosk',
+  COFFEE_SHOP = 'coffee_shop',
+  MOBILE_COFFEE_BAR = 'mobile_coffee_bar',
 }
 
 @Entity('stores')
@@ -25,14 +27,14 @@ export class Store {
   @Column({ type: 'varchar', length: 255 })
   name: string;
 
-  @Column({ type: 'enum', enum: StoreType, default: StoreType.STORE })
+  @Column({ type: 'enum', enum: StoreType, default: StoreType.COFFEE_SHOP })
   type: StoreType;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   toastLocationId: string | null;
 
-  @Column({ type: 'varchar', length: 500 })
-  address: string;
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  address: string | null;
 
   @Column({ type: 'varchar', length: 100 })
   city: string;
@@ -76,16 +78,20 @@ export class Store {
   @Column({ type: 'jsonb', default: {} })
   features: Record<string, any>; // { parking: true, wifi: true, dineIn: true, ... }
 
+  // ============ TIMESTAMPS & TRACKING ============
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 
-  // Relations
+  // ============ RELATIONS ============
   @OneToMany(() => Order, (order) => order.store)
   orders: Order[];
 
   @OneToMany(() => Review, (review) => review.store)
   reviews: Review[];
+
+  @OneToMany(() => MenuItem, (menuItem) => menuItem.storeId)
+  menuItems: MenuItem[];
 }

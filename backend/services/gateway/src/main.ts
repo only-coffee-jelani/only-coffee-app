@@ -43,29 +43,86 @@ async function bootstrap() {
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('Only Coffee API')
-    .setDescription('API documentation for Only Coffee mobile ordering platform')
-    .setVersion('1.0')
-    .addTag('auth', 'Authentication endpoints')
-    .addTag('users', 'User management')
-    .addTag('stores', 'Store discovery and information')
-    .addTag('menu', 'Menu items and customization')
-    .addTag('orders', 'Order management')
-    .addTag('payments', 'Payment processing')
-    .addTag('rewards', 'Loyalty and rewards')
-    .addTag('gifts', 'Gift cards and social gifting')
-    .addTag('delivery', 'Delivery services')
-    .addTag('reviews', 'Reviews and ratings')
-    .addBearerAuth()
+    .setDescription(
+      `API documentation for Only Coffee mobile ordering platform.
+
+## Authentication
+Most endpoints require Bearer token authentication. Use the login endpoint to obtain a token.
+
+## Base URL
+All endpoints are prefixed with \`/api/v1\`
+
+## Rate Limiting
+- 100 requests per minute per IP address
+
+## Error Handling
+All errors follow a consistent format with appropriate HTTP status codes.`,
+    )
+    .setVersion('1.0.0')
+    .setContact(
+      'Only Coffee Support',
+      'https://onlycoffee.com',
+      'support@onlycoffee.com',
+    )
+    .setLicense('Proprietary', 'https://onlycoffee.com/license')
+    .addTag('auth', 'Authentication endpoints - Register, login, and token refresh')
+    .addTag('users', 'User management - Profile and loyalty information')
+    .addTag('stores', 'Store discovery and information - Find nearby stores')
+    .addTag('menu', 'Menu items and customization - Browse and customize items')
+    .addTag('orders', 'Order management - Create, track, and manage orders')
+    .addTag('payments', 'Payment processing - Handle payments and payment methods')
+    .addTag('rewards', 'Loyalty and rewards - Manage loyalty points and redemptions')
+    .addTag('gifts', 'Gift cards and social gifting - Create and redeem gift cards')
+    .addTag('reviews', 'Reviews and ratings - Submit and view reviews')
+    .addTag('promotions', 'Promotions and campaigns - Get active promotions')
+    .addTag('carousel', 'Carousel management - Manage home screen carousel images')
+    .addTag('upload', 'File uploads - Upload images and files')
+    .addTag('admin', 'Admin operations - Administrative functions')
+    .addTag('health', 'Health checks - API health and status')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Enter your JWT token',
+      },
+      'bearer',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayOperationId: true,
+      filter: true,
+      showRequestHeaders: true,
+      docExpansion: 'list',
+      defaultModelsExpandDepth: 1,
+      defaultModelExpandDepth: 1,
+    },
+    customCss: `
+      .topbar { display: none; }
+      .swagger-ui .topbar { display: block; }
+      .swagger-ui .info .title { font-size: 32px; }
+      .swagger-ui .scheme-container { background: #fafafa; }
+    `,
+    customSiteTitle: 'Only Coffee API Documentation',
+  });
 
   const port = configService.get('PORT', 3000);
   await app.listen(port);
 
-  console.log(`🚀 Gateway API is running on: http://localhost:${port}`);
-  console.log(`📚 API Documentation: http://localhost:${port}/api/docs`);
+  console.log(`
+╔════════════════════════════════════════════════════════════╗
+║          🚀 Only Coffee API Gateway Started 🚀             ║
+╠════════════════════════════════════════════════════════════╣
+║ API Server:        http://localhost:${port}                    ║
+║ API Prefix:        /api/v1                                 ║
+║ Swagger UI:        http://localhost:${port}/api/docs           ║
+║ Health Check:      http://localhost:${port}/api/v1/health      ║
+╚════════════════════════════════════════════════════════════╝
+  `);
 }
 
 bootstrap();
