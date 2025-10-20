@@ -13,8 +13,7 @@ struct PhoneAuthView: View {
     @State private var navigateToVerification: Bool = false
 
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 24) {
                     // Header
                     VStack(spacing: 12) {
@@ -152,25 +151,25 @@ struct PhoneAuthView: View {
                 }
                 .padding()
             }
-            .navigationTitle("")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "chevron.left")
-                            Text("Back")
-                        }
-                        .foregroundColor(.brandPink)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Back")
                     }
+                    .foregroundColor(.brandPink)
                 }
             }
-            .navigationDestination(isPresented: $navigateToVerification) {
-                VerificationCodeView(phoneNumber: formattedPhoneNumber)
-                    .environmentObject(authManager)
-            }
+        }
+        .navigationDestination(isPresented: $navigateToVerification) {
+            VerificationCodeView(phoneNumber: formattedPhoneNumber)
+                .environmentObject(authManager)
         }
     }
 

@@ -134,7 +134,7 @@ class AuthenticationManager: ObservableObject {
     func sendVerificationCode(phone: String, marketingOptIn: Bool = false) async throws {
         let request = SendCodeRequest(phone: phone, marketingOptIn: marketingOptIn)
         let _: SendCodeResponse = try await apiClient.request(
-            endpoint: "/api/v1/auth/send-code",
+            endpoint: "/auth/send-code",
             method: .post,
             body: request,
             requiresAuth: false
@@ -145,7 +145,7 @@ class AuthenticationManager: ObservableObject {
     func verifyCode(phone: String, code: String) async throws -> VerifyCodeResponse {
         let request = VerifyCodeRequest(phone: phone, code: code)
         let response: VerifyCodeResponse = try await apiClient.request(
-            endpoint: "/api/v1/auth/verify-code",
+            endpoint: "/auth/verify-code",
             method: .post,
             body: request,
             requiresAuth: false
@@ -170,7 +170,7 @@ class AuthenticationManager: ObservableObject {
             lastName: lastName
         )
         let response: CompleteProfileResponse = try await apiClient.request(
-            endpoint: "/api/v1/auth/complete-profile",
+            endpoint: "/auth/complete-profile",
             method: .post,
             body: request,
             requiresAuth: true
