@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import SplashScreenManager from './pages/SplashScreenManager';
 import SplashScreenAnalytics from './pages/SplashScreenAnalytics';
 import CarouselManager from './pages/CarouselManager';
+import CarouselAnalytics from './pages/CarouselAnalytics';
 import MenuItemsManager from './pages/MenuItemsManager';
 import ImagesManager from './pages/ImagesManager';
 import StoresManager from './pages/StoresManager';
@@ -31,6 +32,7 @@ function App() {
             <Route path="/splash-screen" element={<SplashScreenManager />} />
             <Route path="/splash-screen-analytics" element={<SplashScreenAnalytics />} />
             <Route path="/carousel" element={<CarouselManager />} />
+            <Route path="/carousel-analytics" element={<CarouselAnalytics />} />
             <Route path="/menu-items" element={<MenuItemsManager />} />
             <Route path="/images" element={<ImagesManager />} />
             <Route path="/stores" element={<StoresManager />} />
@@ -39,7 +41,41 @@ function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
-        <Toaster position="top-right" />
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: '#000',
+              borderRadius: '12px',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
+              padding: '16px 24px',
+              fontSize: '14px',
+              fontWeight: '500',
+            },
+            success: {
+              style: {
+                background: '#10b981',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#10b981',
+              },
+            },
+            error: {
+              style: {
+                background: '#ef4444',
+                color: '#fff',
+              },
+              iconTheme: {
+                primary: '#fff',
+                secondary: '#ef4444',
+              },
+            },
+          }}
+        />
       </div>
     </Router>
   );

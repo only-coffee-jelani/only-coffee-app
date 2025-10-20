@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useImperativeHandle } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FiUpload, FiX, FiMaximize2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
@@ -10,15 +10,27 @@ interface ImageUploaderProps {
   onClear?: () => void;
 }
 
-const ImageUploader: React.FC<ImageUploaderProps> = ({ onUpload, folder, imageUrl, onClear }) => {
-  const [preview, setPreview] = useState<string | null>(imageUrl || null);
-  const [uploading, setUploading] = useState(false);
-  const [showFullImage, setShowFullImage] = useState(false);
+export interface ImageUploaderRef {
+  reset: () => void;
+}
 
-  // Sync preview with imageUrl from parent
-  useEffect(() => {
-    setPreview(imageUrl || null);
-  }, [imageUrl]);
+const ImageUploader = React.forwardRef<ImageUploaderRef, ImageUploaderProps>(
+  ({ onUpload, folder, imageUrl, onClear }, ref) => {
+    const [preview, setPreview] = useState<string | null>(imageUrl || null);
+    const [uploading, setUploading] = useState(false);
+    const [showFullImage, setShowFullImage] = useState(false);
+
+    // Expose reset method to parent
+    useImperativeHandle(ref, () => ({
+      reset: () => {
+        setPreview(null);
+      },
+    }));
+
+    // Sync preview with imageUrl from parent
+    useEffect(() => {
+      setPreview(imageUrl || null);
+    }, [imageUrl]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (acceptedFiles.length === 0) return;
@@ -170,7 +182,10 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onUpload, folder, imageUr
       )}
     </div>
   );
-};
+  }
+);
+
+ImageUploader.displayName = 'ImageUploader';
 
 export default ImageUploader;
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Store, StoreType } from '@shared/database/entities';
@@ -40,14 +40,57 @@ export class StoresService {
       .sort((a, b) => a.distance - b.distance);
   }
 
+  async findAll() {
+    return this.storeRepository.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async findById(id: string) {
-    return this.storeRepository.findOne({ where: { id } });
+    const store = await this.storeRepository.findOne({ where: { id } });
+    if (!store) {
+      throw new NotFoundException(`Store with ID ${id} not found`);
+    }
+    return store;
   }
 
   async findByType(type: StoreType) {
     return this.storeRepository.find({
       where: { type, isActive: true, acceptingOrders: true },
     });
+  }
+
+  async create(createStoreDto: any) {
+    // Validate required fields
+    if (!createStoreDto.name || !createStoreDto.city) {
+      throw new BadRequestException('Name and city are required');
+    }
+
+    // For coffee shops, address is required
+    if (createStoreDto.type === StoreType.COFFEE_SHOP && !createStoreDto.address) {
+      throw new BadRequestException('Address is required for coffee shops');
+    }
+
+    const store = this.storeRepository.create({
+      ...createStoreDto,
+      type: createStoreDto.type || StoreType.COFFEE_SHOP,
+      latitude: createStoreDto.latitude || 0,
+      longitude: createStoreDto.longitude || 0,
+    });
+
+    return this.storeRepository.save(store);
+  }
+
+  async update(id: string, updateStoreDto: any) {
+    const store = await this.findById(id);
+
+    Object.assign(store, updateStoreDto);
+    return this.storeRepository.save(store);
+  }
+
+  async delete(id: string) {
+    const store = await this.findById(id);
+    return this.storeRepository.remove(store);
   }
 
   private calculateDistance(

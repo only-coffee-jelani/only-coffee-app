@@ -17,6 +17,7 @@ import { UploadModule } from './modules/upload/upload.module';
 import { PromotionsModule } from './modules/promotions/promotions.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SplashScreenModule } from './modules/splash-screen/splash-screen.module';
+import { CarouselModule } from './modules/carousel/carousel.module';
 
 @Module({
   imports: [
@@ -29,7 +30,7 @@ import { SplashScreenModule } from './modules/splash-screen/splash-screen.module
     // Database
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: () => getDatabaseConfig(),
+      useFactory: (configService: ConfigService) => getDatabaseConfig(),
     }),
 
     // Rate limiting
@@ -55,6 +56,7 @@ import { SplashScreenModule } from './modules/splash-screen/splash-screen.module
     PromotionsModule,
     AdminModule,
     SplashScreenModule,
+    CarouselModule,
   ],
 })
 export class AppModule {}
