@@ -1,1 +1,1 @@
-web: node services/gateway/dist/services/gateway/src/main.js
+web: bash start.sh

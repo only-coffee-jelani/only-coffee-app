@@ -66,6 +66,38 @@ struct RewardsView: View {
                         .padding()
                         .background(Color.gray.opacity(0.05))
                         .cornerRadius(12)
+                    } else {
+                        // Not logged in - show sign in prompt
+                        VStack(spacing: 20) {
+                            Spacer()
+
+                            Image(systemName: "star.circle.fill")
+                                .font(.system(size: 80))
+                                .foregroundColor(.brandPink)
+
+                            VStack(spacing: 8) {
+                                Text("Sign In to View Rewards")
+                                    .font(.title2.bold())
+                                Text("Access your loyalty points, tier benefits, and exclusive rewards")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                            }
+
+                            NavigationLink(destination: LoginView()) {
+                                Text("Sign In")
+                                    .fontWeight(.semibold)
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.brandPink)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                            }
+                            .padding(.horizontal, 40)
+
+                            Spacer()
+                        }
                     }
                 }
                 .padding()

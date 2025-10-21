@@ -7,8 +7,22 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0BCB94FED296D7F0BFA2CE71 /* CouponCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DBDE4CF1AD28CD833805349 /* CouponCard.swift */; };
+		14A7A0F614111FCC39FE4AEB /* CouponQRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8DDB7C37AEB76843A1FB30 /* CouponQRCodeView.swift */; };
+		179D104F70105C43959DD877 /* CouponSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6B15857F87854E1B1D4D2 /* CouponSelectorView.swift */; };
+		2523D1587F674A3A224BD55B /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BEBA730FC680E56661BFD2 /* PhoneAuthView.swift */; };
+		26AAC738A6371FA68A26FBA8 /* ProfileCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EDA8C88DC3D7911BA7F6B71 /* ProfileCompletionView.swift */; };
+		423D78CD764B81F8374C52C7 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C946FC0AD755995DB610C /* PushNotificationManager.swift */; };
+		4F78E7A354E9532F669D4BF7 /* VerificationCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8156179C2056732D4D65554B /* VerificationCodeView.swift */; };
+		5EBD40CF984BCA770EE11F6B /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5A376C72797A52286E1F76 /* QRCodeGenerator.swift */; };
+		6453BE14BAD0F4E2DD76D2B1 /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD378F409E169FE5CBEE3F5B /* PhoneAuthView.swift */; };
+		6735E14AFA9DA825A3C16895 /* ProfileCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598DF0E22BBA41CF1A18BD1 /* ProfileCompletionView.swift */; };
+		6B5A5B513750CF37A2AC3EAD /* NotificationPermissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1532B8860ED34329D8BA12A /* NotificationPermissionView.swift */; };
 		6F64489F2EA31A2F00CCE71A /* ImageCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F64489D2EA31A2F00CCE71A /* ImageCacheManager.swift */; };
 		6F6448A02EA31A2F00CCE71A /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F64489B2EA31A2F00CCE71A /* CachedAsyncImage.swift */; };
+		7040CFAF3A9A7E2CEC03629F /* LoyaltyDashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 599F145A20AD7EED465DFD81 /* LoyaltyDashboardView.swift */; };
+		78991244A8A33307778ED9DB /* LoyaltyAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68BC554A350E37801AE92AC3 /* LoyaltyAPIService.swift */; };
+		99E24953E6F59FF82BD3425C /* CouponsAPIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D7C5BFAFB71734D4E1DAE6DD /* CouponsAPIService.swift */; };
 		A00000010000000000000001 /* OnlyCoffeeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000020000000000000001 /* OnlyCoffeeApp.swift */; };
 		A00000030000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000040000000000000001 /* ContentView.swift */; };
 		A00000050000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A00000060000000000000001 /* Assets.xcassets */; };
@@ -34,7 +48,6 @@
 		A00000450000000000000001 /* AuthenticationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000460000000000000001 /* AuthenticationManager.swift */; };
 		A00000470000000000000001 /* CartManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000480000000000000001 /* CartManager.swift */; };
 		A00000490000000000000001 /* KeychainManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000500000000000000001 /* KeychainManager.swift */; };
-		A00000510000000000000001 /* OAuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000520000000000000001 /* OAuthManager.swift */; };
 		A00000530000000000000001 /* Auth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000540000000000000001 /* Auth.swift */; };
 		A00000550000000000000001 /* CartItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000560000000000000001 /* CartItem.swift */; };
 		A00000570000000000000001 /* MenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000580000000000000001 /* MenuItem.swift */; };
@@ -45,11 +58,37 @@
 		A00000670000000000000001 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000680000000000000001 /* APIClient.swift */; };
 		A00000690000000000000001 /* Endpoints.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00000700000000000000001 /* Endpoints.swift */; };
 		A00000990000000000000001 /* InviteFriendView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A00001000000000000000001 /* InviteFriendView.swift */; };
+		A0906141CA5FF12A38E146AD /* TierBadgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6488B5BF3EB49E4BDA386A24 /* TierBadgeView.swift */; };
+		B9A339C971907A7921D7E10A /* StreakProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 597D559D3291B7A812FAC36F /* StreakProgressView.swift */; };
+		BC9EF95B7145E7C2AC6C8C99 /* Coupon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5885E6BA1B0DFB113420242E /* Coupon.swift */; };
+		BFA36C526FC88705D1DFDDEB /* LoyaltyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668F39EAE07E2BD5C67987FF /* LoyaltyViewModel.swift */; };
+		C21AA44D26CE11D3B8AA1FE7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3B60CF71FB77FF07DCB9A /* AppDelegate.swift */; };
+		CB3E2FA2661C1B6EAB379DC3 /* MyCouponsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A2368A9BC2CFE8F2A6DC77 /* MyCouponsView.swift */; };
+		D994A67306AD36D5842E8E5C /* VerificationCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A516ECD8A87AE69FC7B9A03A /* VerificationCodeView.swift */; };
+		E9A8B8A584A861CDD75E1B9F /* PromoCodeEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD0E56633B415939553DEC /* PromoCodeEntryView.swift */; };
+		FC7508F9D2818AE6937C2063 /* Loyalty.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD04D698078055340794BCC1 /* Loyalty.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0598DF0E22BBA41CF1A18BD1 /* ProfileCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProfileCompletionView.swift; path = OnlyCoffee/Views/Auth/ProfileCompletionView.swift; sourceTree = "<group>"; };
+		0EDA8C88DC3D7911BA7F6B71 /* ProfileCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileCompletionView.swift; sourceTree = "<group>"; };
+		13BD0E56633B415939553DEC /* PromoCodeEntryView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PromoCodeEntryView.swift; path = Views/Coupons/PromoCodeEntryView.swift; sourceTree = "<group>"; };
+		2406C98E75BED4CB4A69A7AD /* ProfileCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ProfileCompletionView.swift; sourceTree = "<group>"; };
+		24A2368A9BC2CFE8F2A6DC77 /* MyCouponsView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MyCouponsView.swift; path = Views/Coupons/MyCouponsView.swift; sourceTree = "<group>"; };
+		2DBDE4CF1AD28CD833805349 /* CouponCard.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CouponCard.swift; path = Views/Coupons/CouponCard.swift; sourceTree = "<group>"; };
+		5885E6BA1B0DFB113420242E /* Coupon.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Coupon.swift; path = Models/Coupon.swift; sourceTree = "<group>"; };
+		597D559D3291B7A812FAC36F /* StreakProgressView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StreakProgressView.swift; path = Views/Loyalty/StreakProgressView.swift; sourceTree = "<group>"; };
+		599F145A20AD7EED465DFD81 /* LoyaltyDashboardView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LoyaltyDashboardView.swift; path = Views/Loyalty/LoyaltyDashboardView.swift; sourceTree = "<group>"; };
+		5B5A376C72797A52286E1F76 /* QRCodeGenerator.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = QRCodeGenerator.swift; path = Utilities/QRCodeGenerator.swift; sourceTree = "<group>"; };
+		6488B5BF3EB49E4BDA386A24 /* TierBadgeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = TierBadgeView.swift; path = Views/Loyalty/TierBadgeView.swift; sourceTree = "<group>"; };
+		668F39EAE07E2BD5C67987FF /* LoyaltyViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LoyaltyViewModel.swift; path = Views/Loyalty/LoyaltyViewModel.swift; sourceTree = "<group>"; };
+		68BC554A350E37801AE92AC3 /* LoyaltyAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LoyaltyAPIService.swift; path = Services/LoyaltyAPIService.swift; sourceTree = "<group>"; };
 		6F64489B2EA31A2F00CCE71A /* CachedAsyncImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedAsyncImage.swift; sourceTree = "<group>"; };
 		6F64489D2EA31A2F00CCE71A /* ImageCacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCacheManager.swift; sourceTree = "<group>"; };
+		711967FB06B5F674B1A2E4A2 /* PhoneAuthView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PhoneAuthView.swift; sourceTree = "<group>"; };
+		73A6B15857F87854E1B1D4D2 /* CouponSelectorView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CouponSelectorView.swift; path = Views/Coupons/CouponSelectorView.swift; sourceTree = "<group>"; };
+		8156179C2056732D4D65554B /* VerificationCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VerificationCodeView.swift; sourceTree = "<group>"; };
+		83D3B60CF71FB77FF07DCB9A /* AppDelegate.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A00000020000000000000001 /* OnlyCoffeeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnlyCoffeeApp.swift; sourceTree = "<group>"; };
 		A00000040000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A00000060000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -75,7 +114,6 @@
 		A00000460000000000000001 /* AuthenticationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationManager.swift; sourceTree = "<group>"; };
 		A00000480000000000000001 /* CartManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartManager.swift; sourceTree = "<group>"; };
 		A00000500000000000000001 /* KeychainManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManager.swift; sourceTree = "<group>"; };
-		A00000520000000000000001 /* OAuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OAuthManager.swift; sourceTree = "<group>"; };
 		A00000540000000000000001 /* Auth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Auth.swift; sourceTree = "<group>"; };
 		A00000560000000000000001 /* CartItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CartItem.swift; sourceTree = "<group>"; };
 		A00000580000000000000001 /* MenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItem.swift; sourceTree = "<group>"; };
@@ -89,6 +127,15 @@
 		A00000720000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A00000730000000000000001 /* OnlyCoffee.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OnlyCoffee.entitlements; sourceTree = "<group>"; };
 		A00001000000000000000001 /* InviteFriendView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InviteFriendView.swift; sourceTree = "<group>"; };
+		A3BEBA730FC680E56661BFD2 /* PhoneAuthView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PhoneAuthView.swift; path = OnlyCoffee/Views/Auth/PhoneAuthView.swift; sourceTree = "<group>"; };
+		A516ECD8A87AE69FC7B9A03A /* VerificationCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = VerificationCodeView.swift; path = OnlyCoffee/Views/Auth/VerificationCodeView.swift; sourceTree = "<group>"; };
+		AD378F409E169FE5CBEE3F5B /* PhoneAuthView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PhoneAuthView.swift; sourceTree = "<group>"; };
+		AD8DDB7C37AEB76843A1FB30 /* CouponQRCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CouponQRCodeView.swift; path = Views/Coupons/CouponQRCodeView.swift; sourceTree = "<group>"; };
+		BD04D698078055340794BCC1 /* Loyalty.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Loyalty.swift; path = Models/Loyalty.swift; sourceTree = "<group>"; };
+		D7C5BFAFB71734D4E1DAE6DD /* CouponsAPIService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = CouponsAPIService.swift; path = Services/CouponsAPIService.swift; sourceTree = "<group>"; };
+		DA94F067DF0B9681D47EB04A /* VerificationCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VerificationCodeView.swift; sourceTree = "<group>"; };
+		E1532B8860ED34329D8BA12A /* NotificationPermissionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotificationPermissionView.swift; path = Views/Notifications/NotificationPermissionView.swift; sourceTree = "<group>"; };
+		EE1C946FC0AD755995DB610C /* PushNotificationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PushNotificationManager.swift; path = Managers/PushNotificationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -141,6 +188,23 @@
 				A00000800000000000000001 /* Models */,
 				A00000810000000000000001 /* Networking */,
 				A00000060000000000000001 /* Assets.xcassets */,
+				83D3B60CF71FB77FF07DCB9A /* AppDelegate.swift */,
+				EE1C946FC0AD755995DB610C /* PushNotificationManager.swift */,
+				5885E6BA1B0DFB113420242E /* Coupon.swift */,
+				BD04D698078055340794BCC1 /* Loyalty.swift */,
+				D7C5BFAFB71734D4E1DAE6DD /* CouponsAPIService.swift */,
+				68BC554A350E37801AE92AC3 /* LoyaltyAPIService.swift */,
+				5B5A376C72797A52286E1F76 /* QRCodeGenerator.swift */,
+				24A2368A9BC2CFE8F2A6DC77 /* MyCouponsView.swift */,
+				13BD0E56633B415939553DEC /* PromoCodeEntryView.swift */,
+				73A6B15857F87854E1B1D4D2 /* CouponSelectorView.swift */,
+				AD8DDB7C37AEB76843A1FB30 /* CouponQRCodeView.swift */,
+				2DBDE4CF1AD28CD833805349 /* CouponCard.swift */,
+				599F145A20AD7EED465DFD81 /* LoyaltyDashboardView.swift */,
+				668F39EAE07E2BD5C67987FF /* LoyaltyViewModel.swift */,
+				597D559D3291B7A812FAC36F /* StreakProgressView.swift */,
+				6488B5BF3EB49E4BDA386A24 /* TierBadgeView.swift */,
+				E1532B8860ED34329D8BA12A /* NotificationPermissionView.swift */,
 			);
 			path = OnlyCoffee;
 			sourceTree = "<group>";
@@ -177,7 +241,6 @@
 				A00000460000000000000001 /* AuthenticationManager.swift */,
 				A00000480000000000000001 /* CartManager.swift */,
 				A00000500000000000000001 /* KeychainManager.swift */,
-				A00000520000000000000001 /* OAuthManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -210,6 +273,15 @@
 			children = (
 				A00000140000000000000001 /* LoginView.swift */,
 				A00000160000000000000001 /* SignupView.swift */,
+				A3BEBA730FC680E56661BFD2 /* PhoneAuthView.swift */,
+				A516ECD8A87AE69FC7B9A03A /* VerificationCodeView.swift */,
+				0598DF0E22BBA41CF1A18BD1 /* ProfileCompletionView.swift */,
+				711967FB06B5F674B1A2E4A2 /* PhoneAuthView.swift */,
+				DA94F067DF0B9681D47EB04A /* VerificationCodeView.swift */,
+				2406C98E75BED4CB4A69A7AD /* ProfileCompletionView.swift */,
+				AD378F409E169FE5CBEE3F5B /* PhoneAuthView.swift */,
+				8156179C2056732D4D65554B /* VerificationCodeView.swift */,
+				0EDA8C88DC3D7911BA7F6B71 /* ProfileCompletionView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -363,7 +435,6 @@
 				A00000450000000000000001 /* AuthenticationManager.swift in Sources */,
 				A00000470000000000000001 /* CartManager.swift in Sources */,
 				A00000490000000000000001 /* KeychainManager.swift in Sources */,
-				A00000510000000000000001 /* OAuthManager.swift in Sources */,
 				A00000530000000000000001 /* Auth.swift in Sources */,
 				A00000550000000000000001 /* CartItem.swift in Sources */,
 				A00000570000000000000001 /* MenuItem.swift in Sources */,
@@ -375,6 +446,26 @@
 				6F64489F2EA31A2F00CCE71A /* ImageCacheManager.swift in Sources */,
 				6F6448A02EA31A2F00CCE71A /* CachedAsyncImage.swift in Sources */,
 				A00000690000000000000001 /* Endpoints.swift in Sources */,
+				C21AA44D26CE11D3B8AA1FE7 /* AppDelegate.swift in Sources */,
+				423D78CD764B81F8374C52C7 /* PushNotificationManager.swift in Sources */,
+				BC9EF95B7145E7C2AC6C8C99 /* Coupon.swift in Sources */,
+				FC7508F9D2818AE6937C2063 /* Loyalty.swift in Sources */,
+				99E24953E6F59FF82BD3425C /* CouponsAPIService.swift in Sources */,
+				78991244A8A33307778ED9DB /* LoyaltyAPIService.swift in Sources */,
+				5EBD40CF984BCA770EE11F6B /* QRCodeGenerator.swift in Sources */,
+				CB3E2FA2661C1B6EAB379DC3 /* MyCouponsView.swift in Sources */,
+				E9A8B8A584A861CDD75E1B9F /* PromoCodeEntryView.swift in Sources */,
+				179D104F70105C43959DD877 /* CouponSelectorView.swift in Sources */,
+				14A7A0F614111FCC39FE4AEB /* CouponQRCodeView.swift in Sources */,
+				0BCB94FED296D7F0BFA2CE71 /* CouponCard.swift in Sources */,
+				7040CFAF3A9A7E2CEC03629F /* LoyaltyDashboardView.swift in Sources */,
+				BFA36C526FC88705D1DFDDEB /* LoyaltyViewModel.swift in Sources */,
+				B9A339C971907A7921D7E10A /* StreakProgressView.swift in Sources */,
+				A0906141CA5FF12A38E146AD /* TierBadgeView.swift in Sources */,
+				6B5A5B513750CF37A2AC3EAD /* NotificationPermissionView.swift in Sources */,
+				6453BE14BAD0F4E2DD76D2B1 /* PhoneAuthView.swift in Sources */,
+				4F78E7A354E9532F669D4BF7 /* VerificationCodeView.swift in Sources */,
+				26AAC738A6371FA68A26FBA8 /* ProfileCompletionView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

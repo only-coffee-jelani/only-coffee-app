@@ -18,6 +18,12 @@ import { PromotionsModule } from './modules/promotions/promotions.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SplashScreenModule } from './modules/splash-screen/splash-screen.module';
 import { CarouselModule } from './modules/carousel/carousel.module';
+import { PromoCodesModule } from './modules/promo-codes/promo-codes.module';
+import { CouponsModule } from './modules/coupons/coupons.module';
+import { TasksModule } from './modules/tasks/tasks.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -57,6 +63,12 @@ import { CarouselModule } from './modules/carousel/carousel.module';
     AdminModule,
     SplashScreenModule,
     CarouselModule,
+    PromoCodesModule,
+    CouponsModule,
+    NotificationsModule,
+    TasksModule,
+    AnalyticsModule,
+    LoyaltyModule,
   ],
 })
 export class AppModule {}

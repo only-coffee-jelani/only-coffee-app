@@ -12,6 +12,10 @@ import {
 import { SlotManagementService, PaymentService, ToastApiService } from '@shared/services';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ConfirmOrderDto } from './dto/confirm-order.dto';
+import { CouponsService } from '../coupons/coupons.service';
+import { CouponApplicationService } from '../coupons/coupon-application.service';
+import { StreakTrackingService } from '../loyalty/streak-tracking.service';
+import { StreakRewardService } from '../loyalty/streak-reward.service';
 
 @Injectable()
 export class OrdersService {
@@ -27,11 +31,15 @@ export class OrdersService {
     private readonly slotManagementService: SlotManagementService,
     private readonly paymentService: PaymentService,
     private readonly toastApiService: ToastApiService,
+    private readonly couponsService: CouponsService,
+    private readonly couponApplicationService: CouponApplicationService,
+    private readonly streakTrackingService: StreakTrackingService,
+    private readonly streakRewardService: StreakRewardService,
     private readonly dataSource: DataSource,
   ) {}
 
   async create(userId: string, createOrderDto: CreateOrderDto) {
-    const { storeId, items, orderType, pickupTime, specialInstructions } = createOrderDto;
+    const { storeId, items, orderType, pickupTime, specialInstructions, couponId } = createOrderDto;
 
     // Validate store
     const store = await this.storeRepository.findOne({ where: { id: storeId } });
@@ -43,10 +51,47 @@ export class OrdersService {
       throw new BadRequestException('Store is not accepting orders');
     }
 
-    // Calculate totals
+    // Calculate subtotal
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice * item.quantity, 0);
-    const tax = subtotal * 0.0875; // 8.75% tax (California)
-    const total = subtotal + tax;
+
+    // Apply coupon if provided
+    let discountAmount = 0;
+    let appliedCouponId: string | null = null;
+
+    if (couponId) {
+      const coupon = await this.couponsService.getCouponById(couponId, userId);
+
+      // Validate and calculate discount
+      const orderChannel = orderType === OrderType.PICKUP || orderType === OrderType.DELIVERY
+        ? 'app_only'
+        : 'both'; // Default to app_only for non-catering orders
+
+      const couponResult = await this.couponApplicationService.validateCouponForOrder(
+        coupon,
+        userId,
+        items,
+        orderChannel as any,
+        subtotal,
+      );
+
+      if (!couponResult.valid) {
+        throw new BadRequestException(
+          couponResult.reason || 'Coupon cannot be applied to this order',
+        );
+      }
+
+      discountAmount = couponResult.discountAmount;
+      appliedCouponId = couponId;
+
+      this.logger.log(
+        `Coupon ${couponId} applied to order. Discount: $${discountAmount.toFixed(2)}`,
+      );
+    }
+
+    // Calculate tax on discounted subtotal
+    const taxableAmount = subtotal - discountAmount;
+    const tax = taxableAmount * 0.0875; // 8.75% tax (California)
+    const total = taxableAmount + tax;
 
     // Handle pickup time
     let finalPickupTime: Date;
@@ -73,6 +118,8 @@ export class OrdersService {
         status: OrderStatus.INITIATED,
         subtotal,
         tax,
+        discountAmount,
+        appliedCouponId,
         total,
         pickupTime: finalPickupTime,
         specialInstructions,
@@ -153,8 +200,18 @@ export class OrdersService {
 
     if (status === OrderStatus.COMPLETED) {
       order.completedAt = new Date();
+
+      // Process loyalty streak tracking (async, don't block order completion)
+      this.processLoyaltyForCompletedOrder(order.id, order.userId).catch((error) => {
+        this.logger.error(
+          `Failed to process loyalty for order ${order.id}:`,
+          error,
+        );
+        // Don't fail the order completion if loyalty processing fails
+      });
     } else if (status === OrderStatus.CANCELLED) {
       order.cancelledAt = new Date();
+
       // Release the slot
       if (order.pickupTime) {
         await this.slotManagementService.releaseSlot(
@@ -162,6 +219,38 @@ export class OrdersService {
           order.storeId,
           order.pickupTime,
         );
+      }
+
+      // Cancel the coupon if it was applied but not yet redeemed
+      // (If order was cancelled before payment confirmation)
+      if (order.appliedCouponId) {
+        try {
+          await this.couponsService.cancelCoupon(order.appliedCouponId);
+          this.logger.log(
+            `Coupon ${order.appliedCouponId} cancelled due to order ${orderId} cancellation`,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Failed to cancel coupon ${order.appliedCouponId} for cancelled order ${orderId}`,
+            error,
+          );
+          // Don't fail the cancellation, coupon may already be redeemed
+        }
+      }
+    } else if (status === OrderStatus.PAYMENT_FAILED) {
+      // Also release coupon if payment fails
+      if (order.appliedCouponId) {
+        try {
+          await this.couponsService.cancelCoupon(order.appliedCouponId);
+          this.logger.log(
+            `Coupon ${order.appliedCouponId} cancelled due to payment failure for order ${orderId}`,
+          );
+        } catch (error) {
+          this.logger.warn(
+            `Failed to cancel coupon ${order.appliedCouponId} for failed payment`,
+            error,
+          );
+        }
       }
     }
 
@@ -228,6 +317,24 @@ export class OrdersService {
 
       // Confirm the slot reservation permanently
       await this.slotManagementService.confirmSlot(orderId);
+
+      // Redeem coupon if applied
+      if (order.appliedCouponId) {
+        try {
+          await this.couponsService.redeemCoupon(
+            order.appliedCouponId,
+            userId,
+            orderId,
+          );
+          this.logger.log(`Coupon ${order.appliedCouponId} redeemed for order ${orderId}`);
+        } catch (error) {
+          this.logger.error(
+            `Failed to redeem coupon ${order.appliedCouponId} for order ${orderId}`,
+            error,
+          );
+          // Don't fail the order, but log for manual review
+        }
+      }
 
       const confirmedOrder = await manager.save(Order, order);
 
@@ -318,5 +425,52 @@ export class OrdersService {
       }
     }
     return PaymentMethod.STRIPE;
+  }
+
+  /**
+   * Process loyalty tracking for completed order
+   * This handles streak tracking and milestone rewards
+   */
+  private async processLoyaltyForCompletedOrder(
+    orderId: string,
+    userId: string,
+  ): Promise<void> {
+    try {
+      this.logger.log(`Processing loyalty for completed order ${orderId}`);
+
+      // Process the order for streak tracking
+      const result = await this.streakTrackingService.processOrderForStreak(orderId);
+
+      if (!result.qualified) {
+        this.logger.debug(
+          `Order ${orderId} did not qualify for streak tracking`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `Streak visit logged for user ${userId}: Day ${result.streak?.consecutiveDays}`,
+      );
+
+      // Check and grant milestone reward if reached
+      if (result.milestoneReached) {
+        const reward = await this.streakRewardService.checkAndGrantMilestoneReward(
+          userId,
+          result.milestoneReached,
+        );
+
+        if (reward) {
+          this.logger.log(
+            `Milestone reward granted for user ${userId}: Day ${result.milestoneReached}`,
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error processing loyalty for order ${orderId}:`,
+        error,
+      );
+      throw error;
+    }
   }
 }
