@@ -40,6 +40,21 @@ struct CartView: View {
                                     Text(String(format: "$%.2f", cartManager.subtotal))
                                 }
 
+                                // Show discount if coupon applied
+                                if cartManager.discountAmount > 0, let coupon = cartManager.selectedCoupon {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text("Coupon Discount")
+                                            Text(coupon.label)
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                        }
+                                        Spacer()
+                                        Text("-\(String(format: "$%.2f", cartManager.discountAmount))")
+                                            .foregroundColor(.green)
+                                    }
+                                }
+
                                 HStack {
                                     Text("Tax (8.75%)")
                                     Spacer()

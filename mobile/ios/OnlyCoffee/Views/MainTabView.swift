@@ -5,7 +5,7 @@ struct MainTabView: View {
     @State private var selectedTab = 0  // Start on Home tab
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             TabView(selection: $selectedTab) {
                 // Home
                 HomeView()
@@ -53,7 +53,6 @@ struct MainTabView: View {
                 UITabBar.appearance().scrollEdgeAppearance = appearance
             }
         }
-        .navigationViewStyle(.stack)
     }
 }
 

@@ -68,7 +68,8 @@ class APIClient {
 
         encoder.dateEncodingStrategy = .iso8601
         decoder.keyDecodingStrategy = .convertFromSnakeCase
-        encoder.keyEncodingStrategy = .convertToSnakeCase
+        // Backend expects camelCase, not snake_case
+        // encoder.keyEncodingStrategy = .convertToSnakeCase
     }
 
     func request<T: Decodable>(
@@ -101,10 +102,21 @@ class APIClient {
 
         // Make request
         do {
+            print("🌐 API Request: \(method.rawValue) \(url.absoluteString)")
+            if let bodyData = request.httpBody, let bodyString = String(data: bodyData, encoding: .utf8) {
+                print("📤 Request Body: \(bodyString)")
+            }
+
             let (data, response) = try await URLSession.shared.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ Invalid response - not HTTPURLResponse")
                 throw APIError.invalidResponse
+            }
+
+            print("📥 Response Status: \(httpResponse.statusCode)")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("📥 Response Body: \(responseString)")
             }
 
             switch httpResponse.statusCode {
@@ -112,6 +124,7 @@ class APIClient {
                 do {
                     return try decoder.decode(T.self, from: data)
                 } catch {
+                    print("❌ Decoding error: \(error)")
                     throw APIError.decodingError(error)
                 }
             case 401:
@@ -125,8 +138,10 @@ class APIClient {
                 throw APIError.invalidResponse
             }
         } catch let error as APIError {
+            print("❌ API Error: \(error.localizedDescription)")
             throw error
         } catch {
+            print("❌ Network error: \(error)")
             throw APIError.networkError(error)
         }
     }

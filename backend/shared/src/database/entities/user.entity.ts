@@ -18,9 +18,11 @@ export enum UserRole {
 }
 
 export enum UserTier {
+  BRONZE = 'bronze',
   SILVER = 'silver',
   GOLD = 'gold',
   PLATINUM = 'platinum',
+  BLACK = 'black',
 }
 
 @Entity('users')
@@ -51,7 +53,7 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER })
   role: UserRole;
 
-  @Column({ type: 'enum', enum: UserTier, default: UserTier.SILVER })
+  @Column({ type: 'enum', enum: UserTier, default: UserTier.BRONZE })
   loyaltyTier: UserTier;
 
   @Column({ type: 'int', default: 0 })
@@ -68,6 +70,15 @@ export class User {
 
   @Column({ type: 'boolean', default: false })
   phoneVerified: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  marketingOptIn: boolean;
+
+  @Column({ type: 'varchar', length: 6, nullable: true })
+  verificationCode: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  verificationCodeExpiry: Date | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   auth0Id: string | null;

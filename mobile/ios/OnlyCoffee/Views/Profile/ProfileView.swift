@@ -26,6 +26,10 @@ struct ProfileView: View {
                             Label("Edit Profile", systemImage: "person.fill")
                         }
 
+                        NavigationLink(destination: MyCouponsView()) {
+                            Label("My Coupons", systemImage: "ticket.fill")
+                        }
+
                         NavigationLink(destination: Text("Payment Methods")) {
                             Label("Payment Methods", systemImage: "creditcard.fill")
                         }

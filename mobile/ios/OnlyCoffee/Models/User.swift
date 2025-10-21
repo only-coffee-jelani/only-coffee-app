@@ -24,9 +24,11 @@ enum UserRole: String, Codable {
 }
 
 enum LoyaltyTier: String, Codable, CaseIterable {
+    case bronze = "bronze"
     case silver = "silver"
     case gold = "gold"
     case platinum = "platinum"
+    case black = "black"
 
     var displayName: String {
         rawValue.capitalized
@@ -34,17 +36,21 @@ enum LoyaltyTier: String, Codable, CaseIterable {
 
     var pointsRequired: Int {
         switch self {
-        case .silver: return 0
+        case .bronze: return 0
+        case .silver: return 500
         case .gold: return 1000
         case .platinum: return 5000
+        case .black: return 10000
         }
     }
 
     var color: String {
         switch self {
+        case .bronze: return "brown"
         case .silver: return "gray"
         case .gold: return "yellow"
         case .platinum: return "blue"
+        case .black: return "black"
         }
     }
 }
