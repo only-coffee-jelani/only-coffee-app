@@ -8,6 +8,8 @@ export * from './gift-card.entity';
 export * from './delivery-order.entity';
 export * from './review.entity';
 export * from './promotion.entity';
+export * from './splash-screen.entity';
+export * from './carousel-image.entity';
 export * from './promo-code.entity';
 export * from './coupon-grant.entity';
 export * from './program-event.entity';

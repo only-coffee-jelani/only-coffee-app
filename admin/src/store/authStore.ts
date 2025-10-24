@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { API_BASE } from '../config';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -10,10 +11,10 @@ interface AuthState {
 export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: !!localStorage.getItem('adminToken'),
   user: localStorage.getItem('adminUser') ? JSON.parse(localStorage.getItem('adminUser')!) : null,
-  
+
   login: async (email: string, password: string) => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/admin/login', {
+      const response = await fetch(`${API_BASE}/admin/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

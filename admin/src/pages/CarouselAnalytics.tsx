@@ -17,6 +17,7 @@ import {
 import { FiDownload, FiCalendar, FiTrendingUp, FiEye, FiMousePointer, FiTarget } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
+import { API_BASE } from '../config';
 
 interface CarouselAnalyticsData {
   id: string;
@@ -61,7 +62,7 @@ const CarouselAnalytics = () => {
         return;
       }
 
-      const response = await fetch('http://localhost:3000/api/v1/carousel/analytics/all', {
+      const response = await fetch(`${API_BASE}/carousel/analytics/all`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

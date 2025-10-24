@@ -38,7 +38,7 @@ class APIClient {
     static let shared = APIClient()
 
     // Production Elastic Beanstalk URL
-    private let baseURL = "http://only-coffee-prod.eba-p3bfu2px.us-east-1.elasticbeanstalk.com/api/v1"
+    private let baseURL = "http://only-coffee-prod.us-east-1.elasticbeanstalk.com/api/v1"
 
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()

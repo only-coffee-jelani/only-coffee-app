@@ -111,8 +111,15 @@ export class SplashScreenService {
   async updateSplashScreen(id: string, data: Partial<SplashScreen>): Promise<SplashScreen> {
     const splashScreen = await this.getSplashScreenById(id);
 
+    // Clean up empty strings to null for UUID fields
+    const cleanedData = {
+      ...data,
+      targetMenuItemId: data.targetMenuItemId === '' ? null : data.targetMenuItemId,
+      targetUrl: data.targetUrl === '' ? null : data.targetUrl,
+    };
+
     // If trying to set this splash screen as active
-    if (data.isActive === true) {
+    if (cleanedData.isActive === true) {
       // Find any other active splash screens
       const otherActive = await this.splashScreenRepository.findOne({
         where: { isActive: true },
@@ -131,7 +138,7 @@ export class SplashScreenService {
       }
     }
 
-    Object.assign(splashScreen, data);
+    Object.assign(splashScreen, cleanedData);
     return this.splashScreenRepository.save(splashScreen);
   }
 

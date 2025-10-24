@@ -16,7 +16,7 @@ exports.AppDataSource = new typeorm_1.DataSource({
     migrations: [(0, path_1.join)(__dirname, 'migrations', '*.{ts,js}')],
     synchronize: process.env.DB_SYNCHRONIZE === 'true',
     logging: process.env.DB_LOGGING === 'true',
-    ssl: process.env.NODE_ENV === 'production' ? {
+    ssl: process.env.DB_SSL === 'true' || process.env.NODE_ENV === 'production' ? {
         rejectUnauthorized: false
     } : false,
     extra: {

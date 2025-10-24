@@ -2,8 +2,8 @@
 # Production start script for Only Coffee Backend
 # Ensures correct module resolution for monorepo structure
 
-# Set NODE_PATH to help Node find modules
-export NODE_PATH=/var/app/current/node_modules:$NODE_PATH
+# Set NODE_PATH to help Node find modules in monorepo workspaces
+export NODE_PATH=/var/app/current/node_modules:/var/app/current/services/gateway/node_modules:/var/app/current/shared/node_modules:$NODE_PATH
 
 # Change to application directory
 cd /var/app/current
