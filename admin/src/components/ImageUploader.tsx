@@ -2,6 +2,7 @@ import React, { useCallback, useState, useEffect, useImperativeHandle } from 're
 import { useDropzone } from 'react-dropzone';
 import { FiUpload, FiX, FiMaximize2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { API_BASE } from '../config';
 
 interface ImageUploaderProps {
   onUpload: (url: string) => void;
@@ -65,7 +66,7 @@ const ImageUploader = React.forwardRef<ImageUploaderRef, ImageUploaderProps>(
       formData.append('file', file);
       formData.append('folder', folder);
 
-      const response = await fetch('http://localhost:3000/api/v1/upload', {
+      const response = await fetch(`${API_BASE}/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
