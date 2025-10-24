@@ -27,12 +27,16 @@ const MenuItemsManager = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'hot_coffee',
+    category: 'best_sellers',
     description: '',
     basePrice: '',
     imageUrl: '',
     selectedStores: [] as string[],
     allergens: [] as string[],
+    sizes: [
+      { name: 'Small', price: '0.00' },
+      { name: 'Large', price: '1.50' }
+    ] as Array<{ name: string; price: string }>,
   });
 
   const allergensList = [
@@ -102,7 +106,19 @@ const MenuItemsManager = () => {
   };
 
   const handleAddNew = () => {
-    setFormData({ name: '', category: 'hot_coffee', description: '', basePrice: '', imageUrl: '', selectedStores: [], allergens: [] });
+    setFormData({
+      name: '',
+      category: 'best_sellers',
+      description: '',
+      basePrice: '',
+      imageUrl: '',
+      selectedStores: [],
+      allergens: [],
+      sizes: [
+        { name: 'Small', price: '0.00' },
+        { name: 'Large', price: '1.50' }
+      ]
+    });
     setEditingId(null);
     setShowForm(true);
   };
@@ -112,6 +128,22 @@ const MenuItemsManager = () => {
     const storesWithItem = item.storeIds || [];
     const itemAllergens = item.allergens || [];
 
+    // Extract sizes from availableModifiers
+    let extractedSizes = [
+      { name: 'Small', price: '0.00' },
+      { name: 'Large', price: '1.50' }
+    ];
+
+    if (item.availableModifiers && Array.isArray(item.availableModifiers)) {
+      const sizeModifier = item.availableModifiers.find((mod: any) => mod.type === 'size');
+      if (sizeModifier && sizeModifier.options && Array.isArray(sizeModifier.options)) {
+        extractedSizes = sizeModifier.options.map((opt: any) => ({
+          name: opt.value || opt.name,
+          price: (opt.price || 0).toFixed(2)
+        }));
+      }
+    }
+
     setFormData({
       name: item.name,
       category: item.category,
@@ -120,6 +152,7 @@ const MenuItemsManager = () => {
       imageUrl: item.imageUrl || '',
       selectedStores: storesWithItem,
       allergens: itemAllergens,
+      sizes: extractedSizes,
     });
     setEditingId(item.id);
     setShowForm(true);
@@ -145,6 +178,18 @@ const MenuItemsManager = () => {
         return;
       }
 
+      // Construct availableModifiers from sizes
+      const availableModifiers = [{
+        id: 'size',
+        name: 'Size',
+        type: 'size',
+        options: formData.sizes.map(size => ({
+          value: size.name,
+          price: parseFloat(size.price)
+        })),
+        required: true
+      }];
+
       const payload = {
         name: formData.name,
         category: formData.category,
@@ -153,6 +198,7 @@ const MenuItemsManager = () => {
         imageUrl: formData.imageUrl,
         storeIds: formData.selectedStores,
         allergens: formData.allergens,
+        availableModifiers: availableModifiers,
       };
 
       if (editingId) {
@@ -232,12 +278,14 @@ const MenuItemsManager = () => {
 
   const getCategoryLabel = (category: string) => {
     const labels: Record<string, string> = {
+      'best_sellers': 'Best Sellers',
+      'seasonal_specials': 'Seasonal Specials',
+      'signature': 'Signature',
       'hot_coffee': 'Hot Coffee',
       'iced_coffee': 'Iced Coffee',
       'cold_brew': 'Cold Brew',
-      'signature': 'Signature',
-      'seasonal_specials': 'Seasonal Specials',
-      'chocolate': 'Chocolate',
+      'other_drinks': 'Other Drinks',
+      'chocolate': 'Other Drinks', // Legacy support
       'ice_cream': 'Ice Cream',
       'add_ons': 'Add Ons',
     };
@@ -302,12 +350,13 @@ const MenuItemsManager = () => {
 
   // Get all categories in order
   const allCategories = [
+    'best_sellers',
+    'seasonal_specials',
+    'signature',
     'hot_coffee',
     'iced_coffee',
     'cold_brew',
-    'signature',
-    'seasonal_specials',
-    'chocolate',
+    'other_drinks',
     'ice_cream',
     'add_ons',
   ];
@@ -438,12 +487,13 @@ const MenuItemsManager = () => {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                   >
+                    <option value="best_sellers">Best Sellers</option>
+                    <option value="seasonal_specials">Seasonal Specials</option>
+                    <option value="signature">Signature</option>
                     <option value="hot_coffee">Hot Coffee</option>
                     <option value="iced_coffee">Iced Coffee</option>
                     <option value="cold_brew">Cold Brew</option>
-                    <option value="signature">Signature</option>
-                    <option value="seasonal_specials">Seasonal Specials</option>
-                    <option value="chocolate">Chocolate</option>
+                    <option value="other_drinks">Other Drinks</option>
                     <option value="ice_cream">Ice Cream</option>
                     <option value="add_ons">Add Ons</option>
                   </select>
@@ -481,6 +531,41 @@ const MenuItemsManager = () => {
                   folder="menu-items"
                   imageUrl={formData.imageUrl}
                 />
+              </div>
+
+              {/* Sizes */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Cup Sizes & Pricing</label>
+                <div className="space-y-3">
+                  {formData.sizes.map((size, index) => (
+                    <div key={index} className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
+                      <div className="flex-1">
+                        <label className="block text-xs font-semibold text-gray-700 mb-2">{size.name}</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-3 text-gray-500 font-bold">$</span>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={size.price}
+                            onChange={(e) => {
+                              const newSizes = [...formData.sizes];
+                              newSizes[index].price = e.target.value;
+                              setFormData({ ...formData, sizes: newSizes });
+                            }}
+                            className="w-full pl-8 pr-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-semibold"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-600 mt-2">
+                          {index === 0 ? 'Base price (typically $0.00)' : 'Additional charge over base price'}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500 mt-3 italic">
+                  💡 Tip: Small is typically the base price ($0.00), Large adds an upcharge (e.g., $1.50)
+                </p>
               </div>
 
               {/* Allergens */}
@@ -805,12 +890,13 @@ const MenuItemsManager = () => {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white transition-all"
                 >
                   <option value="all">All Categories</option>
+                  <option value="best_sellers">Best Sellers</option>
+                  <option value="seasonal_specials">Seasonal Specials</option>
+                  <option value="signature">Signature</option>
                   <option value="hot_coffee">Hot Coffee</option>
                   <option value="iced_coffee">Iced Coffee</option>
                   <option value="cold_brew">Cold Brew</option>
-                  <option value="signature">Signature</option>
-                  <option value="seasonal_specials">Seasonal Specials</option>
-                  <option value="chocolate">Chocolate</option>
+                  <option value="other_drinks">Other Drinks</option>
                   <option value="ice_cream">Ice Cream</option>
                   <option value="add_ons">Add Ons</option>
                 </select>
@@ -931,7 +1017,8 @@ const MenuItemsManager = () => {
                           <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Price</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Sizes</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Base Price</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-64">Description</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Allergens</th>
                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
@@ -967,7 +1054,30 @@ const MenuItemsManager = () => {
                                 <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{item.name}</p>
                               </td>
 
-                              {/* Price */}
+                              {/* Sizes */}
+                              <td className="px-6 py-5">
+                                {item.availableModifiers && Array.isArray(item.availableModifiers) ? (
+                                  (() => {
+                                    const sizeModifier = item.availableModifiers.find((mod: any) => mod.type === 'size');
+                                    if (sizeModifier && sizeModifier.options) {
+                                      return (
+                                        <div className="flex flex-col gap-1">
+                                          {sizeModifier.options.map((opt: any, idx: number) => (
+                                            <span key={idx} className="text-xs text-gray-700 font-medium">
+                                              {opt.value}: <span className="text-blue-600 font-bold">+${Number(opt.price).toFixed(2)}</span>
+                                            </span>
+                                          ))}
+                                        </div>
+                                      );
+                                    }
+                                    return <span className="text-xs text-gray-500 italic">No sizes</span>;
+                                  })()
+                                ) : (
+                                  <span className="text-xs text-gray-500 italic">No sizes</span>
+                                )}
+                              </td>
+
+                              {/* Base Price */}
                               <td className="px-6 py-5">
                                 <span className="inline-block px-4 py-2 bg-gradient-to-r from-pink-100 to-orange-100 text-pink-700 rounded-full text-sm font-bold shadow-sm group-hover:shadow-md transition-shadow">
                                   ${Number(item.basePrice).toFixed(2)}
