@@ -11,6 +11,22 @@ import { MenuService } from './menu.service';
 export class MenuItemsController {
   constructor(private readonly menuService: MenuService) {}
 
+  @Get('categories')
+  @ApiOperation({
+    summary: 'Get all categories',
+    description: 'Retrieve all unique menu categories that are currently in use, sorted in display order.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all categories in use',
+    schema: {
+      example: ['best_sellers', 'seasonal_specials', 'signature', 'hot_coffee', 'iced_coffee', 'cold_brew', 'other_drinks', 'ice_cream', 'add_ons'],
+    },
+  })
+  async getAllCategories() {
+    return this.menuService.getAllCategories();
+  }
+
   @Get()
   @ApiOperation({
     summary: 'Get all menu items',

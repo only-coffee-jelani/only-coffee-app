@@ -12,13 +12,16 @@ enum Endpoint {
     case getLoyalty
 
     // MARK: - Stores
+    case getAllStores
     case nearbyStores(latitude: Double, longitude: Double, radius: Int?)
     case storeDetails(id: String)
 
     // MARK: - Menu
+    case getAllMenuItems
     case getMenu(storeId: String)
     case getMenuItem(id: String)
     case calculatePrice
+    case getCategories
 
     // MARK: - Orders
     case createOrder
@@ -64,6 +67,7 @@ enum Endpoint {
         case .getLoyalty: return "/users/me/loyalty"
 
         // Stores
+        case .getAllStores: return "/stores"
         case .nearbyStores(let lat, let lon, let radius):
             var path = "/stores/nearby?latitude=\(lat)&longitude=\(lon)"
             if let radius = radius {
@@ -73,9 +77,11 @@ enum Endpoint {
         case .storeDetails(let id): return "/stores/\(id)"
 
         // Menu
+        case .getAllMenuItems: return "/menu-items"
         case .getMenu(let storeId): return "/menu/store/\(storeId)"
         case .getMenuItem(let id): return "/menu/item/\(id)"
         case .calculatePrice: return "/menu/calculate-price"
+        case .getCategories: return "/categories"
 
         // Orders
         case .createOrder: return "/orders"

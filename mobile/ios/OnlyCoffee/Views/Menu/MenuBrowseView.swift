@@ -32,13 +32,10 @@ struct MenuBrowseView: View {
         .task {
             await viewModel.loadAllMenuItems()
             if !viewModel.categories.isEmpty {
-                // Default to best_sellers if available, otherwise use first category
-                selectedCategory = viewModel.categories.contains("best_sellers") ? "best_sellers" : (viewModel.categories.first ?? "")
-                viewModel.filterItems(by: nil, category: selectedCategory, searchText: "")
+                selectedCategory = viewModel.categories.first ?? ""
             }
         }
         .onChange(of: viewModel.isLoading) { isLoading in
-            // Show store prompt after menu data loads successfully
             if !isLoading && !viewModel.allMenuItems.isEmpty && viewModel.selectedStore == nil && !showStorePrompt {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     showStorePrompt = true
@@ -48,7 +45,6 @@ struct MenuBrowseView: View {
         .sheet(isPresented: $showStorePrompt) {
             StoresView(onStoreSelected: { store in
                 viewModel.setSelectedStore(store)
-                viewModel.filterItems(by: store, category: selectedCategory, searchText: searchText)
             })
         }
     }
@@ -91,7 +87,6 @@ struct MenuBrowseView: View {
             .sheet(isPresented: $showingLocationPicker) {
                 StoresView(onStoreSelected: { store in
                     viewModel.setSelectedStore(store)
-                    viewModel.filterItems(by: store, category: selectedCategory, searchText: searchText)
                 })
             }
 
@@ -104,9 +99,6 @@ struct MenuBrowseView: View {
 
                 TextField("Search menu items", text: $searchText)
                     .textFieldStyle(.plain)
-                    .onChange(of: searchText) { _ in
-                        viewModel.filterItems(by: viewModel.selectedStore, category: selectedCategory, searchText: searchText)
-                    }
 
                 if !searchText.isEmpty {
                     Button(action: {
@@ -122,67 +114,134 @@ struct MenuBrowseView: View {
 
             Divider()
 
-            // Category selector
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(viewModel.categories, id: \.self) { category in
-                        Button(action: {
-                            selectedCategory = category
-                            viewModel.filterItems(by: viewModel.selectedStore, category: category, searchText: searchText)
-                        }) {
-                            Text(MenuItem.getCategoryDisplayName(category))
-                                .font(.subheadline)
-                                .fontWeight(selectedCategory == category ? .bold : .regular)
-                                .foregroundColor(selectedCategory == category ? .white : .brandPink)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(selectedCategory == category ? Color.brandPink : Color.brandLight.opacity(0.2))
-                                .cornerRadius(20)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-            }
-            .background(Color(.systemBackground))
-
-            Divider()
-
-            // Menu items
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(viewModel.filteredItems, id: \.id) { item in
-                        NavigationLink(destination: MenuItemDetailView(menuItem: item, selectedStore: viewModel.selectedStore)) {
-                            MenuItemCard(item: item)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                    }
-
-                    // Empty state when no items found
-                    if viewModel.filteredItems.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 48))
-                                .foregroundColor(.secondary)
-
-                            Text(searchText.isEmpty ? "No items available" : "No items found")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-
-                            Text(searchText.isEmpty ? "Try selecting a different location or category" : "Try a different search")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 60)
-                    }
-                }
-                .padding()
-            }
-            .background(Color(.systemGroupedBackground))
+            // Main Content: Side Tabs + Infinite Scroll
+            InfiniteScrollMenuView(
+                viewModel: viewModel,
+                selectedCategory: $selectedCategory,
+                searchText: searchText
+            )
         }
         .navigationTitle("Menu")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct InfiniteScrollMenuView: View {
+    @ObservedObject var viewModel: MenuBrowseViewModel
+    @Binding var selectedCategory: String
+    let searchText: String
+
+    var groupedItems: [(category: String, items: [MenuItem])] {
+        viewModel.getAllItemsGroupedByCategory(store: viewModel.selectedStore, searchText: searchText)
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // Left Side: Pinned Category Tabs
+            ScrollView {
+                VStack(spacing: 4) {
+                    ForEach(viewModel.categories, id: \.self) { category in
+                        CategoryTabButton(
+                            category: category,
+                            isSelected: selectedCategory == category
+                        ) {
+                            withAnimation {
+                                selectedCategory = category
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            .frame(width: 80)
+            .background(Color(.systemGroupedBackground))
+
+            Divider()
+
+            // Right Side: Infinite Scroll with Category Headers
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        ForEach(groupedItems, id: \.category) { section in
+                            Section(header: CategoryHeader(category: section.category)) {
+                                ForEach(section.items, id: \.id) { item in
+                                    NavigationLink(destination: MenuItemDetailView(menuItem: item, selectedStore: viewModel.selectedStore)) {
+                                        MenuItemCard(item: item)
+                                            .padding(.horizontal)
+                                            .padding(.vertical, 8)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                            .id(section.category)
+                        }
+
+                        // Empty state
+                        if groupedItems.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(.secondary)
+
+                                Text(searchText.isEmpty ? "No items available" : "No items found")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                Text(searchText.isEmpty ? "Try selecting a different location" : "Try a different search")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 60)
+                        }
+                    }
+                }
+                .background(Color(.systemGroupedBackground))
+                .onChange(of: selectedCategory) { newCategory in
+                    withAnimation {
+                        proxy.scrollTo(newCategory, anchor: .top)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct CategoryTabButton: View {
+    let category: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(MenuItem.getCategoryDisplayName(category))
+                .font(.caption2)
+                .fontWeight(isSelected ? .bold : .regular)
+                .foregroundColor(isSelected ? .white : .brandPink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 4)
+                .background(isSelected ? Color.brandPink : Color.clear)
+                .cornerRadius(8)
+        }
+        .padding(.horizontal, 4)
+    }
+}
+
+struct CategoryHeader: View {
+    let category: String
+
+    var body: some View {
+        Text(MenuItem.getCategoryDisplayName(category))
+            .font(.title3)
+            .fontWeight(.bold)
+            .foregroundColor(.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(Color(.systemGroupedBackground))
     }
 }
 
