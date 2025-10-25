@@ -85,6 +85,45 @@ export class MenuService {
     return [...new Set(items.map((item) => item.category))];
   }
 
+  async getAllCategories(): Promise<string[]> {
+    // Query to get all unique categories from the categories array field
+    const result = await this.menuItemRepository
+      .createQueryBuilder('item')
+      .select('DISTINCT unnest(item.categories)', 'category')
+      .where('item.isActive = :isActive', { isActive: true })
+      .getRawMany();
+
+    const uniqueCategories = result.map((r) => r.category);
+
+    // Define category order
+    const categoryOrder = [
+      'best_sellers',
+      'seasonal_specials',
+      'signature',
+      'hot_coffee',
+      'iced_coffee',
+      'cold_brew',
+      'other_drinks',
+      'ice_cream',
+      'add_ons',
+    ];
+
+    // Sort by predefined order, putting unknown categories at the end
+    return uniqueCategories.sort((a, b) => {
+      const indexA = categoryOrder.indexOf(a);
+      const indexB = categoryOrder.indexOf(b);
+
+      // If both categories are not in the order list, maintain their relative order
+      if (indexA === -1 && indexB === -1) return 0;
+      // If only A is not in the list, put it at the end
+      if (indexA === -1) return 1;
+      // If only B is not in the list, put it at the end
+      if (indexB === -1) return -1;
+      // Otherwise, sort by their defined order
+      return indexA - indexB;
+    });
+  }
+
   // Admin methods
   async findAll() {
     // Get all menu items and deduplicate by name
@@ -110,7 +149,15 @@ export class MenuService {
   }
 
   async create(createMenuItemDto: any) {
-    const menuItem = this.menuItemRepository.create(createMenuItemDto);
+    // Ensure categories array is provided - use categories if available, otherwise fallback to category
+    const dto = {
+      ...createMenuItemDto,
+      categories: createMenuItemDto.categories && createMenuItemDto.categories.length > 0
+        ? createMenuItemDto.categories
+        : [createMenuItemDto.category],
+    };
+
+    const menuItem = this.menuItemRepository.create(dto);
     return this.menuItemRepository.save(menuItem);
   }
 
@@ -123,7 +170,17 @@ export class MenuService {
       throw new NotFoundException('Menu item not found');
     }
 
-    Object.assign(menuItem, updateMenuItemDto);
+    // Ensure categories array is provided - use categories if available, otherwise fallback to category
+    const dto = {
+      ...updateMenuItemDto,
+      categories: updateMenuItemDto.categories && updateMenuItemDto.categories.length > 0
+        ? updateMenuItemDto.categories
+        : updateMenuItemDto.category
+        ? [updateMenuItemDto.category]
+        : undefined,
+    };
+
+    Object.assign(menuItem, dto);
     return this.menuItemRepository.save(menuItem);
   }
 

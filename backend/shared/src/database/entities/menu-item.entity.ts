@@ -43,6 +43,14 @@ export class MenuItem {
   @Column({ type: 'enum', enum: MenuCategory })
   category: MenuCategory;
 
+  // New categories array field - supports multiple categories per item
+  @Column({
+    type: 'text',
+    array: true,
+    default: () => 'ARRAY[]::text[]'
+  })
+  categories: string[];
+
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   basePrice: number;
 
@@ -100,5 +108,8 @@ export function getCategoryDisplayName(category: string): string {
     'ice_cream': 'Ice Cream',
     'add_ons': 'Add Ons',
   };
-  return displayNames[category] || category;
+  // Convert snake_case to Title Case for unknown categories
+  return displayNames[category] || category.split('_').map(word =>
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
 }

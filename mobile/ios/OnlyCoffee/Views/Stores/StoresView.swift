@@ -4,6 +4,10 @@ import MapKit
 struct StoresView: View {
     @StateObject private var viewModel = StoresViewModel()
     @State private var showingMap = true
+    @Environment(\.dismiss) var dismiss
+
+    // Optional callback for selection mode
+    var onStoreSelected: ((Store) -> Void)?
 
     var body: some View {
         NavigationView {
@@ -41,11 +45,69 @@ struct StoresView: View {
                         StoreMapView(stores: viewModel.stores, selectedStore: $viewModel.selectedStore)
                             .ignoresSafeArea(edges: .bottom)
                     } else {
-                        StoreListView(stores: viewModel.stores)
+                        // Add "All Locations" option when in selection mode
+                        if onStoreSelected != nil {
+                            List {
+                                // "All Locations" button
+                                Button(action: {
+                                    onStoreSelected?(nil as Store? ?? Store(
+                                        id: "all",
+                                        name: "All Locations",
+                                        type: .store,
+                                        address: "",
+                                        city: "",
+                                        state: "",
+                                        zipCode: "",
+                                        latitude: 0,
+                                        longitude: 0,
+                                        phone: nil,
+                                        isActive: true,
+                                        acceptingOrders: true,
+                                        capacity: 0,
+                                        openingTime: "",
+                                        closingTime: ""
+                                    ))
+                                    dismiss()
+                                }) {
+                                    HStack(spacing: 12) {
+                                        Image(systemName: "mappin.and.ellipse")
+                                            .font(.title2)
+                                            .foregroundColor(.brandPink)
+                                            .frame(width: 40)
+
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("All Locations")
+                                                .font(.headline)
+                                                .foregroundColor(.primary)
+                                            Text("Show menu items from all stores")
+                                                .font(.subheadline)
+                                                .foregroundColor(.secondary)
+                                        }
+
+                                        Spacer()
+                                    }
+                                    .padding(.vertical, 8)
+                                }
+
+                                Section(header: Text("Nearby Stores")) {
+                                    ForEach(viewModel.stores) { storeWithDistance in
+                                        Button(action: {
+                                            onStoreSelected?(storeWithDistance.store)
+                                            dismiss()
+                                        }) {
+                                            StoreRowView(storeWithDistance: storeWithDistance)
+                                        }
+                                    }
+                                }
+                            }
+                            .listStyle(.insetGrouped)
+                        } else {
+                            StoreListView(stores: viewModel.stores)
+                        }
                     }
                 }
             }
-            .navigationTitle("Coffee Stores")
+            .navigationTitle(onStoreSelected != nil ? "Select Location" : "Coffee Stores")
             .task {
                 await viewModel.loadNearbyStores()
             }

@@ -10,13 +10,11 @@
 		0BCB94FED296D7F0BFA2CE71 /* CouponCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DBDE4CF1AD28CD833805349 /* CouponCard.swift */; };
 		14A7A0F614111FCC39FE4AEB /* CouponQRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD8DDB7C37AEB76843A1FB30 /* CouponQRCodeView.swift */; };
 		179D104F70105C43959DD877 /* CouponSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73A6B15857F87854E1B1D4D2 /* CouponSelectorView.swift */; };
-		2523D1587F674A3A224BD55B /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A3BEBA730FC680E56661BFD2 /* PhoneAuthView.swift */; };
 		26AAC738A6371FA68A26FBA8 /* ProfileCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EDA8C88DC3D7911BA7F6B71 /* ProfileCompletionView.swift */; };
 		423D78CD764B81F8374C52C7 /* PushNotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE1C946FC0AD755995DB610C /* PushNotificationManager.swift */; };
 		4F78E7A354E9532F669D4BF7 /* VerificationCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8156179C2056732D4D65554B /* VerificationCodeView.swift */; };
 		5EBD40CF984BCA770EE11F6B /* QRCodeGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5A376C72797A52286E1F76 /* QRCodeGenerator.swift */; };
 		6453BE14BAD0F4E2DD76D2B1 /* PhoneAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD378F409E169FE5CBEE3F5B /* PhoneAuthView.swift */; };
-		6735E14AFA9DA825A3C16895 /* ProfileCompletionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0598DF0E22BBA41CF1A18BD1 /* ProfileCompletionView.swift */; };
 		6B5A5B513750CF37A2AC3EAD /* NotificationPermissionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1532B8860ED34329D8BA12A /* NotificationPermissionView.swift */; };
 		6F64489F2EA31A2F00CCE71A /* ImageCacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F64489D2EA31A2F00CCE71A /* ImageCacheManager.swift */; };
 		6F6448A02EA31A2F00CCE71A /* CachedAsyncImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F64489B2EA31A2F00CCE71A /* CachedAsyncImage.swift */; };
@@ -64,10 +62,11 @@
 		BFA36C526FC88705D1DFDDEB /* LoyaltyViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 668F39EAE07E2BD5C67987FF /* LoyaltyViewModel.swift */; };
 		C21AA44D26CE11D3B8AA1FE7 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3B60CF71FB77FF07DCB9A /* AppDelegate.swift */; };
 		CB3E2FA2661C1B6EAB379DC3 /* MyCouponsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24A2368A9BC2CFE8F2A6DC77 /* MyCouponsView.swift */; };
-		D994A67306AD36D5842E8E5C /* VerificationCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A516ECD8A87AE69FC7B9A03A /* VerificationCodeView.swift */; };
 		E9A8B8A584A861CDD75E1B9F /* PromoCodeEntryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13BD0E56633B415939553DEC /* PromoCodeEntryView.swift */; };
 		FC7508F9D2818AE6937C2063 /* Loyalty.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD04D698078055340794BCC1 /* Loyalty.swift */; };
-/* End PBXBuildFile section */
+		34F42E051AF3F6F2C7C4D58E /* Category.swift in Sources */ = {isa = PBXBuildFile; fileRef = 131FDA92DADBB53B1E201712 /* Category.swift */; };
+		AA61D306B660186A9561881C /* MenuBrowseViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 419FFAE300870C76C91E4473 /* MenuBrowseViewModel.swift */; };
+	/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		0598DF0E22BBA41CF1A18BD1 /* ProfileCompletionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ProfileCompletionView.swift; path = OnlyCoffee/Views/Auth/ProfileCompletionView.swift; sourceTree = "<group>"; };
@@ -136,7 +135,9 @@
 		DA94F067DF0B9681D47EB04A /* VerificationCodeView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = VerificationCodeView.swift; sourceTree = "<group>"; };
 		E1532B8860ED34329D8BA12A /* NotificationPermissionView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NotificationPermissionView.swift; path = Views/Notifications/NotificationPermissionView.swift; sourceTree = "<group>"; };
 		EE1C946FC0AD755995DB610C /* PushNotificationManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PushNotificationManager.swift; path = Managers/PushNotificationManager.swift; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+		131FDA92DADBB53B1E201712 /* Category.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Category.swift; sourceTree = "<group>"; };
+		419FFAE300870C76C91E4473 /* MenuBrowseViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBrowseViewModel.swift; sourceTree = "<group>"; };
+	/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A00000740000000000000001 /* Frameworks */ = {
@@ -255,7 +256,7 @@
 				A00000620000000000000001 /* Promotion.swift */,
 				A00000640000000000000001 /* Store.swift */,
 				A00000660000000000000001 /* User.swift */,
-			);
+				131FDA92DADBB53B1E201712 /* Category.swift */,);
 			path = Models;
 			sourceTree = "<group>";
 		};
@@ -292,7 +293,7 @@
 				A00000200000000000000001 /* MenuBrowseView.swift */,
 				A00000220000000000000001 /* MenuItemDetailView.swift */,
 				A00000240000000000000001 /* MenuView.swift */,
-			);
+				419FFAE300870C76C91E4473 /* MenuBrowseViewModel.swift */,);
 			path = Menu;
 			sourceTree = "<group>";
 		};
@@ -466,7 +467,8 @@
 				6453BE14BAD0F4E2DD76D2B1 /* PhoneAuthView.swift in Sources */,
 				4F78E7A354E9532F669D4BF7 /* VerificationCodeView.swift in Sources */,
 				26AAC738A6371FA68A26FBA8 /* ProfileCompletionView.swift in Sources */,
-			);
+				34F42E051AF3F6F2C7C4D58E /* Category.swift in Sources */,
+				AA61D306B660186A9561881C /* MenuBrowseViewModel.swift in Sources */,);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */

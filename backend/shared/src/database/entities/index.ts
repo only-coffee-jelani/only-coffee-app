@@ -3,6 +3,7 @@ export * from './store.entity';
 export * from './order.entity';
 export * from './order-item.entity';
 export * from './menu-item.entity';
+export * from './category.entity';
 export * from './rewards-ledger.entity';
 export * from './gift-card.entity';
 export * from './delivery-order.entity';

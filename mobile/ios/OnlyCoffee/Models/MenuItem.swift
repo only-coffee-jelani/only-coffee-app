@@ -7,6 +7,7 @@ struct MenuItem: Codable, Identifiable {
     let name: String
     let description: String?
     let category: String
+    let categories: [String] // New multi-category field
     let basePrice: Double
     let imageUrl: String?
     let isAvailable: Bool
@@ -23,7 +24,7 @@ struct MenuItem: Codable, Identifiable {
 
     // Coding keys for backwards compatibility with old API responses
     enum CodingKeys: String, CodingKey {
-        case id, toastItemId, storeIds, name, description, category, basePrice
+        case id, toastItemId, storeIds, name, description, category, categories, basePrice
         case imageUrl, isAvailable, isActive, calories, isPopular
         case allergens, nutritionalInfo, preparationTime, sortOrder, createdAt, updatedAt
         case modifiers = "availableModifiers"  // Backend uses "availableModifiers"
@@ -44,6 +45,13 @@ struct MenuItem: Codable, Identifiable {
         name = try container.decode(String.self, forKey: .name)
         description = try container.decodeIfPresent(String.self, forKey: .description)
         category = try container.decode(String.self, forKey: .category)
+
+        // Support both categories array and fallback to single category
+        if let categoriesArray = try? container.decode([String].self, forKey: .categories), !categoriesArray.isEmpty {
+            categories = categoriesArray
+        } else {
+            categories = [category]
+        }
 
         // Backend returns basePrice as String, convert to Double
         if let priceString = try? container.decode(String.self, forKey: .basePrice) {
@@ -128,6 +136,7 @@ struct MenuItem: Codable, Identifiable {
         try container.encode(name, forKey: .name)
         try container.encodeIfPresent(description, forKey: .description)
         try container.encode(category, forKey: .category)
+        try container.encode(categories, forKey: .categories)
         try container.encode(basePrice, forKey: .basePrice)
         try container.encodeIfPresent(imageUrl, forKey: .imageUrl)
         try container.encode(isAvailable, forKey: .isAvailable)

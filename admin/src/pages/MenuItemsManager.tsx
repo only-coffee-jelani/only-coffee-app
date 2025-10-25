@@ -11,11 +11,14 @@ const MenuItemsManager = () => {
   const allergensDropdownRef = useRef<HTMLDivElement>(null);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: string | null; name: string }>({ show: false, id: null, name: '' });
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Search, Filter, Sort states
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,7 +30,8 @@ const MenuItemsManager = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'best_sellers',
+    category: 'best_sellers', // Keep for backward compatibility
+    categories: ['best_sellers'] as string[], // New multi-category field
     description: '',
     basePrice: '',
     imageUrl: '',
@@ -74,7 +78,7 @@ const MenuItemsManager = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [menuResponse, storesResponse] = await Promise.all([
+      const [menuResponse, storesResponse, categoriesResponse] = await Promise.all([
         fetch(`${API_BASE}/menu-items`, {
           method: 'GET',
           headers: {
@@ -87,16 +91,25 @@ const MenuItemsManager = () => {
             'Content-Type': 'application/json',
           },
         }),
+        fetch(`${API_BASE}/categories`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
       ]);
 
       if (!menuResponse.ok) throw new Error('Failed to fetch menu items');
       if (!storesResponse.ok) throw new Error('Failed to fetch stores');
+      if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
 
       const menuData = await menuResponse.json();
       const storesData = await storesResponse.json();
+      const categoriesData = await categoriesResponse.json();
 
       setMenuItems(menuData || []);
       setStores(storesData || []);
+      setCategories(categoriesData?.map((c: any) => c.name) || []);
     } catch (error) {
       console.error('Error fetching data:', error);
       toast.error('Failed to load menu items');
@@ -109,6 +122,7 @@ const MenuItemsManager = () => {
     setFormData({
       name: '',
       category: 'best_sellers',
+      categories: ['best_sellers'],
       description: '',
       basePrice: '',
       imageUrl: '',
@@ -144,9 +158,15 @@ const MenuItemsManager = () => {
       }
     }
 
+    // Use categories array if available, otherwise fall back to single category
+    const itemCategories = item.categories && item.categories.length > 0
+      ? item.categories
+      : [item.category];
+
     setFormData({
       name: item.name,
       category: item.category,
+      categories: itemCategories,
       description: item.description || '',
       basePrice: item.basePrice.toString(),
       imageUrl: item.imageUrl || '',
@@ -161,6 +181,11 @@ const MenuItemsManager = () => {
   const handleSave = async () => {
     if (!formData.name || !formData.basePrice) {
       toast.error('Please fill in all required fields');
+      return;
+    }
+
+    if (formData.categories.length === 0) {
+      toast.error('Please select at least one category');
       return;
     }
 
@@ -192,7 +217,8 @@ const MenuItemsManager = () => {
 
       const payload = {
         name: formData.name,
-        category: formData.category,
+        category: formData.categories[0] || formData.category, // Use first category for backward compatibility
+        categories: formData.categories, // Send categories array
         description: formData.description,
         basePrice: parseFloat(formData.basePrice),
         imageUrl: formData.imageUrl,
@@ -213,6 +239,12 @@ const MenuItemsManager = () => {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('adminToken');
+            toast.error('Your session has expired. Please log in again.');
+            window.location.href = '/login';
+            return;
+          }
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.message || `Failed to update menu item: ${response.status}`);
         }
@@ -232,6 +264,12 @@ const MenuItemsManager = () => {
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('adminToken');
+            toast.error('Your session has expired. Please log in again.');
+            window.location.href = '/login';
+            return;
+          }
           const errorData = await response.json().catch(() => ({}));
           throw new Error(errorData.message || `Failed to create menu item: ${response.status}`);
         }
@@ -429,6 +467,84 @@ const MenuItemsManager = () => {
 
   const areAllStoresSelectedGlobally = stores.length > 0 && stores.every(s => formData.selectedStores.includes(s.id));
 
+  // Category management functions
+  const handleAddCategory = async () => {
+    const categoryKey = newCategoryName.trim().toLowerCase().replace(/\s+/g, '_');
+    const displayName = newCategoryName.trim().split('_').map(word =>
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+
+    if (!categoryKey) {
+      toast.error('Please enter a category name');
+      return;
+    }
+    if (categories.includes(categoryKey)) {
+      toast.error('Category already exists');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: categoryKey, displayName }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create category');
+      }
+
+      setCategories([...categories, categoryKey]);
+      setNewCategoryName('');
+      toast.success('Category created successfully!');
+    } catch (error) {
+      console.error('Error creating category:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create category');
+    }
+  };
+
+  const handleDeleteCategory = async (category: string) => {
+    // Check if any items use this category
+    const itemsUsingCategory = menuItems.filter(item =>
+      (item.categories && item.categories.includes(category)) || item.category === category
+    );
+
+    if (itemsUsingCategory.length > 0) {
+      toast.error(`Cannot delete category "${category}". ${itemsUsingCategory.length} item(s) are using it.`);
+      return;
+    }
+
+    try {
+      // Find the category ID by name
+      const categoriesResponse = await fetch(`${API_BASE}/categories`);
+      const categoriesData = await categoriesResponse.json();
+      const categoryObj = categoriesData.find((c: any) => c.name === category);
+
+      if (!categoryObj) {
+        toast.error('Category not found');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/categories/${categoryObj.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to delete category');
+      }
+
+      setCategories(categories.filter(c => c !== category));
+      toast.success('Category deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to delete category');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
@@ -438,14 +554,23 @@ const MenuItemsManager = () => {
             <h1 className="text-4xl font-bold text-gray-900">Menu Items</h1>
             <p className="text-gray-600 mt-2 text-lg">Manage products, pricing, and availability across all stores</p>
           </div>
-          <button
-            onClick={handleAddNew}
-            className="px-6 py-3 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2 hover:opacity-90"
-            style={{ backgroundColor: '#ff93a3' }}
-          >
-            <FiPlus size={18} />
-            Add Menu Item
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowCategoryModal(true)}
+              className="px-6 py-3 text-pink-600 font-bold rounded-xl transition-all active:scale-95 shadow-md hover:shadow-lg flex items-center gap-2 bg-white border-2 border-pink-200 hover:bg-pink-50"
+            >
+              <FiFilter size={18} />
+              Manage Categories
+            </button>
+            <button
+              onClick={handleAddNew}
+              className="px-6 py-3 text-white font-bold rounded-xl transition-all active:scale-95 shadow-lg hover:shadow-xl flex items-center gap-2 hover:opacity-90"
+              style={{ backgroundColor: '#ff93a3' }}
+            >
+              <FiPlus size={18} />
+              Add Menu Item
+            </button>
+          </div>
         </div>
       </div>
 
@@ -478,25 +603,39 @@ const MenuItemsManager = () => {
                 />
               </div>
 
-              {/* Category & Price */}
+              {/* Categories & Price */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Category *</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
-                  >
-                    <option value="best_sellers">Best Sellers</option>
-                    <option value="seasonal_specials">Seasonal Specials</option>
-                    <option value="signature">Signature</option>
-                    <option value="hot_coffee">Hot Coffee</option>
-                    <option value="iced_coffee">Iced Coffee</option>
-                    <option value="cold_brew">Cold Brew</option>
-                    <option value="other_drinks">Other Drinks</option>
-                    <option value="ice_cream">Ice Cream</option>
-                    <option value="add_ons">Add Ons</option>
-                  </select>
+                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Categories * (Select all that apply)</label>
+                  <div className="border-2 border-pink-100 rounded-xl p-3 bg-white max-h-60 overflow-y-auto">
+                    {(categories.length > 0 ? categories : [
+                      'best_sellers',
+                      'seasonal_specials',
+                      'signature',
+                      'hot_coffee',
+                      'iced_coffee',
+                      'cold_brew',
+                      'other_drinks',
+                      'ice_cream',
+                      'add_ons'
+                    ]).map((category) => (
+                      <label key={category} className="flex items-center gap-2 py-2 hover:bg-pink-50 px-2 rounded cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={formData.categories.includes(category)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({ ...formData, categories: [...formData.categories, category] });
+                            } else {
+                              setFormData({ ...formData, categories: formData.categories.filter(c => c !== category) });
+                            }
+                          }}
+                          className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
+                        />
+                        <span className="text-sm text-gray-700">{getCategoryLabel(category)}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Price ($) *</label>
@@ -1017,6 +1156,7 @@ const MenuItemsManager = () => {
                           <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Name</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-40">Categories</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Sizes</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Base Price</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-64">Description</th>
@@ -1052,6 +1192,20 @@ const MenuItemsManager = () => {
                               {/* Name */}
                               <td className="px-6 py-5">
                                 <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{item.name}</p>
+                              </td>
+
+                              {/* Categories */}
+                              <td className="px-6 py-5">
+                                <div className="flex flex-wrap gap-1.5">
+                                  {(item.categories && item.categories.length > 0 ? item.categories : [item.category]).map((cat, idx) => (
+                                    <span
+                                      key={idx}
+                                      className="inline-block px-2.5 py-1 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 rounded-full text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow"
+                                    >
+                                      {getCategoryLabel(cat)}
+                                    </span>
+                                  ))}
+                                </div>
                               </td>
 
                               {/* Sizes */}
@@ -1179,6 +1333,103 @@ const MenuItemsManager = () => {
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-bold rounded-lg transition-all active:scale-95 shadow-lg hover:shadow-xl"
               >
                 Delete Item
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Management Modal */}
+      {showCategoryModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl flex flex-col">
+            <div className="bg-gradient-to-r from-pink-50 to-orange-50 border-b-2 border-pink-100 p-8 flex items-center justify-between">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-orange-600 bg-clip-text text-transparent">
+                Manage Categories
+              </h2>
+              <button onClick={() => setShowCategoryModal(false)} className="text-gray-500 hover:text-gray-700 p-2 hover:bg-white rounded-full transition-colors">
+                <FiX size={24} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6 overflow-y-auto">
+              {/* Add New Category */}
+              <div className="bg-pink-50 p-6 rounded-xl border-2 border-pink-200">
+                <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">
+                  Add New Category
+                </label>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
+                    className="flex-1 px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
+                    placeholder="e.g., Special Drinks"
+                  />
+                  <button
+                    onClick={handleAddCategory}
+                    className="px-6 py-3 bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-95"
+                  >
+                    <FiPlus size={20} />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">Category will be saved as: {newCategoryName.trim().toLowerCase().replace(/\s+/g, '_') || '...'}</p>
+              </div>
+
+              {/* Existing Categories */}
+              <div>
+                <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">
+                  Existing Categories ({categories.length})
+                </label>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {categories.length === 0 ? (
+                    <div className="text-center py-12 text-gray-400">
+                      <FiFilter size={48} className="mx-auto mb-4 opacity-50" />
+                      <p>No categories yet. Add one above!</p>
+                    </div>
+                  ) : (
+                    categories.map((category) => {
+                      const itemCount = menuItems.filter(item =>
+                        (item.categories && item.categories.includes(category)) || item.category === category
+                      ).length;
+                      return (
+                        <div key={category} className="flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-xl hover:border-pink-200 transition-all group">
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 capitalize">
+                              {category.split('_').join(' ')}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {itemCount} item{itemCount !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteCategory(category)}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Delete category"
+                          >
+                            <FiTrash2 size={18} />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Tip:</strong> Categories are automatically saved when you assign them to menu items. You can create categories on-the-fly when editing items!
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 px-8 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => setShowCategoryModal(false)}
+                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold rounded-xl hover:shadow-lg transition-all active:scale-95"
+              >
+                Done
               </button>
             </div>
           </div>

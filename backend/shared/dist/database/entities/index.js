@@ -19,6 +19,7 @@ __exportStar(require("./store.entity"), exports);
 __exportStar(require("./order.entity"), exports);
 __exportStar(require("./order-item.entity"), exports);
 __exportStar(require("./menu-item.entity"), exports);
+__exportStar(require("./category.entity"), exports);
 __exportStar(require("./rewards-ledger.entity"), exports);
 __exportStar(require("./gift-card.entity"), exports);
 __exportStar(require("./delivery-order.entity"), exports);

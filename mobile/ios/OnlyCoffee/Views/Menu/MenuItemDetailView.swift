@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MenuItemDetailView: View {
     let menuItem: MenuItem
+    var selectedStore: Store?
     @EnvironmentObject var cartManager: CartManager
     @Environment(\.dismiss) var dismiss
 
@@ -9,10 +10,16 @@ struct MenuItemDetailView: View {
     @State private var selectedModifiers: [SelectedCartModifier] = []
     @State private var specialInstructions = ""
     @State private var showingAddedToCart = false
+    @State private var showStoreSelector = false
 
     var totalPrice: Double {
         let modifiersPrice = selectedModifiers.reduce(0) { $0 + $1.priceAdjustment }
         return (menuItem.basePrice + modifiersPrice) * Double(quantity)
+    }
+
+    var isAvailableAtSelectedStore: Bool {
+        guard let store = selectedStore else { return true }
+        return menuItem.isAvailableAt(storeId: store.id)
     }
 
     var body: some View {
@@ -55,6 +62,56 @@ struct MenuItemDetailView: View {
                         Text("\(calories) calories")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
+                    }
+
+                    // Allergens
+                    if let allergens = menuItem.allergens, !allergens.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Allergens")
+                                .font(.subheadline.bold())
+                            Text(menuItem.allergensList)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    // Nutritional Info
+                    if let nutritionalText = menuItem.nutritionalText {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nutritional Information")
+                                .font(.subheadline.bold())
+                            Text(nutritionalText)
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+
+                    // Preparation Time
+                    if let prepTime = menuItem.preparationTime, prepTime > 0 {
+                        Label("\(prepTime) min prep time", systemImage: "clock")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+
+                    // Store Availability Warning
+                    if !isAvailableAtSelectedStore {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text("Not available at selected location")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(.orange)
+                            }
+                            if let store = selectedStore {
+                                Text("This item is not available at \(store.name)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        .padding()
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(8)
                     }
 
                     // Modifiers
@@ -116,28 +173,40 @@ struct MenuItemDetailView: View {
 
                     // Add to cart button
                     Button(action: {
-                        let cartItem = CartItem(
-                            menuItem: menuItem,
-                            quantity: quantity,
-                            selectedModifiers: selectedModifiers,
-                            specialInstructions: specialInstructions.isEmpty ? nil : specialInstructions
-                        )
-                        cartManager.addItem(cartItem)
-                        showingAddedToCart = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                            dismiss()
+                        if !isAvailableAtSelectedStore {
+                            showStoreSelector = true
+                        } else {
+                            let cartItem = CartItem(
+                                menuItem: menuItem,
+                                quantity: quantity,
+                                selectedModifiers: selectedModifiers,
+                                specialInstructions: specialInstructions.isEmpty ? nil : specialInstructions
+                            )
+                            cartManager.addItem(cartItem)
+                            showingAddedToCart = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                dismiss()
+                            }
                         }
                     }) {
                         HStack {
-                            Image(systemName: "cart.fill.badge.plus")
-                            Text("Add to Cart - \(String(format: "$%.2f", totalPrice))")
+                            Image(systemName: isAvailableAtSelectedStore ? "cart.fill.badge.plus" : "location.fill")
+                            Text(isAvailableAtSelectedStore ?
+                                "Add to Cart - \(String(format: "$%.2f", totalPrice))" :
+                                "Choose Different Store")
                                 .fontWeight(.semibold)
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.orange)
+                        .background(isAvailableAtSelectedStore ? Color.orange : Color.gray)
                         .foregroundColor(.white)
                         .cornerRadius(12)
+                    }
+                    .sheet(isPresented: $showStoreSelector) {
+                        StoresView(onStoreSelected: { _ in
+                            // Store selection handled by parent view
+                            showStoreSelector = false
+                        })
                     }
                 }
                 .padding()
@@ -159,7 +228,7 @@ struct ModifierSection: View {
             HStack {
                 Text(modifier.name)
                     .font(.headline)
-                if modifier.isRequired {
+                if modifier.required {
                     Text("Required")
                         .font(.caption)
                         .foregroundColor(.red)
@@ -174,7 +243,7 @@ struct ModifierSection: View {
                         Image(systemName: isSelected(option) ? "checkmark.circle.fill" : "circle")
                             .foregroundColor(isSelected(option) ? .orange : .gray)
 
-                        Text(option.name)
+                        Text(option.value)
                             .foregroundColor(.primary)
 
                         Spacer()
@@ -209,8 +278,8 @@ struct ModifierSection: View {
                 modifierId: modifier.id,
                 modifierName: modifier.name,
                 optionId: option.id,
-                optionName: option.name,
-                priceAdjustment: option.priceAdjustment
+                optionName: option.value,
+                priceAdjustment: option.price
             )
             selectedModifiers.append(cartModifier)
         }
