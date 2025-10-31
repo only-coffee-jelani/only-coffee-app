@@ -14,6 +14,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.UserSegment = exports.Event = void 0;
 __exportStar(require("./user.entity"), exports);
 __exportStar(require("./store.entity"), exports);
 __exportStar(require("./order.entity"), exports);
@@ -37,4 +38,16 @@ __exportStar(require("./streak-reward.entity"), exports);
 __exportStar(require("./anniversary-reward.entity"), exports);
 __exportStar(require("./user-tier-history.entity"), exports);
 __exportStar(require("./tier-perk.entity"), exports);
+__exportStar(require("./user-event.entity"), exports);
+var user_event_entity_1 = require("./user-event.entity");
+Object.defineProperty(exports, "Event", { enumerable: true, get: function () { return user_event_entity_1.UserEvent; } });
+__exportStar(require("./user-profile.entity"), exports);
+__exportStar(require("./user-segment-assignment.entity"), exports);
+var user_segment_assignment_entity_1 = require("./user-segment-assignment.entity");
+Object.defineProperty(exports, "UserSegment", { enumerable: true, get: function () { return user_segment_assignment_entity_1.UserSegmentAssignment; } });
+__exportStar(require("./ai-promotion.entity"), exports);
+__exportStar(require("./promotion-execution.entity"), exports);
+__exportStar(require("./user-segment.entity"), exports);
+__exportStar(require("./model-log.entity"), exports);
+__exportStar(require("./notification-preference.entity"), exports);
 //# sourceMappingURL=index.js.map
