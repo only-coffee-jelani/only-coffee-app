@@ -1,60 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Promotion, PromotionType, SplashScreen } from '@shared/database/entities';
+import { Promotion, PromotionType } from '@shared/database/entities';
 
 @Injectable()
 export class PromotionsService {
   constructor(
     @InjectRepository(Promotion)
     private readonly promotionRepository: Repository<Promotion>,
-    @InjectRepository(SplashScreen)
-    private readonly splashScreenRepository: Repository<SplashScreen>,
   ) {}
-
-  async getActiveLaunchModal() {
-    const now = new Date();
-
-    // Query splash_screens table instead of promotions
-    const splashScreen = await this.splashScreenRepository
-      .createQueryBuilder('splash')
-      .where('splash.isActive = :isActive', { isActive: true })
-      .andWhere(
-        '(splash.startDate IS NULL OR splash.startDate <= :now)',
-        { now },
-      )
-      .andWhere(
-        '(splash.endDate IS NULL OR splash.endDate >= :now)',
-        { now },
-      )
-      .orderBy('splash.createdAt', 'DESC')
-      .getOne();
-
-    // If no splash screen found, return null
-    if (!splashScreen) {
-      return null;
-    }
-
-    // Transform SplashScreen to Promotion format for iOS app compatibility
-    const promotion: Promotion = {
-      id: splashScreen.id,
-      title: splashScreen.title,
-      description: splashScreen.description,
-      promotionType: PromotionType.LAUNCH_MODAL,
-      imageUrl: splashScreen.imageUrl,
-      targetMenuItemId: splashScreen.targetMenuItemId,
-      targetUrl: splashScreen.targetUrl,
-      startDate: splashScreen.startDate,
-      endDate: splashScreen.endDate,
-      isActive: splashScreen.isActive,
-      displayDuration: splashScreen.displayDuration,
-      sortOrder: 0, // Default value since splash screens don't have sortOrder
-      createdAt: splashScreen.createdAt,
-      updatedAt: splashScreen.updatedAt,
-    };
-
-    return promotion;
-  }
 
   async getActivePromotions(promotionType?: PromotionType) {
     const now = new Date();

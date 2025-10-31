@@ -9,32 +9,6 @@ import { PromotionType } from '@shared/database/entities';
 export class PromotionsController {
   constructor(private readonly promotionsService: PromotionsService) {}
 
-  @Get('active/launch-modal')
-  @Public()
-  @ApiOperation({
-    summary: 'Get active launch modal promotion',
-    description: 'Retrieve the currently active launch modal promotion if available',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Active launch modal promotion',
-    schema: {
-      example: {
-        id: 'uuid',
-        title: 'Welcome to Only Coffee',
-        description: 'Get 20% off your first order',
-        promotionType: 'LAUNCH_MODAL',
-        isActive: true,
-        startDate: '2024-01-01T00:00:00Z',
-        endDate: '2024-12-31T23:59:59Z',
-      },
-    },
-  })
-  async getActiveLaunchModal() {
-    const promotion = await this.promotionsService.getActiveLaunchModal();
-    return promotion || { message: 'No active launch modal' };
-  }
-
   @Get('active')
   @Public()
   @ApiOperation({

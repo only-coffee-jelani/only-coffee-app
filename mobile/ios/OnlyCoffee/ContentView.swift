@@ -30,23 +30,31 @@ struct ContentView: View {
     }
 
     private func fetchLaunchPromotion() async {
-        print("📱 Fetching launch promotion...")
+        print("📱 Fetching splash screen...")
         do {
             let promotion: Promotion = try await APIClient.shared.request(
-                endpoint: Endpoint.getActiveLaunchModal.path,
+                endpoint: "/splash-screen/current",
                 requiresAuth: false
             )
 
-            print("✅ Promotion fetched: \(promotion.title)")
+            print("✅ Splash screen fetched: \(promotion.title)")
             print("🖼️ Image URL: \(promotion.imageUrl)")
 
             await MainActor.run {
                 self.launchPromotion = promotion
                 print("🎯 Modal should now be visible")
             }
+        } catch let error as APIError {
+            if case .decodingError = error {
+                // Empty response = no active splash screen (expired or not configured)
+                print("ℹ️ No active splash screen available")
+            } else {
+                print("❌ Failed to fetch splash screen: \(error.localizedDescription)")
+            }
+            // Silently fail - no splash screen to show
         } catch {
-            print("❌ Failed to fetch launch promotion: \(error)")
-            // Silently fail - no promotion to show
+            print("❌ Failed to fetch splash screen: \(error.localizedDescription)")
+            // Silently fail - no splash screen to show
         }
     }
 }
