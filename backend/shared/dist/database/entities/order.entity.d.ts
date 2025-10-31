@@ -55,4 +55,6 @@ export declare class Order {
     store: Store;
     items: OrderItem[];
     appliedCoupon: CouponGrant | null;
+    get totalAmount(): number;
+    get promoCodeId(): string | null;
 }

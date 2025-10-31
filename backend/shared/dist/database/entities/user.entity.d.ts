@@ -29,14 +29,20 @@ export declare class User {
     emailVerified: boolean;
     phoneVerified: boolean;
     marketingOptIn: boolean;
+    profileCompleted: boolean;
+    isLoyaltyMember: boolean;
+    notificationsEnabled: boolean;
+    deletedAt: Date | null;
     verificationCode: string | null;
     verificationCodeExpiry: Date | null;
     auth0Id: string | null;
     stripeCustomerId: string | null;
     lastLoginAt: Date | null;
+    lastActivityDate: Date | null;
     createdAt: Date;
     updatedAt: Date;
     orders: Order[];
     rewardsLedger: RewardsLedger[];
     reviews: Review[];
+    get name(): string;
 }

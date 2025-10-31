@@ -42,6 +42,12 @@ var PaymentMethod;
     PaymentMethod["REWARD_REDEMPTION"] = "reward_redemption";
 })(PaymentMethod || (exports.PaymentMethod = PaymentMethod = {}));
 let Order = class Order {
+    get totalAmount() {
+        return this.total;
+    }
+    get promoCodeId() {
+        return this.appliedCouponId;
+    }
 };
 exports.Order = Order;
 __decorate([

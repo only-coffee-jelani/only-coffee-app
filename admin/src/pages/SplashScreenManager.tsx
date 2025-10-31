@@ -3,8 +3,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiLoader, FiImage, FiSearch, Fi
 import toast from 'react-hot-toast';
 import ImageUploader from '../components/ImageUploader';
 import { useAuthStore } from '../store/authStore';
-
-const API_BASE = 'http://localhost:3000/api/v1';
+import { API_BASE } from '../config';
 
 const SplashScreenManager = () => {
   const { user } = useAuthStore();

@@ -3,6 +3,7 @@ import { FiPlus, FiTrash2, FiSave, FiLoader, FiEdit2, FiX, FiImage, FiSearch, Fi
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import ImageUploader from '../components/ImageUploader';
+import { API_BASE } from '../config';
 
 interface CarouselImage {
   id: string;
@@ -18,8 +19,6 @@ interface CarouselImage {
   viewCount?: number;
   createdAt?: string;
 }
-
-const API_BASE = 'http://localhost:3000/api/v1';
 
 const CarouselManager = () => {
   const { user } = useAuthStore();

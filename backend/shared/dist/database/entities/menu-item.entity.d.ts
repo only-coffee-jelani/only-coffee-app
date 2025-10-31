@@ -1,18 +1,23 @@
 export declare enum MenuCategory {
-    COFFEE = "coffee",
-    ESPRESSO = "espresso",
-    TEA = "tea",
-    FOOD = "food",
-    PASTRY = "pastry",
-    MERCHANDISE = "merchandise"
+    BEST_SELLERS = "best_sellers",
+    SEASONAL_SPECIALS = "seasonal_specials",
+    SIGNATURE = "signature",
+    HOT_COFFEE = "hot_coffee",
+    ICED_COFFEE = "iced_coffee",
+    COLD_BREW = "cold_brew",
+    OTHER_DRINKS = "other_drinks",
+    ICE_CREAM = "ice_cream",
+    ADD_ONS = "add_ons",
+    CHOCOLATE = "chocolate"
 }
 export declare class MenuItem {
     id: string;
-    storeId: string;
+    storeIds: string[];
     toastItemId: string | null;
     name: string;
     description: string | null;
     category: MenuCategory;
+    categories: string[];
     basePrice: number;
     imageUrl: string | null;
     availableModifiers: Array<{
@@ -35,3 +40,4 @@ export declare class MenuItem {
     updatedAt: Date;
     lastSyncedAt: Date | null;
 }
+export declare function getCategoryDisplayName(category: string): string;

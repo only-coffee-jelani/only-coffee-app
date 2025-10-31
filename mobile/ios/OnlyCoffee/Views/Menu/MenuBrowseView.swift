@@ -1,225 +1,55 @@
 import SwiftUI
 
 struct MenuBrowseView: View {
-    @State private var selectedCategory: String = "Hot Coffee"
-    @State private var selectedStore: Store? = nil
+    @StateObject private var viewModel = MenuBrowseViewModel()
+    @State private var selectedCategory: String = ""
     @State private var showingLocationPicker = false
+    @State private var showStorePrompt = false
     @State private var searchText: String = ""
 
-    let categories = [
-        "Hot Coffee",
-        "Iced Coffee",
-        "Specialty Drinks",
-        "Add-Ons"
-    ]
-
-    let menuItems: [String: [MenuItemData]] = [
-        "Hot Coffee": [
-            MenuItemData(
-                name: "Espresso",
-                description: "Rich, bold shot of pure coffee perfection",
-                price: 4.50,
-                calories: 5,
-                imageName: "espresso"
-            ),
-            MenuItemData(
-                name: "Doppio",
-                description: "Double shot of espresso for the true coffee lover",
-                price: 5.50,
-                calories: 10,
-                imageName: "doppio"
-            ),
-            MenuItemData(
-                name: "Americano",
-                description: "Espresso with hot water, bold and smooth",
-                price: 4.50,
-                calories: 10,
-                imageName: "americano"
-            ),
-            MenuItemData(
-                name: "Cappuccino",
-                description: "Equal parts espresso, steamed milk, and foam",
-                price: 5.50,
-                calories: 120,
-                imageName: "cappuccino"
-            ),
-            MenuItemData(
-                name: "Latte",
-                description: "Espresso with steamed milk, creamy and smooth",
-                price: 6.00,
-                calories: 190,
-                imageName: "latte"
-            ),
-            MenuItemData(
-                name: "Flat White",
-                description: "Microfoam perfection with a double shot of espresso",
-                price: 6.00,
-                calories: 170,
-                imageName: "flatwhite"
-            ),
-            MenuItemData(
-                name: "Macchiato",
-                description: "Espresso marked with a dollop of foam",
-                price: 5.00,
-                calories: 15,
-                imageName: "macchiato"
-            ),
-            MenuItemData(
-                name: "Cortado",
-                description: "Equal parts espresso and steamed milk",
-                price: 5.50,
-                calories: 90,
-                imageName: "cortado"
-            ),
-            MenuItemData(
-                name: "Mocha",
-                description: "Espresso, steamed milk, and rich chocolate",
-                price: 6.50,
-                calories: 290,
-                imageName: "mocha"
-            ),
-            MenuItemData(
-                name: "Waffolino",
-                description: "Our signature espresso served in a crispy waffle cone",
-                price: 8.50,
-                calories: 350,
-                imageName: "waffolino",
-                isSignature: true
-            )
-        ],
-        "Iced Coffee": [
-            MenuItemData(
-                name: "Iced Espresso",
-                description: "Bold espresso over ice",
-                price: 4.50,
-                calories: 5,
-                imageName: "iced-espresso"
-            ),
-            MenuItemData(
-                name: "Iced Americano",
-                description: "Espresso and water over ice",
-                price: 4.50,
-                calories: 10,
-                imageName: "iced-americano"
-            ),
-            MenuItemData(
-                name: "Iced Latte",
-                description: "Espresso and cold milk over ice",
-                price: 6.00,
-                calories: 190,
-                imageName: "iced-latte"
-            ),
-            MenuItemData(
-                name: "Iced Cappuccino",
-                description: "Espresso, cold milk, and foam over ice",
-                price: 5.50,
-                calories: 120,
-                imageName: "iced-cappuccino"
-            ),
-            MenuItemData(
-                name: "Iced Mocha",
-                description: "Espresso, milk, chocolate, and ice",
-                price: 6.50,
-                calories: 290,
-                imageName: "iced-mocha"
-            ),
-            MenuItemData(
-                name: "Cold Brew",
-                description: "Smooth, slow-steeped coffee",
-                price: 5.00,
-                calories: 5,
-                imageName: "cold-brew"
-            ),
-            MenuItemData(
-                name: "Nitro Cold Brew",
-                description: "Cold brew infused with nitrogen for a creamy texture",
-                price: 6.00,
-                calories: 5,
-                imageName: "nitro-cold-brew"
-            )
-        ],
-        "Specialty Drinks": [
-            MenuItemData(
-                name: "Affogato",
-                description: "Espresso poured over vanilla gelato",
-                price: 7.50,
-                calories: 250,
-                imageName: "affogato"
-            ),
-            MenuItemData(
-                name: "Caramel Macchiato",
-                description: "Vanilla, steamed milk, espresso, and caramel drizzle",
-                price: 6.50,
-                calories: 250,
-                imageName: "caramel-macchiato"
-            ),
-            MenuItemData(
-                name: "Vanilla Latte",
-                description: "Latte with vanilla syrup",
-                price: 6.50,
-                calories: 250,
-                imageName: "vanilla-latte"
-            ),
-            MenuItemData(
-                name: "Hazelnut Latte",
-                description: "Latte with hazelnut syrup",
-                price: 6.50,
-                calories: 250,
-                imageName: "hazelnut-latte"
-            )
-        ],
-        "Add-Ons": [
-            MenuItemData(
-                name: "Extra Shot",
-                description: "Add an extra shot of espresso",
-                price: 1.00,
-                calories: 5,
-                imageName: "extra-shot"
-            ),
-            MenuItemData(
-                name: "Flavor Shot",
-                description: "Vanilla, caramel, hazelnut, or mocha",
-                price: 0.75,
-                calories: 80,
-                imageName: "flavor-shot"
-            ),
-            MenuItemData(
-                name: "Oat Milk",
-                description: "Substitute with oat milk",
-                price: 1.00,
-                calories: 120,
-                imageName: "oat-milk"
-            ),
-            MenuItemData(
-                name: "Almond Milk",
-                description: "Substitute with almond milk",
-                price: 1.00,
-                calories: 60,
-                imageName: "almond-milk"
-            ),
-            MenuItemData(
-                name: "Whipped Cream",
-                description: "Top with whipped cream",
-                price: 0.50,
-                calories: 50,
-                imageName: "whipped-cream"
-            )
-        ]
-    ]
-
-    // Filtered menu items based on search
-    var filteredMenuItems: [MenuItemData] {
-        let items = menuItems[selectedCategory] ?? []
-        if searchText.isEmpty {
-            return items
+    var body: some View {
+        NavigationStack {
+            if viewModel.isLoading {
+                ProgressView("Loading menu...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let errorMessage = viewModel.errorMessage {
+                VStack(spacing: 16) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.system(size: 50))
+                        .foregroundColor(.orange)
+                    Text(errorMessage)
+                        .multilineTextAlignment(.center)
+                    Button("Retry") {
+                        Task { await viewModel.loadAllMenuItems() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding()
+            } else {
+                menuContent
+            }
         }
-        return items.filter { item in
-            item.name.localizedCaseInsensitiveContains(searchText) ||
-            item.description.localizedCaseInsensitiveContains(searchText)
+        .task {
+            await viewModel.loadAllMenuItems()
+            if !viewModel.categories.isEmpty {
+                selectedCategory = viewModel.categories.first ?? ""
+            }
+        }
+        .onChange(of: viewModel.isLoading) { isLoading in
+            if !isLoading && !viewModel.allMenuItems.isEmpty && viewModel.selectedStore == nil && !showStorePrompt {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    showStorePrompt = true
+                }
+            }
+        }
+        .sheet(isPresented: $showStorePrompt) {
+            StoresView(onStoreSelected: { store in
+                viewModel.setSelectedStore(store)
+            })
         }
     }
 
-    var body: some View {
+    var menuContent: some View {
         VStack(spacing: 0) {
             // Location Selector
             Button(action: {
@@ -229,7 +59,7 @@ struct MenuBrowseView: View {
                     Image(systemName: "mappin.and.ellipse")
                         .foregroundColor(.brandPink)
 
-                    if let store = selectedStore {
+                    if let store = viewModel.selectedStore {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(store.name)
                                 .font(.subheadline)
@@ -240,7 +70,7 @@ struct MenuBrowseView: View {
                                 .foregroundColor(.secondary)
                         }
                     } else {
-                        Text("Select a location to view menu")
+                        Text(viewModel.allMenuItems.isEmpty ? "Select a location to view menu" : "All Locations")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -255,12 +85,14 @@ struct MenuBrowseView: View {
                 .background(Color.brandLight.opacity(0.1))
             }
             .sheet(isPresented: $showingLocationPicker) {
-                StoresView()
+                StoresView(onStoreSelected: { store in
+                    viewModel.setSelectedStore(store)
+                })
             }
 
             Divider()
 
-            // Search Bar (matching Android)
+            // Search Bar
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
@@ -282,82 +114,159 @@ struct MenuBrowseView: View {
 
             Divider()
 
-            // Category selector
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(categories, id: \.self) { category in
-                        Button(action: {
-                            selectedCategory = category
-                        }) {
-                            Text(category)
-                                .font(.subheadline)
-                                .fontWeight(selectedCategory == category ? .bold : .regular)
-                                .foregroundColor(selectedCategory == category ? .white : .brandPink)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 8)
-                                .background(selectedCategory == category ? Color.brandPink : Color.brandLight.opacity(0.2))
-                                .cornerRadius(20)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.vertical, 12)
-            }
-            .background(Color(.systemBackground))
-
-            Divider()
-
-            // Menu items
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(filteredMenuItems, id: \.name) { item in
-                        MenuItemCard(item: item)
-                    }
-
-                    // Empty state when no items found
-                    if filteredMenuItems.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 48))
-                                .foregroundColor(.secondary)
-
-                            Text(searchText.isEmpty ? "No items available" : "No items found")
-                                .font(.headline)
-                                .foregroundColor(.primary)
-
-                            Text(searchText.isEmpty ? "Check back later" : "Try a different search")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 60)
-                    }
-                }
-                .padding()
-            }
-            .background(Color(.systemGroupedBackground))
+            // Main Content: Side Tabs + Infinite Scroll
+            InfiniteScrollMenuView(
+                viewModel: viewModel,
+                selectedCategory: $selectedCategory,
+                searchText: searchText
+            )
         }
         .navigationTitle("Menu")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
+struct InfiniteScrollMenuView: View {
+    @ObservedObject var viewModel: MenuBrowseViewModel
+    @Binding var selectedCategory: String
+    let searchText: String
+
+    var groupedItems: [(category: String, items: [MenuItem])] {
+        viewModel.getAllItemsGroupedByCategory(store: viewModel.selectedStore, searchText: searchText)
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            // Left Side: Pinned Category Tabs
+            ScrollView {
+                VStack(spacing: 4) {
+                    ForEach(viewModel.categories, id: \.self) { category in
+                        CategoryTabButton(
+                            category: category,
+                            isSelected: selectedCategory == category
+                        ) {
+                            withAnimation {
+                                selectedCategory = category
+                            }
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            .frame(width: 80)
+            .background(Color(.systemGroupedBackground))
+
+            Divider()
+
+            // Right Side: Infinite Scroll with Category Headers
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        ForEach(groupedItems, id: \.category) { section in
+                            Section(header: CategoryHeader(category: section.category)) {
+                                ForEach(section.items, id: \.id) { item in
+                                    NavigationLink(destination: MenuItemDetailView(menuItem: item, selectedStore: viewModel.selectedStore)) {
+                                        MenuItemCard(item: item)
+                                            .padding(.horizontal)
+                                            .padding(.vertical, 8)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                }
+                            }
+                            .id(section.category)
+                        }
+
+                        // Empty state
+                        if groupedItems.isEmpty {
+                            VStack(spacing: 16) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(.secondary)
+
+                                Text(searchText.isEmpty ? "No items available" : "No items found")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+
+                                Text(searchText.isEmpty ? "Try selecting a different location" : "Try a different search")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 60)
+                        }
+                    }
+                }
+                .background(Color(.systemGroupedBackground))
+                .onChange(of: selectedCategory) { newCategory in
+                    withAnimation {
+                        proxy.scrollTo(newCategory, anchor: .top)
+                    }
+                }
+            }
+        }
+    }
+}
+
+struct CategoryTabButton: View {
+    let category: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(MenuItem.getCategoryDisplayName(category))
+                .font(.caption2)
+                .fontWeight(isSelected ? .bold : .regular)
+                .foregroundColor(isSelected ? .white : .brandPink)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 4)
+                .background(isSelected ? Color.brandPink : Color.clear)
+                .cornerRadius(8)
+        }
+        .padding(.horizontal, 4)
+    }
+}
+
+struct CategoryHeader: View {
+    let category: String
+
+    var body: some View {
+        Text(MenuItem.getCategoryDisplayName(category))
+            .font(.title3)
+            .fontWeight(.bold)
+            .foregroundColor(.primary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(Color(.systemGroupedBackground))
+    }
+}
+
 struct MenuItemCard: View {
-    let item: MenuItemData
+    let item: MenuItem
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             // Image placeholder
             ZStack {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.brandLight.opacity(0.3))
+                if let imageUrl = item.imageUrl, !imageUrl.isEmpty {
+                    AsyncImage(url: URL(string: imageUrl)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        placeholderImage
+                    }
                     .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else {
+                    placeholderImage
+                }
 
-                Image(systemName: "cup.and.saucer.fill")
-                    .font(.system(size: 40))
-                    .foregroundColor(.brandPink)
-
-                if item.isSignature {
+                if item.isPopular {
                     VStack {
                         HStack {
                             Image(systemName: "star.fill")
@@ -380,21 +289,24 @@ struct MenuItemCard: View {
                     Text(item.name)
                         .font(.headline)
                         .fontWeight(.bold)
+                        .foregroundColor(.primary)
 
-                    if item.isSignature {
+                    if item.isPopular {
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
                             .font(.caption)
                     }
                 }
 
-                Text(item.description)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(2)
+                if let description = item.description {
+                    Text(description)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                }
 
                 HStack(spacing: 12) {
-                    Text(String(format: "$%.2f", item.price))
+                    Text(item.formattedPrice)
                         .font(.headline)
                         .foregroundColor(.brandPink)
 
@@ -403,20 +315,6 @@ struct MenuItemCard: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                }
-                .padding(.top, 4)
-
-                Button(action: {
-                    // Add to cart action
-                }) {
-                    Text("Add to Order")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                        .background(Color.brandPink)
-                        .cornerRadius(8)
                 }
                 .padding(.top, 4)
             }
@@ -428,15 +326,17 @@ struct MenuItemCard: View {
         .cornerRadius(12)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
-}
 
-struct MenuItemData {
-    let name: String
-    let description: String
-    let price: Double
-    let calories: Int?
-    let imageName: String
-    var isSignature: Bool = false
+    var placeholderImage: some View {
+        RoundedRectangle(cornerRadius: 12)
+            .fill(Color.brandLight.opacity(0.3))
+            .frame(width: 100, height: 100)
+            .overlay(
+                Image(systemName: "cup.and.saucer.fill")
+                    .font(.system(size: 40))
+                    .foregroundColor(.brandPink)
+            )
+    }
 }
 
 struct MenuBrowseView_Previews: PreviewProvider {

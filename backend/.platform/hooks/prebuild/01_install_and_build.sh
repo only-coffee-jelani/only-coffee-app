@@ -4,9 +4,10 @@ set -e
 cd /var/app/staging
 
 echo "Installing production dependencies..."
-# Install only production dependencies (no building needed, using pre-built artifacts)
-npm install --omit=dev --legacy-peer-deps
-npm install --omit=dev --workspaces --legacy-peer-deps
+# Install dependencies including devDependencies at root for workspace hoisting
+# Then install workspace dependencies
+npm install --legacy-peer-deps
+npm install --workspaces --legacy-peer-deps
 
 echo "Verifying pre-built artifacts..."
 

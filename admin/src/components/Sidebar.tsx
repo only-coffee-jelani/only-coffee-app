@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  FiHome, FiImage, FiMenu, FiMapPin, FiBarChart2, FiSettings, FiLogOut, FiSliders
+import {
+  FiHome, FiImage, FiMenu, FiMapPin, FiBarChart2, FiSettings, FiLogOut, FiSliders, FiZap
 } from 'react-icons/fi';
 import { useAuthStore } from '../store/authStore';
 
@@ -17,6 +17,8 @@ const Sidebar = () => {
     { path: '/carousel-analytics', label: 'Carousel Analytics', icon: FiBarChart2 },
     { path: '/menu-items', label: 'Menu Items', icon: FiMenu },
     { path: '/stores', label: 'Stores', icon: FiMapPin },
+    { path: '/ai-promotions', label: 'AI Promotions', icon: FiZap },
+    { path: '/analytics', label: 'Personalization Analytics', icon: FiBarChart2 },
     { path: '/settings', label: 'Settings', icon: FiSettings },
   ];
 
