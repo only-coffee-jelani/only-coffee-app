@@ -5,8 +5,7 @@ import ImageUploader from '../components/ImageUploader';
 import AddressAutocomplete from '../components/AddressAutocomplete';
 import { useAuthStore } from '../store/authStore';
 import { AddressSuggestion } from '../hooks/useAddressAutocomplete';
-
-const API_BASE = 'http://localhost:3000/api/v1';
+import { API_BASE } from '../config';
 
 const StoresManager = () => {
   const { user } = useAuthStore();

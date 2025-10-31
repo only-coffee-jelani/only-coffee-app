@@ -5,12 +5,15 @@ struct LaunchModalView: View {
     let onDismiss: () -> Void
     let onNavigateToMenuItem: (String) -> Void
 
-    @State private var timeRemaining: Int = 3
+    @State private var timeRemaining: Int
+    @State private var hasRecordedImpression = false
 
     init(promotion: Promotion, onDismiss: @escaping () -> Void, onNavigateToMenuItem: @escaping (String) -> Void) {
         self.promotion = promotion
         self.onDismiss = onDismiss
         self.onNavigateToMenuItem = onNavigateToMenuItem
+        // Initialize timeRemaining with the duration from the database
+        _timeRemaining = State(initialValue: promotion.displayDuration)
     }
 
     var body: some View {
@@ -42,6 +45,9 @@ struct LaunchModalView: View {
                 }
             )
             .onTapGesture {
+                // Record click before navigating
+                recordClick()
+
                 // Navigate to menu item if targetMenuItemId exists
                 if let menuItemId = promotion.targetMenuItemId {
                     onNavigateToMenuItem(menuItemId)
@@ -56,7 +62,9 @@ struct LaunchModalView: View {
                         Spacer()
 
                         Button(action: {
-                            dismiss()
+                            // Record skip before dismissing
+                            recordSkip()
+                            dismiss(isSkip: true)
                         }) {
                             Text("Skip \(timeRemaining)s")
                                 .font(.system(size: 14, weight: .semibold))
@@ -78,12 +86,14 @@ struct LaunchModalView: View {
         .onAppear {
             print("🎬 LaunchModalView appeared")
             print("🖼️ Loading image: \(promotion.imageUrl)")
+            print("⏱️ Display duration: \(promotion.displayDuration) seconds")
+            recordImpression()
             startCountdown()
         }
     }
 
     private func startCountdown() {
-        // Wait 1 second before starting countdown (shows "Skip 3" for 1 second)
+        // Wait 1 second before starting countdown
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             // Start countdown timer
             Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
@@ -91,14 +101,65 @@ struct LaunchModalView: View {
                     timeRemaining -= 1
                 } else {
                     timer.invalidate()
-                    dismiss()
+                    // Auto-dismiss without recording skip (user watched the full duration)
+                    dismiss(isSkip: false)
                 }
             }
         }
     }
 
-    private func dismiss() {
+    private func dismiss(isSkip: Bool = false) {
         onDismiss()
+    }
+
+    // MARK: - Analytics Tracking
+
+    private func recordImpression() {
+        guard !hasRecordedImpression else { return }
+        hasRecordedImpression = true
+
+        Task {
+            do {
+                let _: [String: Bool] = try await APIClient.shared.request(
+                    endpoint: "/splash-screen/\(promotion.id)/impression",
+                    method: .post,
+                    requiresAuth: false
+                )
+                print("✅ Recorded splash screen impression")
+            } catch {
+                print("❌ Failed to record impression: \(error)")
+            }
+        }
+    }
+
+    private func recordClick() {
+        Task {
+            do {
+                let _: [String: Bool] = try await APIClient.shared.request(
+                    endpoint: "/splash-screen/\(promotion.id)/click",
+                    method: .post,
+                    requiresAuth: false
+                )
+                print("✅ Recorded splash screen click")
+            } catch {
+                print("❌ Failed to record click: \(error)")
+            }
+        }
+    }
+
+    private func recordSkip() {
+        Task {
+            do {
+                let _: [String: Bool] = try await APIClient.shared.request(
+                    endpoint: "/splash-screen/\(promotion.id)/skip",
+                    method: .post,
+                    requiresAuth: false
+                )
+                print("✅ Recorded splash screen skip")
+            } catch {
+                print("❌ Failed to record skip: \(error)")
+            }
+        }
     }
 }
 

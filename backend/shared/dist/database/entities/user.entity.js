@@ -29,6 +29,9 @@ var UserTier;
     UserTier["BLACK"] = "black";
 })(UserTier || (exports.UserTier = UserTier = {}));
 let User = class User {
+    get name() {
+        return `${this.firstName} ${this.lastName}`.trim();
+    }
 };
 exports.User = User;
 __decorate([
@@ -92,6 +95,22 @@ __decorate([
     __metadata("design:type", Boolean)
 ], User.prototype, "marketingOptIn", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "profileCompleted", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: false }),
+    __metadata("design:type", Boolean)
+], User.prototype, "isLoyaltyMember", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'boolean', default: true }),
+    __metadata("design:type", Boolean)
+], User.prototype, "notificationsEnabled", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    __metadata("design:type", Date)
+], User.prototype, "deletedAt", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 6, nullable: true }),
     __metadata("design:type", String)
 ], User.prototype, "verificationCode", void 0);
@@ -111,6 +130,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
     __metadata("design:type", Date)
 ], User.prototype, "lastLoginAt", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    __metadata("design:type", Date)
+], User.prototype, "lastActivityDate", void 0);
 __decorate([
     (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
     __metadata("design:type", Date)

@@ -5,53 +5,51 @@ struct MainTabView: View {
     @State private var selectedTab = 0  // Start on Home tab
 
     var body: some View {
-        NavigationStack {
-            TabView(selection: $selectedTab) {
-                // Home
-                HomeView()
-                    .tabItem {
-                        Label("Home", systemImage: "house.fill")
-                    }
-                    .tag(0)
+        TabView(selection: $selectedTab) {
+            // Home
+            HomeView()
+                .tabItem {
+                    Label("Home", systemImage: "house.fill")
+                }
+                .tag(0)
 
-                // Menu
-                MenuBrowseView()
-                    .tabItem {
-                        Label("Menu", systemImage: "cup.and.saucer.fill")
-                    }
-                    .tag(1)
+            // Menu
+            MenuBrowseView()
+                .tabItem {
+                    Label("Menu", systemImage: "cup.and.saucer.fill")
+                }
+                .tag(1)
 
-                // Rewards
-                RewardsView()
-                    .tabItem {
-                        Label("Rewards", systemImage: "star.fill")
-                    }
-                    .tag(2)
+            // Rewards
+            RewardsView()
+                .tabItem {
+                    Label("Rewards", systemImage: "star.fill")
+                }
+                .tag(2)
 
-                // Orders
-                OrdersView()
-                    .tabItem {
-                        Label("Orders", systemImage: "list.bullet.clipboard")
-                    }
-                    .tag(3)
+            // Orders
+            OrdersView()
+                .tabItem {
+                    Label("Orders", systemImage: "list.bullet.clipboard")
+                }
+                .tag(3)
 
-                // Profile
-                ProfileView()
-                    .tabItem {
-                        Label("Profile", systemImage: "person.fill")
-                    }
-                    .tag(4)
-            }
-            .accentColor(.brandPink)
-            .onAppear {
-                // Make tab bar opaque with solid background
-                let appearance = UITabBarAppearance()
-                appearance.configureWithOpaqueBackground()
-                appearance.backgroundColor = UIColor.systemBackground
+            // Profile
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.fill")
+                }
+                .tag(4)
+        }
+        .accentColor(.brandPink)
+        .onAppear {
+            // Make tab bar opaque with solid background
+            let appearance = UITabBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor.systemBackground
 
-                UITabBar.appearance().standardAppearance = appearance
-                UITabBar.appearance().scrollEdgeAppearance = appearance
-            }
+            UITabBar.appearance().standardAppearance = appearance
+            UITabBar.appearance().scrollEdgeAppearance = appearance
         }
     }
 }

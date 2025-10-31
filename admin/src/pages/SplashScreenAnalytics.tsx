@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiEye, FiMousePointer, FiSkipForward, FiTrendingUp, FiCalendar, FiUser, FiMaximize2, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { API_BASE } from '../config';
 
 interface SplashScreen {
   id: string;
@@ -40,7 +41,7 @@ const SplashScreenAnalytics = () => {
 
   const loadSplashScreens = async () => {
     try {
-      const response = await fetch('http://localhost:3000/api/v1/splash-screen?skip=0&take=100', {
+      const response = await fetch(`${API_BASE}/splash-screen?skip=0&take=100`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
         },

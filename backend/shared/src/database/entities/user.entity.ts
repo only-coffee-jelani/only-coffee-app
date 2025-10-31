@@ -74,6 +74,18 @@ export class User {
   @Column({ type: 'boolean', default: false })
   marketingOptIn: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  profileCompleted: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  isLoyaltyMember: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  notificationsEnabled: boolean;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  deletedAt: Date | null;
+
   @Column({ type: 'varchar', length: 6, nullable: true })
   verificationCode: string | null;
 
@@ -88,6 +100,9 @@ export class User {
 
   @Column({ type: 'timestamptz', nullable: true })
   lastLoginAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  lastActivityDate: Date | null;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
@@ -104,4 +119,9 @@ export class User {
 
   @OneToMany(() => Review, (review) => review.user)
   reviews: Review[];
+
+  // Computed properties
+  get name(): string {
+    return `${this.firstName} ${this.lastName}`.trim();
+  }
 }

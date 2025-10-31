@@ -2,39 +2,79 @@ import SwiftUI
 
 struct OrdersView: View {
     @StateObject private var viewModel = OrdersViewModel()
+    @EnvironmentObject var authManager: AuthenticationManager
 
     var body: some View {
         NavigationView {
             Group {
-                if viewModel.isLoading {
-                    ProgressView("Loading orders...")
-                } else if viewModel.orders.isEmpty {
-                    VStack(spacing: 20) {
-                        Image(systemName: "list.bullet.clipboard")
-                            .font(.system(size: 80))
-                            .foregroundColor(.gray)
-                        Text("No orders yet")
-                            .font(.title2)
-                            .foregroundColor(.secondary)
-                        Text("Place your first order to see it here")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                if let user = authManager.currentUser {
+                    // User is logged in - show orders
+                    if viewModel.isLoading {
+                        ProgressView("Loading orders...")
+                    } else if viewModel.orders.isEmpty {
+                        VStack(spacing: 20) {
+                            Image(systemName: "list.bullet.clipboard")
+                                .font(.system(size: 80))
+                                .foregroundColor(.gray)
+                            Text("No orders yet")
+                                .font(.title2)
+                                .foregroundColor(.secondary)
+                            Text("Place your first order to see it here")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    } else {
+                        List(viewModel.orders) { order in
+                            NavigationLink(destination: OrderDetailView(order: order)) {
+                                OrderRow(order: order)
+                            }
+                        }
+                        .listStyle(.insetGrouped)
                     }
                 } else {
-                    List(viewModel.orders) { order in
-                        NavigationLink(destination: OrderDetailView(order: order)) {
-                            OrderRow(order: order)
+                    // Not logged in - show sign in prompt
+                    VStack(spacing: 20) {
+                        Spacer()
+
+                        Image(systemName: "list.bullet.clipboard.fill")
+                            .font(.system(size: 80))
+                            .foregroundColor(.brandPink)
+
+                        VStack(spacing: 8) {
+                            Text("Sign In to View Orders")
+                                .font(.title2.bold())
+                            Text("Access your order history and track your purchases")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
                         }
+
+                        NavigationLink(destination: LoginView()) {
+                            Text("Sign In")
+                                .fontWeight(.semibold)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.brandPink)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                        }
+                        .padding(.horizontal, 40)
+
+                        Spacer()
                     }
-                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Orders")
             .task {
-                await viewModel.loadOrders()
+                if authManager.currentUser != nil {
+                    await viewModel.loadOrders()
+                }
             }
             .refreshable {
-                await viewModel.loadOrders()
+                if authManager.currentUser != nil {
+                    await viewModel.loadOrders()
+                }
             }
         }
     }

@@ -5,8 +5,22 @@ import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import * as express from 'express';
+import { AppDataSource } from '@shared/database/data-source';
 
 async function bootstrap() {
+  // Run migrations before starting the app
+  console.log('Running database migrations...');
+  try {
+    await AppDataSource.initialize();
+    await AppDataSource.runMigrations();
+    console.log('✅ Migrations completed successfully');
+    await AppDataSource.destroy();
+  } catch (error) {
+    console.error('❌ Migration failed:', error);
+    // Don't exit - let the app try to start anyway
+    // This prevents the app from being completely down if migrations fail
+  }
+
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Enable raw body for Stripe webhooks
   });
