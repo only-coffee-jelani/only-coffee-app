@@ -6,8 +6,10 @@ struct LoginView: View {
     @EnvironmentObject var authManager: AuthenticationManager
 
     var body: some View {
-        PhoneAuthView()
-            .environmentObject(authManager)
+        NavigationStack {
+            PhoneAuthView()
+                .environmentObject(authManager)
+        }
     }
 }
 
