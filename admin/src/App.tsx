@@ -13,6 +13,7 @@ import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import AIPromotionsReview from './pages/AIPromotionsReview';
 import PersonalizationAnalytics from './pages/PersonalizationAnalytics';
+import UsersPage from './pages/UsersPage';
 import { useAuthStore } from './store/authStore';
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
             <Route path="/carousel-analytics" element={<CarouselAnalytics />} />
             <Route path="/menu-items" element={<MenuItemsManager />} />
             <Route path="/stores" element={<StoresManager />} />
+            <Route path="/users" element={<UsersPage />} />
             <Route path="/ai-promotions" element={<AIPromotionsReview />} />
             <Route path="/analytics" element={<PersonalizationAnalytics />} />
             <Route path="/settings" element={<SettingsPage />} />
