@@ -24,6 +24,20 @@ import { TasksModule } from './modules/tasks/tasks.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+import { EventsModule } from './modules/events/events.module';
+import { WeatherModule } from './modules/weather/weather.module';
+import { FeatureStoreModule } from './modules/features/feature-store.module';
+import { SegmentationModule } from './modules/segmentation/segmentation.module';
+import { ChurnPredictionModule } from './modules/churn/churn-prediction.module';
+import { RecommendationModule } from './modules/recommendations/recommendation.module';
+import { ContextualBanditModule } from './modules/bandit/contextual-bandit.module';
+import { TriggerEngineModule } from './modules/triggers/trigger-engine.module';
+import { AIPromotionGeneratorModule } from './modules/ai-promotions/ai-promotion-generator.module';
+import { NotificationDecisionModule } from './modules/notification-decision/notification-decision.module';
+import { PushNotificationModule } from './modules/push-notifications/push-notification.module';
+import { PrivacyModule } from './modules/privacy/privacy.module';
+import { MonitoringModule } from './modules/monitoring/monitoring.module';
+import { PersonalizedOffersModule } from './modules/personalized-offers/personalized-offers.module';
 
 @Module({
   imports: [
@@ -69,6 +83,20 @@ import { LoyaltyModule } from './modules/loyalty/loyalty.module';
     TasksModule,
     AnalyticsModule,
     LoyaltyModule,
+    EventsModule,
+    WeatherModule,
+    FeatureStoreModule,
+    SegmentationModule,
+    ChurnPredictionModule,
+    RecommendationModule,
+    ContextualBanditModule,
+    TriggerEngineModule,
+    AIPromotionGeneratorModule,
+    NotificationDecisionModule,
+    PushNotificationModule,
+    PrivacyModule,
+    MonitoringModule,
+    PersonalizedOffersModule,
   ],
 })
 export class AppModule {}

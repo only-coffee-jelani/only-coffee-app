@@ -138,4 +138,13 @@ export class Order {
   @ManyToOne(() => CouponGrant, { nullable: true })
   @JoinColumn({ name: 'appliedCouponId' })
   appliedCoupon: CouponGrant | null;
+
+  // Computed properties for backward compatibility
+  get totalAmount(): number {
+    return this.total;
+  }
+
+  get promoCodeId(): string | null {
+    return this.appliedCouponId;
+  }
 }

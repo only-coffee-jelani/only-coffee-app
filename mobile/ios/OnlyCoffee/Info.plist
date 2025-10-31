@@ -61,9 +61,11 @@
 		</dict>
 	</dict>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>We need your location to find nearby coffee stores and provide location-based features.</string>
+	<string>We need your location to find nearby coffee stores and send you personalized offers when you're near a store. This helps us provide you with relevant promotions at the right time.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to find nearby coffee stores and show you the best pickup options.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>We use tracking to personalize your experience with tailored offers and recommendations based on your preferences. Your privacy is important to us, and you can change this setting anytime.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
