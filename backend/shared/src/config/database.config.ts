@@ -17,7 +17,7 @@ export const getDatabaseConfig = (): TypeOrmModuleOptions => {
     migrations: [path.join(__dirname, '../database/migrations/**/*{.ts,.js}')],
     synchronize: process.env.DB_SYNCHRONIZE === 'true',
     logging: process.env.DB_LOGGING === 'true',
-    ssl: isProduction ? { rejectUnauthorized: false } : false,
+    ssl: useSSL ? { rejectUnauthorized: false } : false,
     extra: {
       max: parseInt(process.env.DB_POOL_MAX || '20', 10),
       min: parseInt(process.env.DB_POOL_MIN || '2', 10),

@@ -37,7 +37,6 @@ __decorate([
 ], User.prototype, "id", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
-    (0, typeorm_1.Index)(),
     __metadata("design:type", String)
 ], User.prototype, "email", void 0);
 __decorate([
