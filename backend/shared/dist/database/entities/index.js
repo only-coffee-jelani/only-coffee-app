@@ -24,6 +24,8 @@ __exportStar(require("./gift-card.entity"), exports);
 __exportStar(require("./delivery-order.entity"), exports);
 __exportStar(require("./review.entity"), exports);
 __exportStar(require("./promotion.entity"), exports);
+__exportStar(require("./splash-screen.entity"), exports);
+__exportStar(require("./carousel-image.entity"), exports);
 __exportStar(require("./promo-code.entity"), exports);
 __exportStar(require("./coupon-grant.entity"), exports);
 __exportStar(require("./program-event.entity"), exports);

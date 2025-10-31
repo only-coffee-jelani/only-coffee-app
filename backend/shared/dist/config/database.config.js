@@ -38,6 +38,7 @@ const typeorm_1 = require("typeorm");
 const path = __importStar(require("path"));
 const getDatabaseConfig = () => {
     const isProduction = process.env.NODE_ENV === 'production';
+    const useSSL = process.env.DB_SSL === 'true' || isProduction;
     return {
         type: 'postgres',
         host: process.env.DB_HOST || 'localhost',
@@ -54,7 +55,8 @@ const getDatabaseConfig = () => {
             max: parseInt(process.env.DB_POOL_MAX || '20', 10),
             min: parseInt(process.env.DB_POOL_MIN || '2', 10),
             idleTimeoutMillis: 30000,
-            connectionTimeoutMillis: 2000,
+            connectionTimeoutMillis: 10000,
+            statement_timeout: 30000,
         },
     };
 };
