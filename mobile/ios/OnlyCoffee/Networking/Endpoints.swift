@@ -51,9 +51,6 @@ enum Endpoint {
     case getStoreReviews(storeId: String)
     case getStoreStats(storeId: String)
 
-    // MARK: - Promotions
-    case getActiveLaunchModal
-    case getActivePromotions(type: String?)
 
     var path: String {
         switch self {
@@ -110,15 +107,6 @@ enum Endpoint {
         case .createReview: return "/reviews"
         case .getStoreReviews(let storeId): return "/reviews/store/\(storeId)"
         case .getStoreStats(let storeId): return "/reviews/store/\(storeId)/stats"
-
-        // Promotions
-        case .getActiveLaunchModal: return "/promotions/active/launch-modal"
-        case .getActivePromotions(let type):
-            var path = "/promotions/active"
-            if let type = type {
-                path += "?type=\(type)"
-            }
-            return path
         }
     }
 }

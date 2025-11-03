@@ -10,7 +10,7 @@ struct Promotion: Codable, Identifiable {
     let id: String
     let title: String
     let description: String?
-    let promotionType: PromotionType
+    let promotionType: PromotionType?
     let imageUrl: String
     let targetMenuItemId: String?
     let targetUrl: String?
@@ -18,7 +18,7 @@ struct Promotion: Codable, Identifiable {
     let endDate: Date
     let isActive: Bool
     let displayDuration: Int // in seconds
-    let sortOrder: Int
+    let sortOrder: Int?
     let createdAt: Date
     let updatedAt: Date
 }
