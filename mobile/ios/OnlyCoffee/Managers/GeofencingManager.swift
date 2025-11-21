@@ -166,7 +166,7 @@ class GeofencingManager: NSObject, ObservableObject {
     }
 
     /// Stop monitoring all regions
-    private func stopMonitoringAllRegions() {
+    func stopMonitoringAllRegions() {
         for region in locationManager.monitoredRegions {
             locationManager.stopMonitoring(for: region)
         }
@@ -235,7 +235,7 @@ class GeofencingManager: NSObject, ObservableObject {
 
     /// Evaluate triggers on backend
     private func evaluateTriggers(storeId: String, eventType: String) async {
-        guard let userId = AuthenticationManager.shared.currentUser?.id else {
+        guard let userId = await AuthenticationManager.shared.currentUser?.id else {
             print("⚠️ No authenticated user for trigger evaluation")
             return
         }
@@ -257,7 +257,7 @@ class GeofencingManager: NSObject, ObservableObject {
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
             // Add auth token
-            if let token = AuthenticationManager.shared.authToken {
+            if let token = KeychainManager.shared.getAccessToken() {
                 request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
 

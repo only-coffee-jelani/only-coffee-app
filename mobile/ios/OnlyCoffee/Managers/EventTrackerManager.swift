@@ -29,13 +29,15 @@ class EventTrackerManager: NSObject, ObservableObject {
 
     override private init() {
         // Generate or restore session ID
+        let sessionId: String
         if let existingSessionId = userDefaults.string(forKey: sessionIdKey) {
-            self.currentSessionId = existingSessionId
+            sessionId = existingSessionId
         } else {
-            self.currentSessionId = UUID().uuidString
-            userDefaults.set(self.currentSessionId, forKey: sessionIdKey)
+            sessionId = UUID().uuidString
+            userDefaults.set(sessionId, forKey: sessionIdKey)
         }
 
+        self.currentSessionId = sessionId
         super.init()
 
         setupObservers()

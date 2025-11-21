@@ -11,7 +11,7 @@ struct OnlyCoffeeApp: App {
     @StateObject private var privacyManager = PrivacyManager.shared
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup { 
             ContentView()
                 .environmentObject(authManager)
                 .environmentObject(cartManager)
