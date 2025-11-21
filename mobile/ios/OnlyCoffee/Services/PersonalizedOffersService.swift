@@ -20,7 +20,7 @@ class PersonalizedOffersService {
         request.httpMethod = "GET"
 
         // Add auth token
-        if let token = AuthenticationManager.shared.authToken {
+        if let token = KeychainManager.shared.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
@@ -56,7 +56,7 @@ class PersonalizedOffersService {
         request.httpMethod = "GET"
 
         // Add auth token
-        if let token = AuthenticationManager.shared.authToken {
+        if let token = KeychainManager.shared.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
