@@ -161,13 +161,13 @@ struct CouponDetailView: View {
 
                     // Details
                     VStack(alignment: .leading, spacing: 16) {
-                        DetailRow(icon: "clock", title: "Expires", value: coupon.formattedExpiryDate)
+                        CouponDetailRow(icon: "clock", title: "Expires", value: coupon.formattedExpiryDate)
 
-                        DetailRow(icon: "bag", title: "Redeem", value: coupon.channelText)
+                        CouponDetailRow(icon: "bag", title: "Redeem", value: coupon.channelText)
 
                         if let eligibleItems = coupon.eligibleItems {
                             if let exclude = eligibleItems.exclude, !exclude.isEmpty {
-                                DetailRow(
+                                CouponDetailRow(
                                     icon: "xmark.circle",
                                     title: "Excludes",
                                     value: exclude.joined(separator: ", ").capitalized
@@ -175,7 +175,7 @@ struct CouponDetailView: View {
                             }
 
                             if let include = eligibleItems.include, !include.isEmpty {
-                                DetailRow(
+                                CouponDetailRow(
                                     icon: "checkmark.circle",
                                     title: "Includes",
                                     value: include.joined(separator: ", ").capitalized
@@ -183,7 +183,7 @@ struct CouponDetailView: View {
                             }
                         }
 
-                        DetailRow(icon: "tag", title: "Source", value: formatSource(coupon.source))
+                        CouponDetailRow(icon: "tag", title: "Source", value: formatSource(coupon.source))
                     }
                     .padding()
                     .background(Color.white)
@@ -257,7 +257,7 @@ struct CouponDetailView: View {
 }
 
 // MARK: - Detail Row
-struct DetailRow: View {
+struct CouponDetailRow: View {
     let icon: String
     let title: String
     let value: String

@@ -128,7 +128,7 @@ struct OfferDetailModal: View {
                                 .foregroundColor(.black)
 
                             // Validity period
-                            DetailRow(
+                            OfferDetailRow(
                                 icon: "clock",
                                 title: "Valid Until",
                                 value: offer.validityText
@@ -136,7 +136,7 @@ struct OfferDetailModal: View {
 
                             // Min purchase
                             if let minPurchase = offer.minPurchaseAmount, minPurchase > 0 {
-                                DetailRow(
+                                OfferDetailRow(
                                     icon: "cart",
                                     title: "Minimum Purchase",
                                     value: "$\(String(format: "%.2f", minPurchase))"
@@ -145,7 +145,7 @@ struct OfferDetailModal: View {
 
                             // Max discount
                             if let maxDiscount = offer.maxDiscountAmount, maxDiscount > 0 {
-                                DetailRow(
+                                OfferDetailRow(
                                     icon: "dollarsign.circle",
                                     title: "Maximum Discount",
                                     value: "$\(String(format: "%.2f", maxDiscount))"
@@ -155,7 +155,7 @@ struct OfferDetailModal: View {
                             // Confidence score (for AI-generated offers)
                             #if DEBUG
                             if let confidence = offer.confidenceScore {
-                                DetailRow(
+                                OfferDetailRow(
                                     icon: "chart.bar",
                                     title: "AI Confidence",
                                     value: "\(Int(confidence * 100))%"
@@ -300,7 +300,7 @@ struct OfferDetailModal: View {
 
 // MARK: - Supporting Views
 
-struct DetailRow: View {
+struct OfferDetailRow: View {
     let icon: String
     let title: String
     let value: String

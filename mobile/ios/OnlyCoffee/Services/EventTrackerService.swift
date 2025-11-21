@@ -36,7 +36,7 @@ class EventTrackerService {
         guard isTrackingEnabled else {
             print("⚠️ Event tracking disabled - skipping \(eventType.rawValue) event")
             // Return a mock response to avoid breaking callers
-            return TrackEventResponse(success: false, eventId: nil, message: "Tracking disabled")
+            return TrackEventResponse(success: false, event: nil)
         }
 
         let request = TrackEventRequest(
@@ -200,6 +200,22 @@ class EventTrackerService {
             print("✅ Tracked promotion_clicked event")
         } catch {
             print("❌ Failed to track promotion_clicked event: \(error.localizedDescription)")
+        }
+    }
+
+    /// Track promotion redeemed
+    func trackPromotionRedeemed(promotionId: String, promotionType: String) async {
+        do {
+            _ = try await trackEvent(
+                .promotionRedeemed,
+                metadata: [
+                    "promotionId": promotionId,
+                    "promotionType": promotionType
+                ]
+            )
+            print("✅ Tracked promotion_redeemed event")
+        } catch {
+            print("❌ Failed to track promotion_redeemed event: \(error.localizedDescription)")
         }
     }
 

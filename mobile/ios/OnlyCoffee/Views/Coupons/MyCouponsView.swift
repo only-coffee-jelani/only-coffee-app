@@ -87,7 +87,7 @@ struct MyCouponsView: View {
                     let displayedCoupons = selectedTab == 0 ? couponsData.active : couponsData.expired
 
                     if displayedCoupons.isEmpty {
-                        EmptyStateView(tab: selectedTab)
+                        CouponEmptyStateView(tab: selectedTab)
                     } else {
                         ScrollView {
                             LazyVStack(spacing: 12) {
@@ -99,7 +99,7 @@ struct MyCouponsView: View {
                         }
                     }
                 } else {
-                    EmptyStateView(tab: selectedTab)
+                    CouponEmptyStateView(tab: selectedTab)
                 }
             }
             .navigationTitle("My Coupons")
@@ -139,7 +139,7 @@ struct MyCouponsView: View {
 }
 
 // MARK: - Empty State View
-struct EmptyStateView: View {
+struct CouponEmptyStateView: View {
     let tab: Int
 
     var body: some View {

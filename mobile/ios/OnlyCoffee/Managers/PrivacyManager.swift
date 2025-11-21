@@ -137,7 +137,7 @@ class PrivacyManager: ObservableObject {
 
         if !enabled {
             // Stop geofencing
-            GeofencingManager.shared.stopAllMonitoring()
+            GeofencingManager.shared.stopMonitoringAllRegions()
         } else {
             // Resume geofencing if permission is granted
             GeofencingManager.shared.requestLocationPermission()
@@ -187,7 +187,7 @@ class PrivacyManager: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
 
-        if let token = AuthenticationManager.shared.authToken {
+        if let token = KeychainManager.shared.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 
@@ -219,7 +219,7 @@ class PrivacyManager: ObservableObject {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        if let token = AuthenticationManager.shared.authToken {
+        if let token = KeychainManager.shared.getAccessToken() {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         }
 

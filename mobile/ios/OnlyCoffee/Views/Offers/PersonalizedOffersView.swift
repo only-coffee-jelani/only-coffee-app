@@ -16,7 +16,7 @@ struct PersonalizedOffersView: View {
                         }
                     })
                 } else if viewModel.offers.isEmpty {
-                    EmptyStateView()
+                    OffersEmptyStateView()
                 } else {
                     ScrollView {
                         VStack(spacing: 20) {
@@ -122,7 +122,7 @@ struct PersonalizationHeaderView: View {
 }
 
 // MARK: - Empty State
-struct EmptyStateView: View {
+struct OffersEmptyStateView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "gift")
