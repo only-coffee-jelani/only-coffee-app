@@ -44,7 +44,7 @@ class CartViewModel @Inject constructor(
                 currentState.items + OrderItem(
                     menuItemId = menuItem.id,
                     name = menuItem.name,
-                    price = menuItem.price,
+                    price = menuItem.basePrice,
                     quantity = quantity,
                     customizations = customizations
                 )

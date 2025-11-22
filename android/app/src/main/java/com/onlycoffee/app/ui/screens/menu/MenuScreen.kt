@@ -63,17 +63,17 @@ import com.onlycoffee.app.ui.theme.TextSecondary
 fun MenuScreen(
     navController: NavController,
     viewModel: MenuViewModel = hiltViewModel(),
-    ordersViewModel: com.onlycoffee.app.ui.screens.orders.OrdersViewModel = hiltViewModel()
+    storeViewModel: com.onlycoffee.app.ui.screens.stores.StoreViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val ordersUiState by ordersViewModel.uiState.collectAsState()
+    val storeUiState by storeViewModel.uiState.collectAsState()
     var searchText by remember { mutableStateOf("") }
 
     // Check if location is selected, if not navigate to select location screen
-    androidx.compose.runtime.LaunchedEffect(ordersUiState.selectedStore) {
-        if (ordersUiState.selectedStore == null) {
+    androidx.compose.runtime.LaunchedEffect(storeUiState.selectedStore) {
+        if (storeUiState.selectedStore == null) {
             navController.navigate("select_location") {
-                popUpTo("menu") { inclusive = false }
+                launchSingleTop = true
             }
         }
     }
@@ -87,7 +87,7 @@ fun MenuScreen(
         ) {
             item {
                 // Location Selector
-                ordersUiState.selectedStore?.let { store ->
+                storeUiState.selectedStore?.let { store ->
                     androidx.compose.material3.Card(
                         onClick = { navController.navigate("select_location") },
                         modifier = Modifier

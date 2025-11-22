@@ -131,46 +131,65 @@ val OnlyCoffeeTypography = Typography(
 
 // Custom text styles for specific use cases
 object OnlyCoffeeTextStyles {
-    val PriceText = TextStyle(
-        fontFamily = InterFontFamily,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 22.sp,
-        letterSpacing = 0.sp
-    )
-    
-    val PriceLarge = TextStyle(
+    // Heading styles (H1, H2, H3)
+    val H1 = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 20.sp,
-        lineHeight = 26.sp,
+        fontSize = 34.sp,
+        lineHeight = 40.sp,
         letterSpacing = 0.sp
     )
-    
-    val ButtonText = TextStyle(
+
+    val H2 = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 34.sp,
+        letterSpacing = 0.sp
+    )
+
+    val H3 = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.SemiBold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp,
+        letterSpacing = 0.sp
+    )
+
+    // Body text styles
+    val Body = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
         lineHeight = 22.sp,
         letterSpacing = 0.sp
     )
-    
-    val ButtonTextLarge = TextStyle(
+
+    val BodyLarge = TextStyle(
         fontFamily = InterFontFamily,
-        fontWeight = FontWeight.SemiBold,
+        fontWeight = FontWeight.Normal,
         fontSize = 18.sp,
         lineHeight = 24.sp,
         letterSpacing = 0.sp
     )
-    
-    val CaptionText = TextStyle(
+
+    val BodySmall = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp,
+        lineHeight = 20.sp,
+        letterSpacing = 0.sp
+    )
+
+    // Caption text
+    val Caption = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 12.sp,
         lineHeight = 18.sp,
         letterSpacing = 0.sp
     )
-    
+
     val CaptionBold = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.SemiBold,
@@ -178,7 +197,50 @@ object OnlyCoffeeTextStyles {
         lineHeight = 18.sp,
         letterSpacing = 0.sp
     )
-    
+
+    // Price text styles
+    val PriceText = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.sp
+    )
+
+    val PriceLarge = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
+        lineHeight = 26.sp,
+        letterSpacing = 0.sp
+    )
+
+    // Button text styles
+    val ButtonText = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        lineHeight = 22.sp,
+        letterSpacing = 0.sp
+    )
+
+    val ButtonTextLarge = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 18.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.sp
+    )
+
+    // Other text styles
+    val CaptionText = TextStyle(
+        fontFamily = InterFontFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        lineHeight = 18.sp,
+        letterSpacing = 0.sp
+    )
+
     val OverlineText = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Medium,
@@ -186,7 +248,7 @@ object OnlyCoffeeTextStyles {
         lineHeight = 16.sp,
         letterSpacing = 1.sp
     )
-    
+
     val TabText = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Medium,
@@ -194,7 +256,7 @@ object OnlyCoffeeTextStyles {
         lineHeight = 18.sp,
         letterSpacing = 0.sp
     )
-    
+
     val BadgeText = TextStyle(
         fontFamily = InterFontFamily,
         fontWeight = FontWeight.Bold,

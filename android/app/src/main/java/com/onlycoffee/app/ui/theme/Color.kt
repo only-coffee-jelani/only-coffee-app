@@ -68,3 +68,13 @@ val CoffeeBean = Color(0xFFFF93A3) // Coral Pink instead of brown
 val Espresso = Color(0xFFFF93A3) // Coral Pink instead of brown
 val Latte = Color(0xFFFFFFFF) // White for light drinks
 val Cappuccino = Color(0xFFFF93A3) // Coral Pink for consistency
+
+// Status Color Variants
+val SuccessLight = Color(0xFFE8F5E9) // Light green background
+val SuccessDark = Color(0xFF2E7D32) // Dark green text
+val InfoLight = Color(0xFFE3F2FD) // Light blue background
+val InfoDark = Color(0xFF1565C0) // Dark blue text
+val WarningLight = Color(0xFFFFF3E0) // Light orange background
+val WarningDark = Color(0xFFE65100) // Dark orange text
+val ErrorLight = Color(0xFFFFEBEE) // Light red background
+val ErrorDark = Color(0xFFC62828) // Dark red text

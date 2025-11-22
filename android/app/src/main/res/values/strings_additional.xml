@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_menu">Menu</string>
+    <string name="nav_orders">Orders</string>
+    <string name="nav_rewards">Rewards</string>
+    <string name="nav_profile">Profile</string>
+    <string name="nav_locations">Locations</string>
+    
+    <!-- Menu -->
+    <string name="search_menu_items">Search menu items</string>
+    <string name="no_items_found">No items found</string>
+    <string name="no_items_available">No items available</string>
+    <string name="try_different_search">Try a different search</string>
+    <string name="check_back_later">Check back later</string>
+    
+    <!-- Profile -->
+    <string name="profile_setup">Profile Setup</string>
+    <string name="profile_coming_soon">Profile Coming Soon</string>
+    
+    <!-- Rewards -->
+    <string name="earn_rewards">Earn Rewards</string>
+    <string name="rewards_coming_soon">Rewards Coming Soon</string>
+</resources>
+

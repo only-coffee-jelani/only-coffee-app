@@ -12,19 +12,20 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.RemoteMessage
+// Firebase imports commented out - Firebase not configured
+// import com.google.firebase.messaging.FirebaseMessaging
+// import com.google.firebase.messaging.RemoteMessage
 import com.onlycoffee.app.R
-import com.onlycoffee.app.data.api.RetrofitClient
-import com.onlycoffee.app.data.model.RegisterDeviceTokenRequest
-import com.onlycoffee.app.ui.MainActivity
+// import com.onlycoffee.app.data.api.RetrofitClient
+// import com.onlycoffee.app.data.model.RegisterDeviceTokenRequest
+import com.onlycoffee.app.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
+// import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -83,16 +84,19 @@ class PushNotificationManager @Inject constructor(
 
     /**
      * Request FCM token and register with backend
+     * NOTE: Firebase is not configured, this is a stub implementation
      */
     suspend fun requestToken(): String? {
         return try {
-            val token = FirebaseMessaging.getInstance().token.await()
+            // Firebase not configured - return null for now
+            // val token = FirebaseMessaging.getInstance().token.await()
+            val token: String? = null
             _deviceToken.value = token
 
-            Log.d(TAG, "📱 FCM Token: $token")
+            Log.d(TAG, "📱 FCM Token: Firebase not configured")
 
-            // Register token with backend
-            registerTokenWithBackend(token)
+            // Register token with backend when available
+            // token?.let { registerTokenWithBackend(it) }
 
             token
         } catch (e: Exception) {
@@ -103,15 +107,15 @@ class PushNotificationManager @Inject constructor(
 
     /**
      * Register device token with backend
+     * NOTE: Stub implementation - API models not available
      */
     private suspend fun registerTokenWithBackend(token: String) {
         try {
-            val request = RegisterDeviceTokenRequest(
-                deviceToken = token,
-                platform = "android"
-            )
-
             // TODO: Implement API call when NotificationsApiService is available
+            // val request = RegisterDeviceTokenRequest(
+            //     deviceToken = token,
+            //     platform = "android"
+            // )
             // val response = retrofitClient.notificationsApi.registerDevice(request)
 
             Log.d(TAG, "✅ Device token registered with backend successfully")
@@ -122,24 +126,15 @@ class PushNotificationManager @Inject constructor(
 
     /**
      * Handle incoming FCM messages
+     * NOTE: Firebase is not configured, this is a stub implementation
      */
-    fun handleRemoteMessage(remoteMessage: RemoteMessage) {
-        Log.d(TAG, "📬 Received FCM message from: ${remoteMessage.from}")
+    fun handleRemoteMessage(data: Map<String, String>) {
+        Log.d(TAG, "📬 Received message")
 
         // Handle data payload
-        if (remoteMessage.data.isNotEmpty()) {
-            Log.d(TAG, "Message data payload: ${remoteMessage.data}")
-            handleDataPayload(remoteMessage.data)
-        }
-
-        // Handle notification payload
-        remoteMessage.notification?.let { notification ->
-            Log.d(TAG, "Message notification: ${notification.title}")
-            showNotification(
-                title = notification.title ?: "Only Coffee",
-                body = notification.body ?: "",
-                data = remoteMessage.data
-            )
+        if (data.isNotEmpty()) {
+            Log.d(TAG, "Message data payload: $data")
+            handleDataPayload(data)
         }
     }
 
@@ -231,10 +226,11 @@ class PushNotificationManager @Inject constructor(
 
     /**
      * Delete FCM token (for logout)
+     * NOTE: Firebase not configured - stub implementation
      */
     suspend fun deleteToken() {
         try {
-            FirebaseMessaging.getInstance().deleteToken().await()
+            // FirebaseMessaging.getInstance().deleteToken().await()
             _deviceToken.value = null
             Log.d(TAG, "✅ FCM token deleted")
         } catch (e: Exception) {

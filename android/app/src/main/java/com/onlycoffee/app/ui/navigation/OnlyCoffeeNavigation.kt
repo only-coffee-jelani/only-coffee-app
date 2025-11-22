@@ -20,9 +20,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.onlycoffee.app.R
 import com.onlycoffee.app.data.model.MenuItem
+import com.onlycoffee.app.ui.screens.auth.LoginScreen
+import com.onlycoffee.app.ui.screens.auth.SignupScreen
 import com.onlycoffee.app.ui.screens.home.HomeScreen
 import com.onlycoffee.app.ui.screens.menu.MenuScreen
-import com.onlycoffee.app.ui.screens.orders.OrdersScreen
+import com.onlycoffee.app.ui.screens.orders.OrdersScreenUpdated
 import com.onlycoffee.app.ui.screens.product.ProductDetailScreen
 import com.onlycoffee.app.ui.screens.profile.ProfileScreen
 import com.onlycoffee.app.ui.screens.rewards.RewardsScreen
@@ -54,7 +56,7 @@ fun OnlyCoffeeNavigation(
                 MenuScreen(navController = navController)
             }
             composable(BottomNavItem.Orders.route) {
-                OrdersScreen(navController = navController)
+                OrdersScreenUpdated(navController = navController)
             }
             composable(BottomNavItem.Rewards.route) {
                 RewardsScreen(navController = navController)
@@ -63,7 +65,7 @@ fun OnlyCoffeeNavigation(
                 ProfileScreen(navController = navController)
             }
             composable(BottomNavItem.Locations.route) {
-                com.onlycoffee.app.ui.screens.locations.LocationsScreen(navController = navController)
+                com.onlycoffee.app.ui.screens.locations.SelectLocationScreen(navController = navController)
             }
             composable("select_location") {
                 com.onlycoffee.app.ui.screens.locations.SelectLocationScreen(navController = navController)
@@ -80,6 +82,12 @@ fun OnlyCoffeeNavigation(
                         navController = navController
                     )
                 }
+            }
+            composable("login") {
+                LoginScreen(navController = navController)
+            }
+            composable("signup") {
+                SignupScreen(navController = navController)
             }
         }
     }
@@ -99,10 +107,17 @@ fun OnlyCoffeeBottomNavigation(
     
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    
+    val currentRoute = currentDestination?.route
+
     NavigationBar {
         items.forEach { item ->
-            val selected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+            // Check if current route matches the item route
+            // Special case: select_location screen should highlight Menu tab
+            val selected = when {
+                currentRoute == item.route -> true
+                currentRoute == "select_location" && item.route == "menu" -> true
+                else -> currentDestination?.hierarchy?.any { it.route == item.route } == true
+            }
             
             NavigationBarItem(
                 icon = {

@@ -51,8 +51,6 @@ import com.onlycoffee.app.R
 import com.onlycoffee.app.data.model.Store
 import com.onlycoffee.app.ui.components.AppHeader
 import com.onlycoffee.app.ui.components.StoreLocatorMap
-import com.onlycoffee.app.ui.screens.orders.OrdersViewModel
-import com.onlycoffee.app.ui.screens.orders.StoreTab
 import com.onlycoffee.app.ui.theme.BackgroundPrimary
 import com.onlycoffee.app.ui.theme.BrandPrimary
 import com.onlycoffee.app.ui.theme.CornerRadius
@@ -66,7 +64,7 @@ import com.onlycoffee.app.utils.LocationUtils
 @Composable
 fun SelectLocationScreen(
     navController: NavController,
-    viewModel: OrdersViewModel = hiltViewModel()
+    viewModel: LocationViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -155,35 +153,7 @@ fun SelectLocationScreen(
                 Spacer(modifier = Modifier.height(Spacing.lg))
             }
 
-            item {
-                // Store Tabs
-                TabRow(
-                    selectedTabIndex = uiState.selectedTab.ordinal,
-                    modifier = Modifier.padding(horizontal = Spacing.screenPadding),
-                    containerColor = BackgroundPrimary,
-                    indicator = { tabPositions ->
-                        TabRowDefaults.Indicator(
-                            modifier = Modifier.tabIndicatorOffset(tabPositions[uiState.selectedTab.ordinal]),
-                            color = BrandPrimary,
-                            height = 3.dp
-                        )
-                    }
-                ) {
-                    StoreTab.values().forEach { tab ->
-                        Tab(
-                            selected = uiState.selectedTab == tab,
-                            onClick = { viewModel.selectTab(tab) },
-                            text = {
-                                Text(
-                                    text = tab.displayName,
-                                    fontWeight = if (uiState.selectedTab == tab) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (uiState.selectedTab == tab) BrandPrimary else TextSecondary
-                                )
-                            }
-                        )
-                    }
-                }
-            }
+            // Tabs removed for simplicity
 
             item {
                 Spacer(modifier = Modifier.height(Spacing.md))
@@ -196,10 +166,12 @@ fun SelectLocationScreen(
                     isSelected = uiState.selectedStore?.id == store.id,
                     onStoreClick = { viewModel.selectStore(it) },
                     onSelectClick = {
-                        // Save selected store and navigate to menu
+                        // Save selected store and navigate back to menu
                         viewModel.saveSelectedStore(it)
+                        // Navigate to menu and clear the select_location from back stack
                         navController.navigate("menu") {
                             popUpTo("menu") { inclusive = true }
+                            launchSingleTop = true
                         }
                     },
                     isFavorite = viewModel.isFavorite(store.id),

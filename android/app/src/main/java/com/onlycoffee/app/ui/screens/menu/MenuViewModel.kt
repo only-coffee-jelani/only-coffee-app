@@ -13,27 +13,35 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MenuViewModel @Inject constructor(
-    // TODO: Inject repositories when backend is ready
+    private val menuApiService: com.onlycoffee.app.data.api.MenuApiService
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(MenuUiState())
     val uiState: StateFlow<MenuUiState> = _uiState.asStateFlow()
-    
+
     private var allMenuItems: List<MenuItem> = emptyList()
-    
+
     init {
         loadMenuItems()
     }
-    
+
     private fun loadMenuItems() {
         viewModelScope.launch {
-            // TODO: Replace with actual API call
-            allMenuItems = MenuItem.sampleItems
-            filterItems()
-            
-            _uiState.value = _uiState.value.copy(
-                isLoading = false
-            )
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                val response = menuApiService.getAllMenuItems()
+                allMenuItems = response.data
+                filterItems()
+                _uiState.value = _uiState.value.copy(isLoading = false)
+            } catch (e: Exception) {
+                // Fallback to sample data if API fails
+                allMenuItems = MenuItem.sampleItems
+                filterItems()
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Using offline menu. ${e.message}"
+                )
+            }
         }
     }
     

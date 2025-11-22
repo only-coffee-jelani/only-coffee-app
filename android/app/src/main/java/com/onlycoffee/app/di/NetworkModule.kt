@@ -3,7 +3,14 @@ package com.onlycoffee.app.di
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.onlycoffee.app.BuildConfig
+import com.onlycoffee.app.data.api.AuthApiService
 import com.onlycoffee.app.data.api.CouponsApiService
+import com.onlycoffee.app.data.api.LoyaltyApiService
+import com.onlycoffee.app.data.api.MenuApiService
+import com.onlycoffee.app.data.api.OffersApiService
+import com.onlycoffee.app.data.api.OrderApiService
+import com.onlycoffee.app.data.api.StoreApiService
+import com.onlycoffee.app.managers.SecureStorageManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,18 +49,22 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        secureStorage: SecureStorageManager
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor { chain ->
                 val original = chain.request()
-                // TODO: Add authentication token when auth system is ready
-                // val token = authManager.getToken()
+                val token = secureStorage.getAccessToken()
                 val request = original.newBuilder()
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
-                    // .header("Authorization", "Bearer $token")
+                    .apply {
+                        if (token != null) {
+                            header("Authorization", "Bearer $token")
+                        }
+                    }
                     .method(original.method, original.body)
                     .build()
                 chain.proceed(request)
@@ -81,5 +92,41 @@ object NetworkModule {
     @Singleton
     fun provideCouponsApiService(retrofit: Retrofit): CouponsApiService {
         return retrofit.create(CouponsApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLoyaltyApiService(retrofit: Retrofit): LoyaltyApiService {
+        return retrofit.create(LoyaltyApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAuthApiService(retrofit: Retrofit): AuthApiService {
+        return retrofit.create(AuthApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOrderApiService(retrofit: Retrofit): OrderApiService {
+        return retrofit.create(OrderApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideMenuApiService(retrofit: Retrofit): MenuApiService {
+        return retrofit.create(MenuApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStoreApiService(retrofit: Retrofit): StoreApiService {
+        return retrofit.create(StoreApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOffersApiService(retrofit: Retrofit): OffersApiService {
+        return retrofit.create(OffersApiService::class.java)
     }
 }

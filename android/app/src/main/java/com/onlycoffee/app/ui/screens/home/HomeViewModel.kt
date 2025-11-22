@@ -13,26 +13,49 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    // TODO: Inject repositories when backend is ready
+    private val menuApiService: com.onlycoffee.app.data.api.MenuApiService,
+    private val storeApiService: com.onlycoffee.app.data.api.StoreApiService,
+    private val authManager: com.onlycoffee.app.managers.AuthenticationManager
 ) : ViewModel() {
-    
+
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-    
+
     init {
         loadHomeData()
     }
-    
+
     private fun loadHomeData() {
         viewModelScope.launch {
-            // TODO: Replace with actual API calls
-            _uiState.value = _uiState.value.copy(
-                isLoading = false,
-                userName = "Coffee Lover",
-                loyaltyPoints = 1250,
-                nearbyStores = Store.sampleStores,
-                featuredItems = MenuItem.sampleItems.filter { it.isFeatured }
-            )
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            try {
+                // Fetch data in parallel
+                val user = authManager.currentUser.value
+                val featuredItemsResponse = menuApiService.getFeaturedItems()
+                val nearbyStoresResponse = storeApiService.getNearbyStores(
+                    latitude = 29.9584, // Default to New Orleans French Quarter
+                    longitude = -90.0644,
+                    radius = 10.0
+                )
+
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    userName = user?.firstName ?: "Coffee Lover",
+                    loyaltyPoints = user?.loyaltyPoints ?: 0,
+                    nearbyStores = nearbyStoresResponse.data,
+                    featuredItems = featuredItemsResponse.data
+                )
+            } catch (e: Exception) {
+                // Fallback to sample data if API fails
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    userName = "Coffee Lover",
+                    loyaltyPoints = 0,
+                    nearbyStores = Store.sampleStores,
+                    featuredItems = MenuItem.sampleItems.filter { it.isFeatured },
+                    error = "Using offline data. ${e.message}"
+                )
+            }
         }
     }
     
