@@ -173,6 +173,8 @@ export class SplashAnalyticsService {
     try {
       const { startDate, endDate } = this.getDateRange(query.timeRange, query.startDate, query.endDate);
 
+      this.logger.log(`Getting analytics for splash ${query.splashId} from ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
       // Build where clause
       const where: any = {
         date: Between(startDate, endDate),
@@ -188,13 +190,15 @@ export class SplashAnalyticsService {
         order: { date: 'DESC' },
       });
 
+      this.logger.log(`Found ${aggregates.length} daily aggregates`);
+
       // If no aggregates found, calculate from raw events
       if (aggregates.length === 0) {
         this.logger.log('No daily aggregates found, calculating from raw events...');
         return await this.getAnalyticsFromRawEvents(startDate, endDate, query.splashId);
       }
 
-      // Calculate totals
+      // Calculate totals from aggregates
       const totals = aggregates.reduce(
         (acc, agg) => ({
           impressions: acc.impressions + Number(agg.impressions),
@@ -208,6 +212,81 @@ export class SplashAnalyticsService {
         }),
         { impressions: 0, clicks: 0, skips: 0, completions: 0, orders: 0, revenue: 0, uniqueUsers: 0, totalViewTime: 0 },
       );
+
+      // Check if today (UTC) is included in the date range
+      const now = new Date();
+      const todayUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+      ));
+      const todayStr = todayUTC.toISOString().split('T')[0];
+
+      this.logger.log(`Checking for today's data (UTC): ${todayStr}`);
+
+      // Check if we have an aggregate for today
+      const hasTodayAggregate = aggregates.some(agg => {
+        const aggDate = new Date(agg.date);
+        const aggDateStr = aggDate.toISOString().split('T')[0];
+        this.logger.log(`Comparing aggregate date ${aggDateStr} with today ${todayStr}`);
+        return aggDateStr === todayStr;
+      });
+
+      this.logger.log(`Has today aggregate: ${hasTodayAggregate}, endDate >= todayUTC: ${endDate >= todayUTC}`);
+
+      // If today is in range but no aggregate exists, add today's raw events
+      if (endDate >= todayUTC && !hasTodayAggregate) {
+        this.logger.log('Adding today\'s raw events to aggregated data...');
+
+        // Query from start of today (UTC) to current moment
+        const todayStart = new Date(todayUTC.getTime());
+        const todayEnd = new Date(now.getTime()); // Use current moment, not end of day
+
+        const todayWhere: any = {
+          serverTimestamp: Between(todayStart, todayEnd),
+        };
+        if (query.splashId) {
+          todayWhere.splashId = query.splashId;
+        }
+
+        const todayEvents = await this.splashEventRepository.find({ where: todayWhere });
+        this.logger.log(`Found ${todayEvents.length} events for today`);
+
+        if (todayEvents.length > 0) {
+          const todayImpressions = todayEvents.filter((e) => e.eventType === 'impression').length;
+          const todayClicks = todayEvents.filter((e) => e.eventType === 'click').length;
+          const todaySkips = todayEvents.filter((e) => e.eventType === 'skip').length;
+          const todayCompletions = todayEvents.filter((e) => e.eventType === 'complete').length;
+          const todayOrders = todayEvents.filter((e) => e.eventType === 'order').length;
+          const todayRevenue = todayEvents
+            .filter((e) => e.eventType === 'order' && e.revenueAmount)
+            .reduce((sum, e) => sum + Number(e.revenueAmount), 0);
+
+          this.logger.log(`Today's events - impressions: ${todayImpressions}, clicks: ${todayClicks}, skips: ${todaySkips}, completions: ${todayCompletions}`);
+
+          // Add today's events to totals
+          totals.impressions += todayImpressions;
+          totals.clicks += todayClicks;
+          totals.skips += todaySkips;
+          totals.completions += todayCompletions;
+          totals.orders += todayOrders;
+          totals.revenue += todayRevenue;
+
+          // Add today's unique users
+          const todayUniqueUsers = new Set(
+            todayEvents
+              .filter((e) => e.userId || e.deviceId)
+              .map((e) => e.userId || e.deviceId)
+          ).size;
+          totals.uniqueUsers = Math.max(totals.uniqueUsers, todayUniqueUsers);
+
+          // Add today's view time
+          const todayEventsWithViewTime = todayEvents.filter((e) => e.viewTimeSeconds !== null && e.viewTimeSeconds !== undefined);
+          const todayTotalViewTime = todayEventsWithViewTime.reduce((sum, e) => sum + Number(e.viewTimeSeconds), 0);
+          totals.totalViewTime += todayTotalViewTime;
+        }
+      }
 
       // Calculate rates
       const ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0;
@@ -255,52 +334,95 @@ export class SplashAnalyticsService {
   }
 
   /**
-   * Get date range based on time range enum
+   * Get date range based on time range enum or custom dates
+   *
+   * ENTERPRISE-LEVEL TIMEZONE HANDLING:
+   * - All dates are normalized to UTC to ensure consistency across timezones
+   * - "Today" means from 00:00:00 UTC to current moment in UTC
+   * - This ensures that events are counted regardless of server/database timezone
+   * - Database timestamps are stored in UTC (timestamptz in PostgreSQL)
+   * - Custom dates from frontend are parsed as UTC dates
    */
   private getDateRange(
     timeRange?: AnalyticsTimeRange,
     customStart?: string,
     customEnd?: string,
   ): { startDate: Date; endDate: Date } {
+    // Always work in UTC for consistency
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // If custom dates are provided (regardless of timeRange), use them
+    if (customStart && customEnd) {
+      // Parse as UTC dates (YYYY-MM-DD format from frontend)
+      const start = new Date(customStart + 'T00:00:00.000Z');
+      const end = new Date(customEnd + 'T23:59:59.999Z');
+
+      this.logger.log(`Custom date range (UTC): ${start.toISOString()} to ${end.toISOString()}`);
+      return { startDate: start, endDate: end };
+    }
+
+    // Get today in UTC (start of day)
+    const todayUTC = new Date(Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth(),
+      now.getUTCDate(),
+      0, 0, 0, 0
+    ));
 
     switch (timeRange) {
       case AnalyticsTimeRange.TODAY:
-        return { startDate: today, endDate: now };
+        // From start of today (UTC) to current moment
+        // This ensures we capture all events up to NOW
+        const todayEnd = new Date(now.getTime());
+        this.logger.log(`TODAY range (UTC): ${todayUTC.toISOString()} to ${todayEnd.toISOString()}`);
+        return { startDate: todayUTC, endDate: todayEnd };
 
       case AnalyticsTimeRange.YESTERDAY:
-        const yesterday = new Date(today);
-        yesterday.setDate(yesterday.getDate() - 1);
-        return { startDate: yesterday, endDate: today };
+        // Full day yesterday in UTC
+        const yesterdayUTC = new Date(todayUTC.getTime());
+        yesterdayUTC.setUTCDate(yesterdayUTC.getUTCDate() - 1);
+        const yesterdayEnd = new Date(Date.UTC(
+          yesterdayUTC.getUTCFullYear(),
+          yesterdayUTC.getUTCMonth(),
+          yesterdayUTC.getUTCDate(),
+          23, 59, 59, 999
+        ));
+        this.logger.log(`YESTERDAY range (UTC): ${yesterdayUTC.toISOString()} to ${yesterdayEnd.toISOString()}`);
+        return { startDate: yesterdayUTC, endDate: yesterdayEnd };
 
       case AnalyticsTimeRange.LAST_7_DAYS:
-        const last7Days = new Date(today);
-        last7Days.setDate(last7Days.getDate() - 7);
-        return { startDate: last7Days, endDate: now };
+        const last7DaysUTC = new Date(todayUTC.getTime());
+        last7DaysUTC.setUTCDate(last7DaysUTC.getUTCDate() - 7);
+        const last7DaysEnd = new Date(now.getTime());
+        this.logger.log(`LAST_7_DAYS range (UTC): ${last7DaysUTC.toISOString()} to ${last7DaysEnd.toISOString()}`);
+        return { startDate: last7DaysUTC, endDate: last7DaysEnd };
 
       case AnalyticsTimeRange.LAST_30_DAYS:
-        const last30Days = new Date(today);
-        last30Days.setDate(last30Days.getDate() - 30);
-        return { startDate: last30Days, endDate: now };
+        const last30DaysUTC = new Date(todayUTC.getTime());
+        last30DaysUTC.setUTCDate(last30DaysUTC.getUTCDate() - 30);
+        const last30DaysEnd = new Date(now.getTime());
+        this.logger.log(`LAST_30_DAYS range (UTC): ${last30DaysUTC.toISOString()} to ${last30DaysEnd.toISOString()}`);
+        return { startDate: last30DaysUTC, endDate: last30DaysEnd };
 
       case AnalyticsTimeRange.LAST_90_DAYS:
-        const last90Days = new Date(today);
-        last90Days.setDate(last90Days.getDate() - 90);
-        return { startDate: last90Days, endDate: now };
+        const last90DaysUTC = new Date(todayUTC.getTime());
+        last90DaysUTC.setUTCDate(last90DaysUTC.getUTCDate() - 90);
+        const last90DaysEnd = new Date(now.getTime());
+        this.logger.log(`LAST_90_DAYS range (UTC): ${last90DaysUTC.toISOString()} to ${last90DaysEnd.toISOString()}`);
+        return { startDate: last90DaysUTC, endDate: last90DaysEnd };
 
       case AnalyticsTimeRange.CUSTOM:
-        if (customStart && customEnd) {
-          return { startDate: new Date(customStart), endDate: new Date(customEnd) };
-        }
+        // This case is now handled at the top of the function
         // Fall through to default if no custom dates provided
         break;
 
       default:
         // Default to last 30 days
-        const defaultStart = new Date(today);
-        defaultStart.setDate(defaultStart.getDate() - 30);
-        return { startDate: defaultStart, endDate: now };
+        const defaultStartUTC = new Date(todayUTC.getTime());
+        defaultStartUTC.setUTCDate(defaultStartUTC.getUTCDate() - 30);
+        const defaultEnd = new Date(now.getTime());
+        this.logger.log(`DEFAULT range (UTC): ${defaultStartUTC.toISOString()} to ${defaultEnd.toISOString()}`);
+        return { startDate: defaultStartUTC, endDate: defaultEnd };
     }
   }
 
@@ -324,6 +446,8 @@ export class SplashAnalyticsService {
       // Fetch all events in the date range
       const events = await this.splashEventRepository.find({ where });
 
+      this.logger.log(`Found ${events.length} raw events for date range`);
+
       if (events.length === 0) {
         return this.getEmptyAnalytics();
       }
@@ -334,6 +458,8 @@ export class SplashAnalyticsService {
       const skips = events.filter((e) => e.eventType === 'skip').length;
       const completions = events.filter((e) => e.eventType === 'complete').length;
       const orders = events.filter((e) => e.eventType === 'order').length;
+
+      this.logger.log(`Event counts - impressions: ${impressions}, clicks: ${clicks}, skips: ${skips}, completions: ${completions}, orders: ${orders}`);
       const revenue = events
         .filter((e) => e.eventType === 'order' && e.revenueAmount)
         .reduce((sum, e) => sum + Number(e.revenueAmount), 0);

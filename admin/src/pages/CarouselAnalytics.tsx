@@ -99,6 +99,7 @@ const CarouselAnalytics = () => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState<CarouselItemAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTimeRange, setActiveTimeRange] = useState<string>('30days');
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30);
@@ -163,6 +164,42 @@ const CarouselAnalytics = () => {
       console.error('Error:', error);
       toast.error('Failed to load analytics');
     }
+  };
+
+  const setTimeRange = (range: string) => {
+    const today = new Date();
+    const end = today.toISOString().split('T')[0];
+    let start: string;
+
+    switch (range) {
+      case 'today':
+        start = end;
+        break;
+      case 'yesterday':
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        start = yesterday.toISOString().split('T')[0];
+        setEndDate(start); // For yesterday, both start and end are the same
+        setStartDate(start);
+        setActiveTimeRange(range);
+        return;
+      case '7days':
+        const last7Days = new Date(today);
+        last7Days.setDate(last7Days.getDate() - 7);
+        start = last7Days.toISOString().split('T')[0];
+        break;
+      case '30days':
+        const last30Days = new Date(today);
+        last30Days.setDate(last30Days.getDate() - 30);
+        start = last30Days.toISOString().split('T')[0];
+        break;
+      default:
+        return;
+    }
+
+    setStartDate(start);
+    setEndDate(end);
+    setActiveTimeRange(range);
   };
 
   const exportToCSV = () => {
@@ -324,13 +361,77 @@ const CarouselAnalytics = () => {
             <FiCalendar className="text-pink-500 w-5 h-5" />
             <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">Date Range</span>
           </div>
+
+          {/* Quick Time Range Buttons */}
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <button
+              onClick={() => setTimeRange('today')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                activeTimeRange === 'today'
+                  ? 'text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              style={activeTimeRange === 'today' ? { backgroundColor: '#ff93a3' } : {}}
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setTimeRange('yesterday')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                activeTimeRange === 'yesterday'
+                  ? 'text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              style={activeTimeRange === 'yesterday' ? { backgroundColor: '#ff93a3' } : {}}
+            >
+              Yesterday
+            </button>
+            <button
+              onClick={() => setTimeRange('7days')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                activeTimeRange === '7days'
+                  ? 'text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              style={activeTimeRange === '7days' ? { backgroundColor: '#ff93a3' } : {}}
+            >
+              Last 7 Days
+            </button>
+            <button
+              onClick={() => setTimeRange('30days')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                activeTimeRange === '30days'
+                  ? 'text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              style={activeTimeRange === '30days' ? { backgroundColor: '#ff93a3' } : {}}
+            >
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => {
+                // Refresh without changing the active time range
+                if (selectedItemId) {
+                  fetchItemAnalytics(selectedItemId);
+                }
+              }}
+              className="px-4 py-2 rounded-lg font-semibold bg-pink-50 text-pink-600 hover:bg-pink-100 transition-all border-2 border-pink-200"
+            >
+              Refresh
+            </button>
+          </div>
+
+          {/* Custom Date Inputs */}
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <label className="text-sm font-semibold text-gray-700">Start Date:</label>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setActiveTimeRange('custom');
+                }}
                 className="border-2 border-pink-100 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               />
             </div>
@@ -339,7 +440,10 @@ const CarouselAnalytics = () => {
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setActiveTimeRange('custom');
+                }}
                 className="border-2 border-pink-100 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
               />
             </div>

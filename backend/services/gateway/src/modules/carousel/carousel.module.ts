@@ -7,6 +7,8 @@ import {
   CarouselSession,
   CarouselDailyAggregate,
   CarouselABTest,
+  AnonymousDevice,
+  UserDevice,
 } from '@shared/database/entities';
 import { CarouselService } from './carousel.service';
 import { CarouselAnalyticsService } from './carousel-analytics.service';
@@ -23,6 +25,8 @@ import { UploadModule } from '../upload/upload.module';
       CarouselSession,
       CarouselDailyAggregate,
       CarouselABTest,
+      AnonymousDevice,
+      UserDevice,
     ]),
     UploadModule,
   ],

@@ -5,6 +5,8 @@ import { CarouselEvent } from '@shared/database/entities/carousel-event.entity';
 import { CarouselSession } from '@shared/database/entities/carousel-session.entity';
 import { CarouselDailyAggregate } from '@shared/database/entities/carousel-daily-aggregate.entity';
 import { CarouselItem } from '@shared/database/entities';
+import { AnonymousDevice } from '@shared/database/entities/anonymous-device.entity';
+import { UserDevice } from '@shared/database/entities/user-device.entity';
 import { TrackCarouselEventDto } from './dto/track-carousel-event.dto';
 
 /**
@@ -41,6 +43,10 @@ export class CarouselAnalyticsService {
     private readonly carouselDailyAggregateRepository: Repository<CarouselDailyAggregate>,
     @InjectRepository(CarouselItem)
     private readonly carouselItemRepository: Repository<CarouselItem>,
+    @InjectRepository(AnonymousDevice)
+    private readonly anonymousDeviceRepository: Repository<AnonymousDevice>,
+    @InjectRepository(UserDevice)
+    private readonly userDeviceRepository: Repository<UserDevice>,
   ) {}
 
   /**
@@ -66,7 +72,16 @@ export class CarouselAnalyticsService {
         `(position ${data.positionInCarousel}/${data.totalItemsInCarousel})`,
       );
 
-      // Note: Anonymous device tracking can be added later if needed
+      // ENTERPRISE-LEVEL ANONYMOUS DEVICE TRACKING
+      // Register or update anonymous device if deviceId is provided and user is not logged in
+      if (data.deviceId && !data.userId) {
+        await this.registerOrUpdateAnonymousDevice(
+          data.deviceId,
+          data.osType,
+          data.appVersion,
+          data.deviceModel,
+        );
+      }
 
       const now = new Date();
       const event = this.carouselEventRepository.create({
@@ -319,14 +334,33 @@ export class CarouselAnalyticsService {
     try {
       this.logger.log(`Fetching analytics for carousel item: ${carouselItemId}`);
 
+      // ENTERPRISE-LEVEL TIMEZONE HANDLING: Always use UTC
+      const now = new Date();
+      const todayUTC = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+      ));
+
       // Default to last 30 days if no dates provided
       if (!startDate) {
-        startDate = new Date();
-        startDate.setDate(startDate.getDate() - 30);
+        startDate = new Date(todayUTC.getTime());
+        startDate.setUTCDate(startDate.getUTCDate() - 30);
+      } else {
+        // Parse as UTC date (YYYY-MM-DD format from frontend)
+        startDate = new Date(startDate.toISOString().split('T')[0] + 'T00:00:00.000Z');
       }
+
       if (!endDate) {
-        endDate = new Date();
+        // Use current moment for end date
+        endDate = new Date(now.getTime());
+      } else {
+        // Parse as UTC date (YYYY-MM-DD format from frontend)
+        endDate = new Date(endDate.toISOString().split('T')[0] + 'T23:59:59.999Z');
       }
+
+      this.logger.log(`Date range (UTC): ${startDate.toISOString()} to ${endDate.toISOString()}`);
 
       // Try to get from daily aggregates first (faster)
       const aggregates = await this.carouselDailyAggregateRepository.find({
@@ -337,13 +371,88 @@ export class CarouselAnalyticsService {
         order: { date: 'DESC' },
       });
 
-      if (aggregates.length > 0) {
-        return this.calculateMetricsFromAggregates(aggregates);
+      this.logger.log(`Found ${aggregates.length} daily aggregates for carousel item`);
+
+      if (aggregates.length === 0) {
+        // Fall back to raw events if no aggregates
+        this.logger.log('No aggregates found, calculating from raw events...');
+        return await this.calculateMetricsFromRawEvents(carouselItemId, startDate, endDate);
       }
 
-      // Fall back to raw events if no aggregates
-      this.logger.log('No aggregates found, calculating from raw events...');
-      return await this.calculateMetricsFromRawEvents(carouselItemId, startDate, endDate);
+      // Calculate metrics from aggregates
+      let metrics = this.calculateMetricsFromAggregates(aggregates);
+
+      // Check if today (UTC) is included in the date range
+      const todayStr = todayUTC.toISOString().split('T')[0];
+
+      this.logger.log(`Checking for today's carousel data (UTC): ${todayStr}`);
+
+      // Check if we have an aggregate for today
+      const hasTodayAggregate = aggregates.some(agg => {
+        const aggDate = new Date(agg.date);
+        const aggDateStr = aggDate.toISOString().split('T')[0];
+        return aggDateStr === todayStr;
+      });
+
+      this.logger.log(`Has today aggregate: ${hasTodayAggregate}, endDate >= todayUTC: ${endDate >= todayUTC}`);
+
+      // If today is in range but no aggregate exists, add today's raw events
+      if (endDate >= todayUTC && !hasTodayAggregate) {
+        this.logger.log('Adding today\'s raw events to aggregated carousel data...');
+
+        // Query from start of today (UTC) to current moment
+        const todayStart = new Date(todayUTC.getTime());
+        const todayEnd = new Date(now.getTime()); // Use current moment, not end of day
+
+        const todayEvents = await this.carouselEventRepository.find({
+          where: {
+            carouselItemId,
+            createdAt: Between(todayStart, todayEnd),
+          },
+        });
+
+        this.logger.log(`Found ${todayEvents.length} carousel events for today`);
+
+        if (todayEvents.length > 0) {
+          const todayImpressions = todayEvents.filter(e => e.eventType === 'impression').length;
+          const todayClicks = todayEvents.filter(e => e.eventType === 'click').length;
+          const todaySwipesLeft = todayEvents.filter(e => e.eventType === 'swipe_left').length;
+          const todaySwipesRight = todayEvents.filter(e => e.eventType === 'swipe_right').length;
+          const todayAutoAdvances = todayEvents.filter(e => e.eventType === 'auto_advance').length;
+          const todayManualAdvances = todayEvents.filter(e => e.eventType === 'manual_advance').length;
+          const todayOrders = todayEvents.filter(e => e.eventType === 'order').length;
+          const todayAddToCart = todayEvents.filter(e => e.eventType === 'add_to_cart').length;
+          const todayRevenue = todayEvents
+            .filter(e => e.eventType === 'order' && e.revenueAmount)
+            .reduce((sum, e) => sum + Number(e.revenueAmount), 0);
+
+          this.logger.log(`Today's carousel events - impressions: ${todayImpressions}, clicks: ${todayClicks}`);
+
+          // Add today's events to metrics
+          metrics.impressions = Number(metrics.impressions) + todayImpressions;
+          metrics.clicks = Number(metrics.clicks) + todayClicks;
+          metrics.swipesLeft = Number(metrics.swipesLeft) + todaySwipesLeft;
+          metrics.swipesRight = Number(metrics.swipesRight) + todaySwipesRight;
+          metrics.autoAdvances = Number(metrics.autoAdvances) + todayAutoAdvances;
+          metrics.manualAdvances = Number(metrics.manualAdvances) + todayManualAdvances;
+          metrics.addToCartCount = Number(metrics.addToCartCount) + todayAddToCart;
+          metrics.associatedOrders = Number(metrics.associatedOrders) + todayOrders;
+          metrics.associatedRevenue = (Number(metrics.associatedRevenue) + todayRevenue).toFixed(2);
+
+          // Recalculate rates
+          const ctr = metrics.impressions > 0 ? (metrics.clicks / metrics.impressions) * 100 : 0;
+          const conversionRate = metrics.clicks > 0 ? (metrics.associatedOrders / metrics.clicks) * 100 : 0;
+          const avgOrderValue = metrics.associatedOrders > 0 ? Number(metrics.associatedRevenue) / metrics.associatedOrders : 0;
+          const engagementRate = metrics.impressions > 0 ? ((metrics.clicks + metrics.swipesLeft + metrics.swipesRight) / metrics.impressions) * 100 : 0;
+
+          metrics.ctr = ctr.toFixed(2);
+          metrics.conversionRate = conversionRate.toFixed(2);
+          metrics.avgOrderValue = avgOrderValue.toFixed(2);
+          metrics.engagementRate = engagementRate.toFixed(2);
+        }
+      }
+
+      return metrics;
     } catch (error) {
       this.logger.error(`Failed to get item analytics:`, error);
       throw error;
@@ -656,5 +765,73 @@ export class CarouselAnalyticsService {
       `Aggregated carousel item ${carouselItemId}: ` +
       `${impressions} impressions, ${clicks} clicks, ${orders} orders, $${revenue.toFixed(2)} revenue`,
     );
+  }
+
+  /**
+   * Register or update an anonymous device
+   *
+   * ENTERPRISE-LEVEL ANONYMOUS DEVICE TRACKING:
+   * - Automatically registers devices before user login
+   * - Updates device metadata on each event
+   * - Enables cross-session analytics for anonymous users
+   * - Supports device migration when user logs in
+   *
+   * This ensures carousel analytics work for all users, not just logged-in users.
+   *
+   * @param deviceId Device UUID
+   * @param osType Operating system (ios, android, web)
+   * @param appVersion App version string
+   * @param deviceModel Device model string
+   */
+  private async registerOrUpdateAnonymousDevice(
+    deviceId: string,
+    osType?: string,
+    appVersion?: string,
+    deviceModel?: string,
+  ): Promise<void> {
+    try {
+      // Check if device already exists in anonymous_devices
+      let device = await this.anonymousDeviceRepository.findOne({
+        where: { deviceId },
+      });
+
+      if (device) {
+        // Update last active time and metadata
+        device.lastActiveAt = new Date();
+        if (osType) device.deviceType = osType;
+        if (appVersion) device.appVersion = appVersion;
+        if (deviceModel) device.deviceModel = deviceModel;
+
+        await this.anonymousDeviceRepository.save(device);
+        this.logger.debug(`Updated anonymous device: ${deviceId}`);
+      } else {
+        // Check if device exists in user_devices (already migrated)
+        const userDevice = await this.userDeviceRepository.findOne({
+          where: { deviceId },
+        });
+
+        if (userDevice) {
+          // Device is already registered to a user, no need to create anonymous device
+          this.logger.debug(`Device ${deviceId} is already registered to user ${userDevice.userId}`);
+          return;
+        }
+
+        // Create new anonymous device
+        device = this.anonymousDeviceRepository.create({
+          deviceId,
+          deviceType: osType || null,
+          appVersion: appVersion || null,
+          deviceModel: deviceModel || null,
+          firstSeenAt: new Date(),
+          lastActiveAt: new Date(),
+        });
+
+        await this.anonymousDeviceRepository.save(device);
+        this.logger.log(`Registered new anonymous device: ${deviceId}`);
+      }
+    } catch (error) {
+      // Don't fail the event tracking if device registration fails
+      this.logger.warn(`Failed to register/update anonymous device ${deviceId}:`, error.message);
+    }
   }
 }
