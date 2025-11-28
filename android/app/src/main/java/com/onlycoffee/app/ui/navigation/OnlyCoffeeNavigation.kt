@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -20,6 +21,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.onlycoffee.app.R
 import com.onlycoffee.app.data.model.MenuItem
+import com.onlycoffee.app.managers.CarouselAnalyticsManager
 import com.onlycoffee.app.ui.screens.auth.LoginScreen
 import com.onlycoffee.app.ui.screens.auth.SignupScreen
 import com.onlycoffee.app.ui.screens.home.HomeScreen
@@ -32,12 +34,20 @@ import com.onlycoffee.app.ui.screens.coupons.MyCouponsScreen
 import com.onlycoffee.app.ui.theme.BrandPrimary
 import com.onlycoffee.app.ui.theme.OnlyCoffeeTextStyles
 import com.onlycoffee.app.ui.theme.TextSecondary
+import dagger.hilt.android.EntryPointAccessors
+import com.onlycoffee.app.di.CarouselAnalyticsEntryPoint
 
 @Composable
 fun OnlyCoffeeNavigation(
     navController: NavHostController,
     modifier: Modifier = Modifier
 ) {
+    // Get CarouselAnalyticsManager from Hilt
+    val context = LocalContext.current
+    val analyticsManager = EntryPointAccessors.fromApplication(
+        context.applicationContext,
+        CarouselAnalyticsEntryPoint::class.java
+    ).carouselAnalyticsManager()
     Scaffold(
         bottomBar = {
             OnlyCoffeeBottomNavigation(navController = navController)
@@ -50,7 +60,10 @@ fun OnlyCoffeeNavigation(
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(BottomNavItem.Home.route) {
-                HomeScreen(navController = navController)
+                HomeScreen(
+                    navController = navController,
+                    analyticsManager = analyticsManager
+                )
             }
             composable(BottomNavItem.Menu.route) {
                 MenuScreen(navController = navController)

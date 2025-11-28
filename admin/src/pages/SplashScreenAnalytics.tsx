@@ -1,173 +1,387 @@
 import React, { useState, useEffect } from 'react';
-import { FiEye, FiMousePointer, FiSkipForward, FiTrendingUp, FiCalendar, FiUser, FiMaximize2, FiX } from 'react-icons/fi';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  FunnelChart,
+  Funnel,
+  Cell,
+  LabelList,
+} from 'recharts';
+import {
+  FiDownload,
+  FiCalendar,
+  FiEye,
+  FiMousePointer,
+  FiTarget,
+  FiShoppingCart,
+  FiDollarSign,
+  FiZap,
+  FiClock,
+  FiActivity,
+  FiSkipForward,
+  FiCheckCircle,
+  FiRefreshCw,
+} from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { API_BASE } from '../config';
 
-interface SplashScreen {
-  id: string;
+/**
+ * Enterprise-level Splash Screen Analytics Dashboard
+ *
+ * Features:
+ * - Comprehensive metrics (5 event types: impression, click, skip, complete, order)
+ * - Real-time data from backend aggregates
+ * - Date range filtering with custom date pickers
+ * - Session-based metrics
+ * - CSV export functionality
+ * - Per-splash deep dive analytics
+ * - Advanced visualizations (CTR trends, completion rate, revenue, engagement funnel)
+ * - Skip rate analysis
+ * - View time tracking
+ */
+
+interface SplashScreenAnalytics {
+  splashId: string;
   title: string;
-  description: string;
+  subtitle: string;
   imageUrl: string;
-  displayDuration: number;
+  durationSeconds: number;
   isActive: boolean;
+  impressions: number;
+  uniqueUsersShown: number;
+  uniqueUsersClicked: number;
+  clicks: number;
+  skips: number;
+  completions: number;
+  associatedOrders: number;
+  associatedRevenue: string;
+  ctr: string;
+  skipRate: string;
+  completionRate: string;
+  conversionRate: string;
+  avgOrderValue: string;
+  avgViewTime: string;
+  dailyData: DailyData[];
+}
+
+interface DailyData {
+  date: string;
   impressions: number;
   clicks: number;
   skips: number;
+  completions: number;
   ctr: string;
   skipRate: string;
-  associatedOrders: number;
-  associatedRevenue: string;
-  conversionRate: string;
-  averageOrderValue: string;
-  uniqueUsersShown: number;
-  uniqueUsersClicked: number;
-  averageViewTime: string;
-  lastImpressionAt: string | null;
-  lastClickAt: string | null;
-  createdAt: string;
-  replacedAt: string | null;
-  createdById: string | null;
+  completionRate: string;
+  orders: number;
+  revenue: string;
+}
+
+interface MetricCard {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+}
+
+interface SplashScreen {
+  splashId: string;
+  title: string;
+  subtitle: string;
+  imageAsset: {
+    url: string;
+  };
+  isActive: boolean;
 }
 
 const SplashScreenAnalytics = () => {
   const [splashScreens, setSplashScreens] = useState<SplashScreen[]>([]);
+  const [selectedSplashId, setSelectedSplashId] = useState<string | null>(null);
+  const [analytics, setAnalytics] = useState<SplashScreenAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedScreen, setSelectedScreen] = useState<SplashScreen | null>(null);
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [timeRange, setTimeRange] = useState('last_7_days');
-  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [startDate, setStartDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 30);
+    return date.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
 
   useEffect(() => {
-    loadSplashScreens();
-    loadAnalytics();
-  }, [timeRange]);
+    fetchSplashScreens();
+  }, []);
 
-  const loadAnalytics = async () => {
-    try {
-      const response = await fetch(`${API_BASE}/splash-screen/analytics?timeRange=${timeRange}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to load analytics');
-      const data = await response.json();
-      setAnalyticsData(data);
-    } catch (error) {
-      console.error('Failed to load analytics:', error);
-      toast.error('Failed to load analytics data');
+  useEffect(() => {
+    if (selectedSplashId) {
+      fetchSplashAnalytics(selectedSplashId);
     }
-  };
+  }, [selectedSplashId, startDate, endDate]);
 
-  const loadSplashScreens = async () => {
+  const fetchSplashScreens = async () => {
     try {
-      // Fetch splash screens
+      setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('Not authenticated');
+        return;
+      }
+
       const response = await fetch(`${API_BASE}/splash-screen?skip=0&take=100`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
-      if (!response.ok) throw new Error('Failed to load');
+
+      if (!response.ok) throw new Error('Failed to fetch splash screens');
       const data = await response.json();
+      setSplashScreens(data.data || []);
 
-      // Fetch analytics for each splash screen
-      const mappedData = await Promise.all(data.data.map(async (screen: any) => {
-        let analytics = {
-          impressions: 0,
-          clicks: 0,
-          skips: 0,
-          completions: 0,
-          ctr: '0.00',
-          skipRate: '0.00',
-          associatedOrders: 0,
-          associatedRevenue: '0.00',
-          conversionRate: '0.00',
-          averageOrderValue: '0.00',
-          uniqueUsersShown: 0,
-          uniqueUsersClicked: 0,
-          averageViewTime: '0.00',
-        };
-
-        try {
-          // Fetch analytics for this specific splash screen
-          const analyticsResponse = await fetch(
-            `${API_BASE}/splash-screen/analytics?timeRange=${timeRange}&splashId=${screen.splashId}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
-              },
-            }
-          );
-          if (analyticsResponse.ok) {
-            const analyticsData = await analyticsResponse.json();
-            if (analyticsData.summary) {
-              analytics = {
-                impressions: analyticsData.summary.impressions || 0,
-                clicks: analyticsData.summary.clicks || 0,
-                skips: analyticsData.summary.skips || 0,
-                completions: analyticsData.summary.completions || 0,
-                ctr: analyticsData.summary.ctr || '0.00',
-                skipRate: analyticsData.summary.skipRate || '0.00',
-                associatedOrders: analyticsData.summary.orders || 0,
-                associatedRevenue: analyticsData.summary.revenue || '0.00',
-                conversionRate: analyticsData.summary.conversionRate || '0.00',
-                averageOrderValue: analyticsData.summary.avgOrderValue || '0.00',
-                uniqueUsersShown: analyticsData.summary.uniqueUsers || 0,
-                uniqueUsersClicked: analyticsData.summary.uniqueUsersClicked || 0,
-                averageViewTime: analyticsData.summary.avgViewTime || '0.0',
-              };
-            }
-          }
-        } catch (error) {
-          console.error(`Failed to load analytics for splash ${screen.splashId}:`, error);
-        }
-
-        return {
-          id: screen.splashId,
-          title: screen.title || 'Untitled',
-          description: screen.subtitle || '',
-          imageUrl: screen.imageAsset?.url || '',
-          displayDuration: screen.durationSeconds || 3,
-          isActive: screen.isActive || false,
-          ...analytics,
-          lastImpressionAt: null,
-          lastClickAt: null,
-          createdAt: screen.createdAt,
-          replacedAt: screen.replacedAt || null,
-          createdById: screen.createdBy || null,
-        };
-      }));
-
-      setSplashScreens(mappedData.sort((a: SplashScreen, b: SplashScreen) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ));
+      if (data.data && data.data.length > 0) {
+        setSelectedSplashId(data.data[0].splashId);
+      }
     } catch (error) {
+      console.error('Error:', error);
       toast.error('Failed to load splash screens');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const fetchSplashAnalytics = async (splashId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+
+      const url = `${API_BASE}/splash-screen/analytics?splashId=${splashId}&startDate=${startDate}&endDate=${endDate}`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      const data = await response.json();
+
+      // Transform the data to match our interface
+      const selectedScreen = splashScreens.find(s => s.splashId === splashId);
+      const transformedData: SplashScreenAnalytics = {
+        splashId: splashId,
+        title: selectedScreen?.title || 'Unknown',
+        subtitle: selectedScreen?.subtitle || '',
+        imageUrl: selectedScreen?.imageAsset?.url || '',
+        durationSeconds: 3,
+        isActive: selectedScreen?.isActive || false,
+        impressions: data.summary?.impressions || 0,
+        uniqueUsersShown: data.summary?.uniqueUsers || 0,
+        uniqueUsersClicked: data.summary?.uniqueUsersClicked || 0,
+        clicks: data.summary?.clicks || 0,
+        skips: data.summary?.skips || 0,
+        completions: data.summary?.completions || 0,
+        associatedOrders: data.summary?.orders || 0,
+        associatedRevenue: data.summary?.revenue || '0.00',
+        ctr: data.summary?.ctr || '0.00',
+        skipRate: data.summary?.skipRate || '0.00',
+        completionRate: ((data.summary?.completions || 0) / (data.summary?.impressions || 1) * 100).toFixed(2),
+        conversionRate: data.summary?.conversionRate || '0.00',
+        avgOrderValue: data.summary?.avgOrderValue || '0.00',
+        avgViewTime: data.summary?.avgViewTime || '0.0',
+        dailyData: (data.daily || []).map((day: any) => ({
+          date: day.date,
+          impressions: day.impressions || 0,
+          clicks: day.clicks || 0,
+          skips: day.skips || 0,
+          completions: day.completions || 0,
+          ctr: day.ctr || '0.00',
+          skipRate: day.skipRate || '0.00',
+          completionRate: ((day.completions || 0) / (day.impressions || 1) * 100).toFixed(2),
+          orders: day.orders || 0,
+          revenue: day.revenue || '0.00',
+        })),
+      };
+
+      setAnalytics(transformedData);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to load analytics');
+    }
   };
 
-  const StatBox = ({ icon: Icon, label, value, color = '#ff93a3' }: any) => (
-    <div className="bg-white/80 backdrop-blur-sm p-4 rounded-2xl border border-pink-200 flex items-center gap-4 hover:shadow-lg transition-all">
-      <div className="p-3 rounded-xl" style={{ backgroundColor: `${color}20` }}>
-        <Icon size={24} style={{ color }} />
-      </div>
-      <div>
-        <p className="text-xs text-gray-600 uppercase tracking-wide font-semibold">{label}</p>
-        <p className="text-2xl font-bold text-gray-900">{value}</p>
-      </div>
-    </div>
-  );
+  // Quick date range handlers
+  const setDateRangeToday = () => {
+    const today = new Date().toISOString().split('T')[0];
+    setStartDate(today);
+    setEndDate(today);
+  };
+
+  const setDateRangeYesterday = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    setStartDate(yesterdayStr);
+    setEndDate(yesterdayStr);
+  };
+
+  const setDateRangeLast7Days = () => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 7);
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+  };
+
+  const setDateRangeLast30Days = () => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+  };
+
+  // Date validation handlers
+  const handleStartDateChange = (newStartDate: string) => {
+    if (newStartDate > endDate) {
+      toast.error('Start date cannot be after end date');
+      return;
+    }
+    setStartDate(newStartDate);
+  };
+
+  const handleEndDateChange = (newEndDate: string) => {
+    if (newEndDate < startDate) {
+      toast.error('End date cannot be before start date');
+      return;
+    }
+    setEndDate(newEndDate);
+  };
+
+  // Refresh analytics data
+  const handleRefresh = async () => {
+    if (!selectedSplashId) {
+      toast.error('Please select a splash screen first');
+      return;
+    }
+
+    try {
+      setRefreshing(true);
+      toast.loading('Refreshing analytics...', { id: 'refresh' });
+
+      // Fetch latest analytics data
+      await fetchSplashAnalytics(selectedSplashId);
+
+      toast.success('Analytics refreshed successfully!', { id: 'refresh' });
+    } catch (error) {
+      console.error('Error refreshing analytics:', error);
+      toast.error('Failed to refresh analytics', { id: 'refresh' });
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const exportToCSV = () => {
+    if (!analytics) {
+      toast.error('No data to export');
+      return;
+    }
+
+    try {
+      const headers = ['Date', 'Impressions', 'Clicks', 'Skips', 'Completions', 'CTR (%)', 'Skip Rate (%)', 'Completion Rate (%)', 'Orders', 'Revenue ($)'];
+      const rows = analytics.dailyData.map((day) => [
+        day.date,
+        day.impressions,
+        day.clicks,
+        day.skips,
+        day.completions,
+        day.ctr,
+        day.skipRate,
+        day.completionRate,
+        day.orders,
+        day.revenue,
+      ]);
+
+      rows.push([]);
+      rows.push(['Summary']);
+      rows.push(['Total Impressions', analytics.impressions]);
+      rows.push(['Total Clicks', analytics.clicks]);
+      rows.push(['Total Skips', analytics.skips]);
+      rows.push(['Total Completions', analytics.completions]);
+      rows.push(['Overall CTR (%)', analytics.ctr]);
+      rows.push(['Overall Skip Rate (%)', analytics.skipRate]);
+      rows.push(['Overall Completion Rate (%)', analytics.completionRate]);
+      rows.push(['Total Orders', analytics.associatedOrders]);
+      rows.push(['Total Revenue ($)', analytics.associatedRevenue]);
+      rows.push(['Avg Order Value ($)', analytics.avgOrderValue]);
+      rows.push(['Avg View Time (s)', analytics.avgViewTime]);
+      rows.push(['Unique Users Shown', analytics.uniqueUsersShown]);
+      rows.push(['Unique Users Clicked', analytics.uniqueUsersClicked]);
+
+      const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `splash-analytics-${analytics.splashId}-${startDate}-to-${endDate}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Analytics exported successfully!');
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      toast.error('Failed to export analytics');
+    }
+  };
+
+  const getMetricCards = (): MetricCard[] => {
+    if (!analytics) return [];
+
+    return [
+      {
+        title: 'Total Impressions',
+        value: analytics.impressions.toLocaleString(),
+        icon: <FiEye className="w-6 h-6" />,
+        color: 'bg-blue-500',
+      },
+      {
+        title: 'Total Clicks',
+        value: analytics.clicks.toLocaleString(),
+        icon: <FiMousePointer className="w-6 h-6" />,
+        color: 'bg-green-500',
+      },
+      {
+        title: 'Click-Through Rate',
+        value: `${analytics.ctr}%`,
+        icon: <FiTarget className="w-6 h-6" />,
+        color: 'bg-purple-500',
+      },
+      {
+        title: 'Total Orders',
+        value: analytics.associatedOrders.toLocaleString(),
+        icon: <FiShoppingCart className="w-6 h-6" />,
+        color: 'bg-orange-500',
+      },
+      {
+        title: 'Total Revenue',
+        value: `$${parseFloat(analytics.associatedRevenue).toFixed(2)}`,
+        icon: <FiDollarSign className="w-6 h-6" />,
+        color: 'bg-pink-500',
+      },
+      {
+        title: 'Avg View Time',
+        value: `${parseFloat(analytics.avgViewTime).toFixed(1)}s`,
+        icon: <FiClock className="w-6 h-6" />,
+        color: 'bg-indigo-500',
+      },
+    ];
+  };
 
   if (loading) {
     return (
@@ -181,173 +395,342 @@ const SplashScreenAnalytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
       {/* Header */}
-      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm mb-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold text-gray-900">Splash Screen Analytics</h1>
-          <p className="text-gray-600 mt-2 text-lg">Track performance and engagement metrics for your splash screens</p>
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            <FiActivity className="inline-block mr-3 text-pink-500" />
+            Splash Screen Analytics
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Enterprise-level analytics for splash screen performance and engagement
+          </p>
+        </div>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing || !selectedSplashId}
+          className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium shadow-lg transition-all ${
+            refreshing || !selectedSplashId
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:shadow-xl'
+          }`}
+        >
+          <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+          {refreshing ? 'Refreshing...' : 'Refresh'}
+        </button>
+      </div>
+
+      {/* Splash Screen Selector */}
+      <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Select Splash Screen
+        </label>
+        <select
+          value={selectedSplashId || ''}
+          onChange={(e) => setSelectedSplashId(e.target.value)}
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent text-gray-900 font-medium"
+        >
+          {splashScreens.map((screen) => (
+            <option key={screen.splashId} value={screen.splashId}>
+              {screen.title} {screen.isActive ? '(Active)' : '(Inactive)'}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Date Range Selector */}
+      <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <FiCalendar className="text-pink-500 w-5 h-5" />
+            <span className="text-sm font-semibold text-gray-700">Date Range</span>
+          </div>
+          <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors font-medium shadow-sm"
+          >
+            <FiDownload className="w-4 h-4" />
+            Export CSV
+          </button>
+        </div>
+
+        {/* Quick Date Range Buttons */}
+        <div className="mb-4 flex gap-2 flex-wrap">
+          <button
+            onClick={setDateRangeToday}
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-medium text-sm shadow-sm"
+          >
+            Today
+          </button>
+          <button
+            onClick={setDateRangeYesterday}
+            className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white rounded-lg hover:from-cyan-600 hover:to-cyan-700 transition-all font-medium text-sm shadow-sm"
+          >
+            Yesterday
+          </button>
+          <button
+            onClick={setDateRangeLast7Days}
+            className="px-4 py-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all font-medium text-sm shadow-sm"
+          >
+            Last 7 Days
+          </button>
+          <button
+            onClick={setDateRangeLast30Days}
+            className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all font-medium text-sm shadow-sm"
+          >
+            Last 30 Days
+          </button>
+        </div>
+
+        {/* Custom Date Inputs */}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-600 mb-2">Start Date</label>
+            <input
+              type="date"
+              value={startDate}
+              max={endDate}
+              onChange={(e) => handleStartDateChange(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs font-medium text-gray-600 mb-2">End Date</label>
+            <input
+              type="date"
+              value={endDate}
+              min={startDate}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={(e) => handleEndDateChange(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-8">
-
-        {/* Time Range Selector */}
-        <div className="mb-8 flex justify-between items-center">
-          <div className="flex gap-2">
-            {[
-              { value: 'today', label: 'Today' },
-              { value: 'yesterday', label: 'Yesterday' },
-              { value: 'last_7_days', label: 'Last 7 Days' },
-              { value: 'last_30_days', label: 'Last 30 Days' },
-              { value: 'last_90_days', label: 'Last 90 Days' },
-            ].map((range) => (
-              <button
-                key={range.value}
-                onClick={() => setTimeRange(range.value)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  timeRange === range.value
-                    ? 'bg-pink-500 text-white shadow-lg'
-                    : 'bg-white text-gray-700 hover:bg-pink-50 border border-gray-200'
-                }`}
-              >
-                {range.label}
-              </button>
-            ))}
-          </div>
+      {/* Analytics Content */}
+      {!analytics ? (
+        <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-200">
+          <FiActivity className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500 text-lg">Select a splash screen to view analytics</p>
         </div>
-
-      {/* Splash Screens List */}
-      <div className="space-y-8 max-w-6xl mx-auto">
-        {splashScreens.map((screen) => (
-          <div
-            key={screen.id}
-            className="bg-white rounded-3xl border-2 border-pink-100 overflow-hidden hover:shadow-2xl transition-all duration-300 hover:border-pink-300"
-          >
-            {/* Header with Image Preview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
-              {/* Image Preview */}
-              <div className="md:col-span-1 flex justify-center">
-                <button
-                  onClick={() => {
-                    setSelectedScreen(screen);
-                    setShowImageModal(true);
-                  }}
-                  className="relative w-32 aspect-[9/16] rounded-2xl overflow-hidden group cursor-pointer"
-                >
-                  <img
-                    src={screen.imageUrl}
-                    alt={screen.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <FiMaximize2 size={32} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+      ) : (
+        <>
+          {/* Metric Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {getMetricCards().map((metric, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 mb-1">{metric.title}</p>
+                    <p className="text-3xl font-bold text-gray-900">{metric.value}</p>
                   </div>
-                </button>
-              </div>
-
-              {/* Info Section */}
-              <div className="md:col-span-2 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h2 className="text-3xl font-bold text-gray-900 mb-2">{screen.title}</h2>
-                      <p className="text-gray-600 text-base leading-relaxed">{screen.description}</p>
-                    </div>
-                    <span className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ml-4 ${
-                      screen.isActive
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {screen.isActive ? '🟢 Active' : '⚪ Inactive'}
-                    </span>
-                  </div>
-
-                  {/* Timeline Info */}
-                  <div className="flex flex-wrap gap-6 text-sm text-gray-600 mt-6 pt-6 border-t border-gray-200">
-                    <div className="flex items-center gap-2">
-                      <FiCalendar size={16} className="text-pink-500" />
-                      <span><strong>Created:</strong> {formatDate(screen.createdAt)}</span>
-                    </div>
-                    {screen.replacedAt && (
-                      <div className="flex items-center gap-2">
-                        <FiCalendar size={16} className="text-pink-500" />
-                        <span><strong>Replaced:</strong> {formatDate(screen.replacedAt)}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <FiUser size={16} className="text-pink-500" />
-                      <span><strong>Duration:</strong> {screen.displayDuration}s</span>
-                    </div>
+                  <div className={`${metric.color} p-4 rounded-xl text-white`}>
+                    {metric.icon}
                   </div>
                 </div>
               </div>
+            ))}
+          </div>
+
+          {/* Charts Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {/* CTR Trend Chart */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <FiTarget className="text-purple-500" />
+                Click-Through Rate Trend
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={analytics.dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    formatter={(value: any) => [`${parseFloat(value).toFixed(2)}%`, 'CTR']}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="ctr"
+                    stroke="#8b5cf6"
+                    strokeWidth={3}
+                    dot={{ fill: '#8b5cf6', r: 4 }}
+                    name="CTR (%)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
 
-            {/* Stats Grid */}
-            <div className="px-8 py-6 bg-gradient-to-r from-pink-50 to-orange-50 border-t-2 border-pink-100">
-              <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4">Performance Metrics</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                <StatBox icon={FiEye} label="Impressions" value={screen.impressions.toLocaleString()} />
-                <StatBox icon={FiMousePointer} label="Clicks" value={screen.clicks.toLocaleString()} />
-                <StatBox icon={FiSkipForward} label="Skips" value={screen.skips.toLocaleString()} />
-                <StatBox icon={FiTrendingUp} label="CTR" value={`${screen.ctr}%`} color="#ff6b6b" />
-                <StatBox icon={FiTrendingUp} label="Skip Rate" value={`${screen.skipRate}%`} color="#ffa94d" />
-                <StatBox icon={FiTrendingUp} label="Conversion" value={`${screen.conversionRate}%`} color="#51cf66" />
-              </div>
+            {/* Skip Rate & Completion Rate Chart */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <FiSkipForward className="text-orange-500" />
+                Skip Rate vs Completion Rate
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={analytics.dailyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    formatter={(value: any) => [`${parseFloat(value).toFixed(2)}%`]}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="skipRate"
+                    stroke="#f97316"
+                    strokeWidth={3}
+                    dot={{ fill: '#f97316', r: 4 }}
+                    name="Skip Rate (%)"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="completionRate"
+                    stroke="#10b981"
+                    strokeWidth={3}
+                    dot={{ fill: '#10b981', r: 4 }}
+                    name="Completion Rate (%)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
 
-            {/* Detailed Metrics */}
-            <div className="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200">
-                <p className="text-xs text-blue-700 uppercase tracking-wide font-bold mb-2">Unique Users Shown</p>
-                <p className="text-3xl font-bold text-blue-900">{screen.uniqueUsersShown.toLocaleString()}</p>
+            {/* Revenue Trend Chart */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <FiDollarSign className="text-pink-500" />
+                Revenue Trend
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={analytics.dailyData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    formatter={(value: any) => [`$${parseFloat(value).toFixed(2)}`, 'Revenue']}
+                  />
+                  <Legend />
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#ec4899"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorRevenue)"
+                    name="Revenue ($)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Engagement Funnel */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                <FiZap className="text-blue-500" />
+                Engagement Funnel
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart
+                  data={[
+                    { name: 'Impressions', value: analytics.impressions, fill: '#3b82f6' },
+                    { name: 'Clicks', value: analytics.clicks, fill: '#10b981' },
+                    { name: 'Completions', value: analytics.completions, fill: '#8b5cf6' },
+                    { name: 'Orders', value: analytics.associatedOrders, fill: '#ec4899' },
+                  ]}
+                  layout="vertical"
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis type="number" tick={{ fontSize: 12 }} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 12 }} width={100} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
+                    formatter={(value: any) => [value.toLocaleString(), 'Count']}
+                  />
+                  <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                    {[
+                      { name: 'Impressions', value: analytics.impressions, fill: '#3b82f6' },
+                      { name: 'Clicks', value: analytics.clicks, fill: '#10b981' },
+                      { name: 'Completions', value: analytics.completions, fill: '#8b5cf6' },
+                      { name: 'Orders', value: analytics.associatedOrders, fill: '#ec4899' },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Additional Metrics */}
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <FiActivity className="text-indigo-500" />
+              Detailed Metrics
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm font-medium text-blue-700 mb-1">Unique Users Shown</p>
+                <p className="text-2xl font-bold text-blue-900">{analytics.uniqueUsersShown.toLocaleString()}</p>
               </div>
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200">
-                <p className="text-xs text-purple-700 uppercase tracking-wide font-bold mb-2">Unique Users Clicked</p>
-                <p className="text-3xl font-bold text-purple-900">{screen.uniqueUsersClicked.toLocaleString()}</p>
+              <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                <p className="text-sm font-medium text-green-700 mb-1">Unique Users Clicked</p>
+                <p className="text-2xl font-bold text-green-900">{analytics.uniqueUsersClicked.toLocaleString()}</p>
               </div>
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200">
-                <p className="text-xs text-green-700 uppercase tracking-wide font-bold mb-2">Associated Orders</p>
-                <p className="text-3xl font-bold text-green-900">{screen.associatedOrders.toLocaleString()}</p>
+              <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
+                <p className="text-sm font-medium text-orange-700 mb-1">Skip Rate</p>
+                <p className="text-2xl font-bold text-orange-900">{analytics.skipRate}%</p>
               </div>
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-pink-50 to-pink-100/50 border border-pink-200">
-                <p className="text-xs text-pink-700 uppercase tracking-wide font-bold mb-2">Associated Revenue</p>
-                <p className="text-3xl font-bold text-pink-900">${parseFloat(screen.associatedRevenue).toFixed(2)}</p>
+              <div className="text-center p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <p className="text-sm font-medium text-purple-700 mb-1">Completion Rate</p>
+                <p className="text-2xl font-bold text-purple-900">{analytics.completionRate}%</p>
               </div>
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200">
-                <p className="text-xs text-orange-700 uppercase tracking-wide font-bold mb-2">Avg Order Value</p>
-                <p className="text-3xl font-bold text-orange-900">${parseFloat(screen.averageOrderValue).toFixed(2)}</p>
+              <div className="text-center p-4 bg-pink-50 rounded-lg border border-pink-200">
+                <p className="text-sm font-medium text-pink-700 mb-1">Conversion Rate</p>
+                <p className="text-2xl font-bold text-pink-900">{analytics.conversionRate}%</p>
               </div>
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200">
-                <p className="text-xs text-indigo-700 uppercase tracking-wide font-bold mb-2">Avg View Time</p>
-                <p className="text-3xl font-bold text-indigo-900">{parseFloat(screen.averageViewTime).toFixed(1)}s</p>
+              <div className="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                <p className="text-sm font-medium text-indigo-700 mb-1">Avg Order Value</p>
+                <p className="text-2xl font-bold text-indigo-900">${parseFloat(analytics.avgOrderValue).toFixed(2)}</p>
+              </div>
+              <div className="text-center p-4 bg-teal-50 rounded-lg border border-teal-200">
+                <p className="text-sm font-medium text-teal-700 mb-1">Total Skips</p>
+                <p className="text-2xl font-bold text-teal-900">{analytics.skips.toLocaleString()}</p>
+              </div>
+              <div className="text-center p-4 bg-cyan-50 rounded-lg border border-cyan-200">
+                <p className="text-sm font-medium text-cyan-700 mb-1">Total Completions</p>
+                <p className="text-2xl font-bold text-cyan-900">{analytics.completions.toLocaleString()}</p>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* Image Modal */}
-      {showImageModal && selectedScreen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center z-50 p-4">
-          <button
-            onClick={() => setShowImageModal(false)}
-            className="absolute top-6 right-6 text-white hover:text-gray-300 transition-colors z-10 p-2 hover:bg-white/10 rounded-full"
-          >
-            <FiX size={32} />
-          </button>
-          <div className="relative bg-black rounded-3xl overflow-hidden flex items-center justify-center max-h-[85vh] max-w-[95vw] shadow-2xl">
-            <img
-              src={selectedScreen.imageUrl}
-              alt={selectedScreen.title}
-              className="max-w-full max-h-full object-contain"
-            />
-          </div>
-          <p className="text-white text-center mt-6 text-lg font-semibold">{selectedScreen.title}</p>
-        </div>
+        </>
       )}
-      </div>
     </div>
   );
 };

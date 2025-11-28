@@ -14,6 +14,7 @@ dist/
 # Environment variables
 .env
 .env*.local
+*.env
 
 # Logs
 logs/
@@ -36,6 +37,14 @@ lerna-debug.log*
 backend/node_modules/
 backend/dist/
 backend/.env
+backend/services/**/.env
+backend/services/gateway/.env
+
+# Admin
+admin/node_modules/
+admin/dist/
+admin/build/
+admin/.env
 
 # iOS
 mobile/ios/*.xcworkspace
@@ -50,6 +59,24 @@ mobile/ios/*.mode2v3
 mobile/ios/*.perspectivev3
 
 # Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/.cxx/
+android/*.apk
+android/*.aab
+android/gradle-*/
+android/*.zip
+android/*_output*.txt
+android/captures/
+android/.externalNativeBuild/
+android/.navigation/
+android/output.json
+
+# Legacy mobile paths (if they exist)
 mobile/android/.gradle/
 mobile/android/build/
 mobile/android/local.properties
@@ -81,5 +108,10 @@ pgdata/
 # Cache
 .cache/
 *.tmp
+
+# Documentation (generated/temporary)
 MASTER.env
 S3_SETUP_COMPLETED.md
+
+# Screenshots
+screenshot*.png

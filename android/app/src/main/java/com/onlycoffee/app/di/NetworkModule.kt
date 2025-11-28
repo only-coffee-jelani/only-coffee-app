@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder
 import com.onlycoffee.app.BuildConfig
 import com.onlycoffee.app.data.api.AuthApiService
 import com.onlycoffee.app.data.api.CarouselApiService
+import com.onlycoffee.app.data.api.CarouselAnalyticsApiService
 import com.onlycoffee.app.data.api.CouponsApiService
 import com.onlycoffee.app.data.api.LoyaltyApiService
 import com.onlycoffee.app.data.api.MenuApiService
@@ -142,5 +143,11 @@ object NetworkModule {
     @Singleton
     fun provideCarouselApiService(retrofit: Retrofit): CarouselApiService {
         return retrofit.create(CarouselApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCarouselAnalyticsApiService(retrofit: Retrofit): CarouselAnalyticsApiService {
+        return retrofit.create(CarouselAnalyticsApiService::class.java)
     }
 }

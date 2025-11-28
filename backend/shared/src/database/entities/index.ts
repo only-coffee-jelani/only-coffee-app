@@ -52,6 +52,10 @@ export * from './splash-session.entity';
 export * from './splash-daily-aggregate.entity';
 export * from './carousel.entity';
 export * from './carousel-item.entity';
+export * from './carousel-event.entity';
+export * from './carousel-session.entity';
+export * from './carousel-daily-aggregate.entity';
+export * from './carousel-ab-test.entity';
 
 // Coupons & Loyalty Programs
 export * from './coupon-grant.entity';

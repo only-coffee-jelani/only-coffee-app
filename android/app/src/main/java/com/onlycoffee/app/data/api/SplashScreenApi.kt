@@ -21,21 +21,21 @@ interface SplashScreenApi {
      * This endpoint is public and doesn't require authentication
      */
     @POST("splash-screen/events/track")
-    suspend fun trackEvent(@Body request: TrackSplashEventRequest): TrackEventResponse
+    suspend fun trackEvent(@Body request: TrackSplashEventRequest): TrackSplashEventResponse
 
     /**
      * Start a splash screen session
      * This endpoint is public and doesn't require authentication
      */
     @POST("splash-screen/sessions/start")
-    suspend fun startSession(@Body request: StartSplashSessionRequest): StartSessionResponse
+    suspend fun startSession(@Body request: StartSplashSessionRequest): StartSplashSessionResponse
 
     /**
      * End a splash screen session
      * This endpoint is public and doesn't require authentication
      */
     @POST("splash-screen/sessions/end")
-    suspend fun endSession(@Body request: EndSplashSessionRequest): EndSessionResponse
+    suspend fun endSession(@Body request: EndSplashSessionRequest): EndSplashSessionResponse
 }
 
 /**
@@ -60,7 +60,7 @@ data class TrackSplashEventRequest(
 /**
  * Response from tracking splash events
  */
-data class TrackEventResponse(
+data class TrackSplashEventResponse(
     val success: Boolean,
     val eventId: String
 )
@@ -83,7 +83,7 @@ data class StartSplashSessionRequest(
 /**
  * Response from starting a splash session
  */
-data class StartSessionResponse(
+data class StartSplashSessionResponse(
     val success: Boolean,
     val sessionId: String
 )
@@ -103,7 +103,7 @@ data class EndSplashSessionRequest(
 /**
  * Response from ending a splash session
  */
-data class EndSessionResponse(
+data class EndSplashSessionResponse(
     val success: Boolean
 )
 

@@ -7,6 +7,7 @@ import SplashScreenManager from './pages/SplashScreenManager';
 import SplashScreenAnalytics from './pages/SplashScreenAnalytics';
 import CarouselManager from './pages/CarouselManager';
 import CarouselAnalytics from './pages/CarouselAnalytics';
+import CarouselABTesting from './pages/CarouselABTesting';
 import MenuItemsManager from './pages/MenuItemsManager';
 import StoresManager from './pages/StoresManager';
 import SettingsPage from './pages/SettingsPage';
@@ -34,6 +35,7 @@ function App() {
             <Route path="/splash-screen-analytics" element={<SplashScreenAnalytics />} />
             <Route path="/carousel" element={<CarouselManager />} />
             <Route path="/carousel-analytics" element={<CarouselAnalytics />} />
+            <Route path="/carousel-ab-testing" element={<CarouselABTesting />} />
             <Route path="/menu-items" element={<MenuItemsManager />} />
             <Route path="/stores" element={<StoresManager />} />
             <Route path="/users" element={<UsersPage />} />

@@ -102,6 +102,9 @@ object ComponentSize {
     val cardMinHeight = 120.dp
     val storeCardWidth = 280.dp
     val menuItemCardWidth = 160.dp
+
+    // Carousel dimensions
+    val carouselHeight = 200.dp
     
     // Image dimensions
     val avatarSmall = 32.dp
