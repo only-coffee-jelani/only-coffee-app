@@ -270,59 +270,81 @@ const CarouselAnalytics = () => {
   }
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Enterprise Carousel Analytics</h1>
-        <p className="text-gray-600">
-          Comprehensive analytics with engagement scoring, swipe tracking, and position performance
-        </p>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-        <div className="flex items-center gap-4 flex-wrap">
-          <FiCalendar className="w-5 h-5 text-gray-500" />
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">Start Date:</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium text-gray-700">End Date:</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm"
-            />
+    <div className="min-h-screen bg-gray-50 pb-8">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
+              <FiActivity className="text-pink-500" />
+              Carousel Analytics
+            </h1>
+            <p className="text-gray-600 mt-2 text-lg">
+              Enterprise-level analytics with engagement scoring, swipe tracking, and position performance
+            </p>
           </div>
           <button
             onClick={exportToCSV}
-            className="ml-auto flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium"
+            disabled={!analytics}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all active:scale-95 ${
+              !analytics
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'text-white hover:shadow-xl hover:opacity-90'
+            }`}
+            style={!analytics ? {} : { backgroundColor: '#ff93a3' }}
           >
-            <FiDownload className="w-4 h-4" />
+            <FiDownload className="w-5 h-5" />
             Export CSV
           </button>
         </div>
       </div>
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Select Carousel Item:</label>
-        <select
-          value={selectedItemId || ''}
-          onChange={(e) => setSelectedItemId(e.target.value)}
-          className="w-full md:w-96 border border-gray-300 rounded-md px-3 py-2 text-sm"
-        >
-          {carouselItems.map((item) => (
-            <option key={item.carouselItemId} value={item.carouselItemId}>
-              {item.title}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="max-w-7xl mx-auto px-8">
+        {/* Carousel Item Selector */}
+        <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">
+            Select Carousel Item
+          </label>
+          <select
+            value={selectedItemId || ''}
+            onChange={(e) => setSelectedItemId(e.target.value)}
+            className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent text-gray-900 font-medium bg-white"
+          >
+            {carouselItems.map((item) => (
+              <option key={item.carouselItemId} value={item.carouselItemId}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Date Range Selector */}
+        <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+          <div className="flex items-center gap-4 mb-4">
+            <FiCalendar className="text-pink-500 w-5 h-5" />
+            <span className="text-sm font-bold text-gray-900 uppercase tracking-wide">Date Range</span>
+          </div>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700">Start Date:</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="border-2 border-pink-100 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-700">End Date:</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="border-2 border-pink-100 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
 
       {analytics && (
         <>
@@ -474,12 +496,13 @@ const CarouselAnalytics = () => {
       )}
 
       {!analytics && !loading && (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+        <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-200">
           <FiActivity className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-900 mb-2">No Analytics Data</h3>
           <p className="text-gray-600">Select a carousel item to view its analytics</p>
         </div>
       )}
+      </div>
     </div>
   );
 };

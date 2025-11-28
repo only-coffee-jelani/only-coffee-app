@@ -395,31 +395,36 @@ const SplashScreenAnalytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8">
+    <div className="min-h-screen bg-gray-50 pb-8">
       {/* Header */}
-      <div className="mb-8 flex items-start justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            <FiActivity className="inline-block mr-3 text-pink-500" />
-            Splash Screen Analytics
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Enterprise-level analytics for splash screen performance and engagement
-          </p>
+      <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm mb-8">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
+              <FiActivity className="text-pink-500" />
+              Splash Screen Analytics
+            </h1>
+            <p className="text-gray-600 mt-2 text-lg">
+              Enterprise-level analytics for splash screen performance and engagement
+            </p>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || !selectedSplashId}
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-lg transition-all active:scale-95 ${
+              refreshing || !selectedSplashId
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'text-white hover:shadow-xl hover:opacity-90'
+            }`}
+            style={refreshing || !selectedSplashId ? {} : { backgroundColor: '#ff93a3' }}
+          >
+            <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Refreshing...' : 'Refresh'}
+          </button>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing || !selectedSplashId}
-          className={`flex items-center gap-2 px-5 py-3 rounded-lg font-medium shadow-lg transition-all ${
-            refreshing || !selectedSplashId
-              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:shadow-xl'
-          }`}
-        >
-          <FiRefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
-          {refreshing ? 'Refreshing...' : 'Refresh'}
-        </button>
       </div>
+
+      <div className="max-w-7xl mx-auto px-8">
 
       {/* Splash Screen Selector */}
       <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border border-gray-200">
@@ -731,6 +736,7 @@ const SplashScreenAnalytics = () => {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 };
