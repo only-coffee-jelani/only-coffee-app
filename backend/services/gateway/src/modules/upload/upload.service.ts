@@ -1,15 +1,22 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
+import { MediaAsset } from '@shared/database/entities';
 
 @Injectable()
 export class UploadService {
   private s3Client: S3Client;
   private bucketName: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    @InjectRepository(MediaAsset)
+    private mediaAssetRepository: Repository<MediaAsset>,
+  ) {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET') || 'only-coffee-assets';
 
     this.s3Client = new S3Client({
@@ -24,7 +31,8 @@ export class UploadService {
   async uploadImage(
     file: Express.Multer.File,
     folder: string,
-  ): Promise<string> {
+    userId?: string,
+  ): Promise<{ url: string; assetId: string }> {
     try {
       // Generate unique filename
       const fileExtension = file.originalname.split('.').pop();
@@ -78,9 +86,23 @@ export class UploadService {
 
       await this.s3Client.send(command);
 
-      // Return public URL
+      // Generate public URL
       const region = this.configService.get<string>('AWS_REGION') || 'us-east-1';
-      return `https://${this.bucketName}.s3.${region}.amazonaws.com/${fileName}`;
+      const url = `https://${this.bucketName}.s3.${region}.amazonaws.com/${fileName}`;
+
+      // Create MediaAsset record in database
+      const mediaAsset = this.mediaAssetRepository.create({
+        url,
+        type: 'image',
+        createdBy: userId || null,
+      });
+
+      const savedAsset = await this.mediaAssetRepository.save(mediaAsset);
+
+      return {
+        url: savedAsset.url,
+        assetId: savedAsset.assetId,
+      };
     } catch (error) {
       console.error('Error uploading image to S3:', error);
       throw new InternalServerErrorException('Failed to upload image');

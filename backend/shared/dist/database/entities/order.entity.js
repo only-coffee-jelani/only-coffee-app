@@ -9,173 +9,135 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Order = exports.PaymentMethod = exports.OrderType = exports.OrderStatus = void 0;
+exports.Order = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./user.entity");
 const store_entity_1 = require("./store.entity");
+const order_status_entity_1 = require("./order-status.entity");
+const payment_method_entity_1 = require("./payment-method.entity");
 const order_item_entity_1 = require("./order-item.entity");
-const coupon_grant_entity_1 = require("./coupon-grant.entity");
-var OrderStatus;
-(function (OrderStatus) {
-    OrderStatus["INITIATED"] = "initiated";
-    OrderStatus["SLOT_RESERVED"] = "slot_reserved";
-    OrderStatus["PAYMENT_PROCESSING"] = "payment_processing";
-    OrderStatus["PAYMENT_FAILED"] = "payment_failed";
-    OrderStatus["CONFIRMED"] = "confirmed";
-    OrderStatus["IN_PROGRESS"] = "in_progress";
-    OrderStatus["READY"] = "ready";
-    OrderStatus["COMPLETED"] = "completed";
-    OrderStatus["CANCELLED"] = "cancelled";
-    OrderStatus["REFUNDED"] = "refunded";
-})(OrderStatus || (exports.OrderStatus = OrderStatus = {}));
-var OrderType;
-(function (OrderType) {
-    OrderType["PICKUP"] = "pickup";
-    OrderType["DELIVERY"] = "delivery";
-    OrderType["CATERING"] = "catering";
-})(OrderType || (exports.OrderType = OrderType = {}));
-var PaymentMethod;
-(function (PaymentMethod) {
-    PaymentMethod["STRIPE"] = "stripe";
-    PaymentMethod["APPLE_PAY"] = "apple_pay";
-    PaymentMethod["GOOGLE_PAY"] = "google_pay";
-    PaymentMethod["REWARD_REDEMPTION"] = "reward_redemption";
-})(PaymentMethod || (exports.PaymentMethod = PaymentMethod = {}));
+const payment_entity_1 = require("./payment.entity");
+const loyalty_ledger_entity_1 = require("./loyalty-ledger.entity");
+const promotion_redemption_entity_1 = require("./promotion-redemption.entity");
+const refund_request_entity_1 = require("./refund-request.entity");
+const refund_entity_1 = require("./refund.entity");
+const fact_orders_entity_1 = require("./fact-orders.entity");
+const splash_event_entity_1 = require("./splash-event.entity");
+const splash_session_entity_1 = require("./splash-session.entity");
 let Order = class Order {
-    get totalAmount() {
-        return this.total;
-    }
-    get promoCodeId() {
-        return this.appliedCouponId;
-    }
 };
 exports.Order = Order;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'order_id' }),
     __metadata("design:type", String)
-], Order.prototype, "id", void 0);
+], Order.prototype, "orderId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid' }),
-    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'user_id', nullable: true }),
     __metadata("design:type", String)
 ], Order.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid' }),
-    (0, typeorm_1.Index)(),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'store_id' }),
     __metadata("design:type", String)
 ], Order.prototype, "storeId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: OrderType, default: OrderType.PICKUP }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'order_status_id' }),
     __metadata("design:type", String)
-], Order.prototype, "orderType", void 0);
+], Order.prototype, "orderStatusId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: OrderStatus, default: OrderStatus.INITIATED }),
-    __metadata("design:type", String)
-], Order.prototype, "status", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], Order.prototype, "toastOrderId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], Order.prototype, "toastCheckId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Order.prototype, "subtotal", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, default: 0 }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Order.prototype, "tax", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, default: 0 }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, name: 'discount_total', default: 0 }),
     __metadata("design:type", Number)
-], Order.prototype, "tip", void 0);
+], Order.prototype, "discountTotal", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, default: 0 }),
-    __metadata("design:type", Number)
-], Order.prototype, "deliveryFee", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, default: 0 }),
-    __metadata("design:type", Number)
-], Order.prototype, "discountAmount", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", String)
-], Order.prototype, "appliedCouponId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, default: 0 }),
     __metadata("design:type", Number)
 ], Order.prototype, "total", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: PaymentMethod, nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'payment_method_id', nullable: true }),
     __metadata("design:type", String)
-], Order.prototype, "paymentMethod", void 0);
+], Order.prototype, "paymentMethodId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], Order.prototype, "stripePaymentIntentId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
-    __metadata("design:type", Number)
-], Order.prototype, "pointsEarned", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'int', default: 0 }),
-    __metadata("design:type", Number)
-], Order.prototype, "pointsRedeemed", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'pickup_time', nullable: true }),
     __metadata("design:type", Date)
 ], Order.prototype, "pickupTime", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 500, nullable: true }),
-    __metadata("design:type", String)
-], Order.prototype, "specialInstructions", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
-    __metadata("design:type", Object)
-], Order.prototype, "deliveryInfo", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'placed_at', default: () => 'NOW()' }),
     __metadata("design:type", Date)
-], Order.prototype, "completedAt", void 0);
+], Order.prototype, "placedAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
-    __metadata("design:type", Date)
-], Order.prototype, "cancelledAt", void 0);
-__decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz', name: 'created_at' }),
     __metadata("design:type", Date)
 ], Order.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz', name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Order.prototype, "updatedAt", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.orders),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
     __metadata("design:type", user_entity_1.User)
 ], Order.prototype, "user", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => store_entity_1.Store, (store) => store.orders),
-    (0, typeorm_1.JoinColumn)({ name: 'storeId' }),
+    (0, typeorm_1.JoinColumn)({ name: 'store_id' }),
     __metadata("design:type", store_entity_1.Store)
 ], Order.prototype, "store", void 0);
 __decorate([
-    (0, typeorm_1.OneToMany)(() => order_item_entity_1.OrderItem, (item) => item.order, { cascade: true }),
-    __metadata("design:type", Array)
-], Order.prototype, "items", void 0);
+    (0, typeorm_1.ManyToOne)(() => order_status_entity_1.OrderStatus, (orderStatus) => orderStatus.orders),
+    (0, typeorm_1.JoinColumn)({ name: 'order_status_id' }),
+    __metadata("design:type", order_status_entity_1.OrderStatus)
+], Order.prototype, "orderStatus", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => coupon_grant_entity_1.CouponGrant, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'appliedCouponId' }),
-    __metadata("design:type", coupon_grant_entity_1.CouponGrant)
-], Order.prototype, "appliedCoupon", void 0);
+    (0, typeorm_1.ManyToOne)(() => payment_method_entity_1.PaymentMethod, (paymentMethod) => paymentMethod.orders),
+    (0, typeorm_1.JoinColumn)({ name: 'payment_method_id' }),
+    __metadata("design:type", payment_method_entity_1.PaymentMethod)
+], Order.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => order_item_entity_1.OrderItem, (orderItem) => orderItem.order),
+    __metadata("design:type", Array)
+], Order.prototype, "orderItems", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => payment_entity_1.Payment, (payment) => payment.order),
+    __metadata("design:type", Array)
+], Order.prototype, "payments", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => loyalty_ledger_entity_1.LoyaltyLedger, (ledger) => ledger.order),
+    __metadata("design:type", Array)
+], Order.prototype, "loyaltyLedger", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => promotion_redemption_entity_1.PromotionRedemption, (redemption) => redemption.order),
+    __metadata("design:type", Array)
+], Order.prototype, "promotionRedemptions", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => refund_request_entity_1.RefundRequest, (refundRequest) => refundRequest.order),
+    __metadata("design:type", Array)
+], Order.prototype, "refundRequests", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => refund_entity_1.Refund, (refund) => refund.order),
+    __metadata("design:type", Array)
+], Order.prototype, "refunds", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => fact_orders_entity_1.FactOrders, (factOrder) => factOrder.order),
+    __metadata("design:type", Array)
+], Order.prototype, "factOrders", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => splash_event_entity_1.SplashEvent, (event) => event.order),
+    __metadata("design:type", Array)
+], Order.prototype, "splashEvents", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => splash_session_entity_1.SplashSession, (session) => session.order),
+    __metadata("design:type", Array)
+], Order.prototype, "splashSessions", void 0);
 exports.Order = Order = __decorate([
     (0, typeorm_1.Entity)('orders'),
-    (0, typeorm_1.Index)(['userId', 'createdAt']),
-    (0, typeorm_1.Index)(['storeId', 'createdAt']),
-    (0, typeorm_1.Index)(['status']),
-    (0, typeorm_1.Index)(['pickupTime'])
+    (0, typeorm_1.Index)(['userId', 'placedAt']),
+    (0, typeorm_1.Index)(['storeId', 'placedAt'])
 ], Order);
 //# sourceMappingURL=order.entity.js.map

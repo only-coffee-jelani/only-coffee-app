@@ -49,7 +49,7 @@ export class UsersController {
   @ApiResponse({ status: 400, description: 'Invalid update data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async updateProfile(@CurrentUser() user: User, @Body() updates: Partial<User>) {
-    return this.usersService.updateProfile(user.id, updates);
+    return this.usersService.updateProfile(user.userId, updates);
   }
 
   @Get('me/loyalty')
@@ -74,6 +74,6 @@ export class UsersController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getLoyalty(@CurrentUser() user: User) {
-    return this.usersService.getLoyaltyInfo(user.id);
+    return this.usersService.getLoyaltyInfo(user.userId);
   }
 }

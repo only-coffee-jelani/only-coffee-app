@@ -4,11 +4,13 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.onlycoffee.app.BuildConfig
 import com.onlycoffee.app.data.api.AuthApiService
+import com.onlycoffee.app.data.api.CarouselApiService
 import com.onlycoffee.app.data.api.CouponsApiService
 import com.onlycoffee.app.data.api.LoyaltyApiService
 import com.onlycoffee.app.data.api.MenuApiService
 import com.onlycoffee.app.data.api.OffersApiService
 import com.onlycoffee.app.data.api.OrderApiService
+import com.onlycoffee.app.data.api.SplashScreenApi
 import com.onlycoffee.app.data.api.StoreApiService
 import com.onlycoffee.app.managers.SecureStorageManager
 import dagger.Module
@@ -128,5 +130,17 @@ object NetworkModule {
     @Singleton
     fun provideOffersApiService(retrofit: Retrofit): OffersApiService {
         return retrofit.create(OffersApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSplashScreenApi(retrofit: Retrofit): SplashScreenApi {
+        return retrofit.create(SplashScreenApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCarouselApiService(retrofit: Retrofit): CarouselApiService {
+        return retrofit.create(CarouselApiService::class.java)
     }
 }

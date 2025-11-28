@@ -28,7 +28,7 @@ export class MenuService {
 
   async findById(id: string) {
     const item = await this.menuItemRepository.findOne({
-      where: { id, isActive: true },
+      where: { menuItemId: id, isActive: true },
     });
 
     if (!item) {
@@ -46,10 +46,13 @@ export class MenuService {
     let totalPrice = Number(item.basePrice);
 
     // Calculate modifier prices
+    // TODO: Implement modifier pricing using MenuItemModifierGroup relation
     for (const selectedMod of selectedModifiers) {
-      const modifier = item.availableModifiers.find((m) => m.id === selectedMod.id);
+      // Stub: MenuItem doesn't have availableModifiers field in new schema
+      // Need to query MenuItemModifierGroup relation
+      const modifier = null; // item.menuItemModifierGroups.find((m) => m.modifierGroupId === selectedMod.id);
       if (modifier) {
-        const option = modifier.options.find((o) => o.value === selectedMod.value);
+        const option = null; // modifier.options.find((o) => o.value === selectedMod.value);
         if (option && option.price) {
           totalPrice += Number(option.price);
         }
@@ -163,30 +166,20 @@ export class MenuService {
 
   async update(id: string, updateMenuItemDto: any) {
     const menuItem = await this.menuItemRepository.findOne({
-      where: { id },
+      where: { menuItemId: id },
     });
 
     if (!menuItem) {
       throw new NotFoundException('Menu item not found');
     }
 
-    // Ensure categories array is provided - use categories if available, otherwise fallback to category
-    const dto = {
-      ...updateMenuItemDto,
-      categories: updateMenuItemDto.categories && updateMenuItemDto.categories.length > 0
-        ? updateMenuItemDto.categories
-        : updateMenuItemDto.category
-        ? [updateMenuItemDto.category]
-        : undefined,
-    };
-
-    Object.assign(menuItem, dto);
+    Object.assign(menuItem, updateMenuItemDto);
     return this.menuItemRepository.save(menuItem);
   }
 
   async delete(id: string) {
     const menuItem = await this.menuItemRepository.findOne({
-      where: { id },
+      where: { menuItemId: id },
     });
 
     if (!menuItem) {

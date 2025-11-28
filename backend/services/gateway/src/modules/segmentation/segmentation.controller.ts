@@ -26,7 +26,7 @@ export class SegmentationController {
     let promotionStrategy: string | undefined;
     if (segment) {
       promotionStrategy = this.segmentationService.getPromotionStrategy(
-        segment.segmentName as Segment,
+        segment.segment as Segment,
       );
     }
 
@@ -47,7 +47,7 @@ export class SegmentationController {
     @Req() req: any,
   ): Promise<{
     success: boolean;
-    segment: UserSegment;
+    segment: any;
     message: string;
   }> {
     const userId = req.user.userId;
@@ -56,7 +56,7 @@ export class SegmentationController {
     return {
       success: true,
       segment,
-      message: `Assigned to segment: ${segment.segmentDisplayName}`,
+      message: `Assigned to segment: ${segment.segmentDisplayName || segment.segment}`,
     };
   }
 
@@ -110,7 +110,7 @@ export class SegmentationController {
   ): Promise<{
     success: boolean;
     segment: string;
-    users: UserSegment[];
+    users: string[];
     count: number;
   }> {
     // TODO: Add admin role check

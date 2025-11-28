@@ -2,7 +2,13 @@ import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards } fro
 import { ApiTags, ApiOperation, ApiQuery, ApiBearerAuth, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/public.decorator';
 import { PromotionsService } from './promotions.service';
-import { PromotionType } from '@shared/database/entities';
+// Note: PromotionType doesn't exist as enum in new schema
+// Promotions use PromotionDiscountType entity
+enum PromotionType {
+  PERCENT_OFF = 'percent_off',
+  FIXED_AMOUNT = 'fixed_amount',
+  BOGO = 'bogo',
+}
 
 @ApiTags('promotions')
 @Controller('promotions')

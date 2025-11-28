@@ -118,8 +118,8 @@ export class RecommendationService {
     // Extract unique item IDs from orders
     const purchasedItemIds = new Set<string>();
     userOrders.forEach((order) => {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach((item: any) => {
+      if (order.orderItems && Array.isArray(order.orderItems)) {
+        order.orderItems.forEach((item: any) => {
           if (item.menuItemId) {
             purchasedItemIds.add(item.menuItemId);
           }
@@ -152,18 +152,18 @@ export class RecommendationService {
 
     for (const [itemId, score] of similarItems.entries()) {
       const menuItem = await this.menuItemRepository.findOne({
-        where: { id: itemId, isActive: true },
+        where: { menuItemId: itemId, isActive: true },
       });
 
       if (menuItem) {
         recommendations.push({
-          menuItemId: menuItem.id,
+          menuItemId: menuItem.menuItemId,
           name: menuItem.name,
           score: Math.min(score / purchasedItemIds.size, 1), // Normalize
           reason: 'Customers who bought your favorites also loved this',
-          category: menuItem.category,
+          category: menuItem.categoryId, // TODO: Load category relation if needed
           basePrice: menuItem.basePrice,
-          imageUrl: menuItem.imageUrl,
+          imageUrl: menuItem.imageAssetId, // TODO: Load imageAsset relation for URL
         });
       }
     }
@@ -207,13 +207,13 @@ export class RecommendationService {
       for (const item of categoryItems) {
         // Check if this is not already in their purchase history
         recommendations.push({
-          menuItemId: item.id,
+          menuItemId: item.menuItemId,
           name: item.name,
           score: 0.8,
           reason: `You love ${topCategory}! Try this`,
-          category: item.category,
+          category: item.categoryId,
           basePrice: item.basePrice,
-          imageUrl: item.imageUrl,
+          imageUrl: item.imageAssetId, // Note: This is now an asset ID, not a URL
         });
       }
     }
@@ -259,13 +259,13 @@ export class RecommendationService {
       });
 
       recommendations.push(...morningItems.map((item) => ({
-        menuItemId: item.id,
+        menuItemId: item.menuItemId,
         name: item.name,
         score: 0.9,
         reason: 'Perfect for your morning',
-        category: item.category,
+        category: item.categoryId,
         basePrice: item.basePrice,
-        imageUrl: item.imageUrl,
+        imageUrl: item.imageAssetId,
       })));
     } else if (hour >= 11 && hour < 14) {
       // Lunch: Food items, refreshing drinks
@@ -278,13 +278,13 @@ export class RecommendationService {
       });
 
       recommendations.push(...lunchItems.map((item) => ({
-        menuItemId: item.id,
+        menuItemId: item.menuItemId,
         name: item.name,
         score: 0.85,
         reason: 'Great for lunch',
-        category: item.category,
+        category: item.categoryId,
         basePrice: item.basePrice,
-        imageUrl: item.imageUrl,
+        imageUrl: item.imageAssetId,
       })));
     } else if (hour >= 14 && hour < 17) {
       // Afternoon: Pick-me-ups, snacks
@@ -297,13 +297,13 @@ export class RecommendationService {
       });
 
       recommendations.push(...afternoonItems.map((item) => ({
-        menuItemId: item.id,
+        menuItemId: item.menuItemId,
         name: item.name,
         score: 0.8,
         reason: 'Afternoon pick-me-up',
-        category: item.category,
+        category: item.categoryId,
         basePrice: item.basePrice,
-        imageUrl: item.imageUrl,
+        imageUrl: item.imageAssetId,
       })));
     }
 
@@ -320,13 +320,13 @@ export class RecommendationService {
         });
 
         recommendations.push(...hotItems.map((item) => ({
-          menuItemId: item.id,
+          menuItemId: item.menuItemId,
           name: item.name,
           score: 0.95,
           reason: `Perfect for ${weather.temperature}°F weather`,
-          category: item.category,
+          category: item.categoryId,
           basePrice: item.basePrice,
-          imageUrl: item.imageUrl,
+          imageUrl: item.imageAssetId,
         })));
       } else if (weather.temperature > 75) {
         // Hot weather: Cold drinks
@@ -339,13 +339,13 @@ export class RecommendationService {
         });
 
         recommendations.push(...coldItems.map((item) => ({
-          menuItemId: item.id,
+          menuItemId: item.menuItemId,
           name: item.name,
           score: 0.95,
           reason: `Cool down in ${weather.temperature}°F heat`,
-          category: item.category,
+          category: item.categoryId,
           basePrice: item.basePrice,
-          imageUrl: item.imageUrl,
+          imageUrl: item.imageAssetId,
         })));
       }
     }
@@ -369,8 +369,8 @@ export class RecommendationService {
     // Count item frequency
     const itemCounts = new Map<string, number>();
     popularQuery.forEach((order) => {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach((item: any) => {
+      if (order.orderItems && Array.isArray(order.orderItems)) {
+        order.orderItems.forEach((item: any) => {
           if (item.menuItemId) {
             const count = itemCounts.get(item.menuItemId) || 0;
             itemCounts.set(item.menuItemId, count + 1);
@@ -388,18 +388,18 @@ export class RecommendationService {
 
     for (const [itemId, count] of sortedItems) {
       const menuItem = await this.menuItemRepository.findOne({
-        where: { id: itemId, isActive: true },
+        where: { menuItemId: itemId, isActive: true },
       });
 
       if (menuItem) {
         recommendations.push({
-          menuItemId: menuItem.id,
+          menuItemId: menuItem.menuItemId,
           name: menuItem.name,
           score: 1.0,
           reason: 'Popular choice',
-          category: menuItem.category,
+          category: menuItem.categoryId, // TODO: Load category relation if needed
           basePrice: menuItem.basePrice,
-          imageUrl: menuItem.imageUrl,
+          imageUrl: menuItem.imageAssetId, // TODO: Load imageAsset relation for URL
         });
       }
     }
@@ -415,7 +415,7 @@ export class RecommendationService {
     limit: number,
   ): Promise<RecommendedItem[]> {
     const baseItem = await this.menuItemRepository.findOne({
-      where: { id: itemId },
+      where: { menuItemId: itemId },
     });
 
     if (!baseItem) {
@@ -435,16 +435,16 @@ export class RecommendationService {
       });
 
       return categoryItems
-        .filter((item) => item.id !== itemId)
+        .filter((item) => item.menuItemId !== itemId)
         .slice(0, limit)
         .map((item) => ({
-          menuItemId: item.id,
+          menuItemId: item.menuItemId,
           name: item.name,
           score: 0.7,
           reason: 'Similar item',
-          category: item.category,
+          category: item.categoryId,
           basePrice: item.basePrice,
-          imageUrl: item.imageUrl,
+          imageUrl: item.imageAssetId,
         }));
     }
 
@@ -456,18 +456,18 @@ export class RecommendationService {
 
     for (const [similarItemId, similarity] of sortedSimilarities) {
       const menuItem = await this.menuItemRepository.findOne({
-        where: { id: similarItemId, isActive: true },
+        where: { menuItemId: similarItemId, isActive: true },
       });
 
       if (menuItem) {
         recommendations.push({
-          menuItemId: menuItem.id,
+          menuItemId: menuItem.menuItemId,
           name: menuItem.name,
           score: similarity,
           reason: 'Similar to items you like',
-          category: menuItem.category,
+          category: menuItem.categoryId, // TODO: Load category relation if needed
           basePrice: menuItem.basePrice,
-          imageUrl: menuItem.imageUrl,
+          imageUrl: menuItem.imageAssetId, // TODO: Load imageAsset relation for URL
         });
       }
     }
@@ -496,9 +496,9 @@ export class RecommendationService {
     const coOccurrence = new Map<string, Map<string, number>>();
 
     for (const order of orders) {
-      if (!order.items || !Array.isArray(order.items)) continue;
+      if (!order.orderItems || !Array.isArray(order.orderItems)) continue;
 
-      const itemIds = order.items
+      const itemIds = order.orderItems
         .map((item: any) => item.menuItemId)
         .filter((id) => !!id);
 
@@ -583,8 +583,8 @@ export class RecommendationService {
 
     const recentItemIds = new Set<string>();
     recentOrders.forEach((order) => {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach((item: any) => {
+      if (order.orderItems && Array.isArray(order.orderItems)) {
+        order.orderItems.forEach((item: any) => {
           if (item.menuItemId) {
             recentItemIds.add(item.menuItemId);
           }
@@ -642,18 +642,18 @@ export class RecommendationService {
 
     for (const [itemId, growthRate] of trending) {
       const menuItem = await this.menuItemRepository.findOne({
-        where: { id: itemId, isActive: true },
+        where: { menuItemId: itemId, isActive: true },
       });
 
       if (menuItem) {
         recommendations.push({
-          menuItemId: menuItem.id,
+          menuItemId: menuItem.menuItemId,
           name: menuItem.name,
           score: Math.min(growthRate, 1),
           reason: `Trending (${Math.round(growthRate * 100)}% growth)`,
-          category: menuItem.category,
+          category: menuItem.categoryId, // TODO: Load category relation if needed
           basePrice: menuItem.basePrice,
-          imageUrl: menuItem.imageUrl,
+          imageUrl: menuItem.imageAssetId, // TODO: Load imageAsset relation for URL
         });
       }
     }
@@ -668,8 +668,8 @@ export class RecommendationService {
     const counts = new Map<string, number>();
 
     for (const order of orders) {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach((item: any) => {
+      if (order.orderItems && Array.isArray(order.orderItems)) {
+        order.orderItems.forEach((item: any) => {
           if (item.menuItemId) {
             counts.set(item.menuItemId, (counts.get(item.menuItemId) || 0) + 1);
           }

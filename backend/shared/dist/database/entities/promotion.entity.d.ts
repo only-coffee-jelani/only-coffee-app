@@ -1,21 +1,21 @@
-export declare enum PromotionType {
-    LAUNCH_MODAL = "launch_modal",
-    BANNER = "banner",
-    CARD = "card"
-}
+import { PromotionDiscountType } from './promotion-discount-type.entity';
+import { AdminUser } from './admin-user.entity';
+import { PromotionRedemption } from './promotion-redemption.entity';
 export declare class Promotion {
-    id: string;
-    title: string;
+    promotionId: string;
+    name: string;
     description: string | null;
-    promotionType: PromotionType;
-    imageUrl: string;
-    targetMenuItemId: string | null;
-    targetUrl: string | null;
-    startDate: Date;
-    endDate: Date;
+    discountTypeId: string;
+    discountValue: number;
+    startAt: Date;
+    endAt: Date;
     isActive: boolean;
-    displayDuration: number;
-    sortOrder: number;
+    createdBy: string | null;
     createdAt: Date;
     updatedAt: Date;
+    get id(): string;
+    get title(): string;
+    discountType: PromotionDiscountType;
+    createdByAdmin: AdminUser;
+    promotionRedemptions: PromotionRedemption[];
 }

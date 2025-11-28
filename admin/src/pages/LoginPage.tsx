@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('admin@onlycoffee.us');
+  const [email, setEmail] = useState('admin@onlycoffee.com');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
@@ -55,7 +55,7 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                  placeholder="admin@onlycoffee.us"
+                  placeholder="admin@onlycoffee.com"
                 />
               </div>
             </div>
@@ -111,8 +111,8 @@ const LoginPage = () => {
           {/* Demo Credentials */}
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm text-blue-900 font-medium mb-2">Demo Credentials:</p>
-            <p className="text-sm text-blue-800">Email: admin@onlycoffee.us</p>
-            <p className="text-sm text-blue-800">Password: demo123</p>
+            <p className="text-sm text-blue-800">Email: admin@onlycoffee.com</p>
+            <p className="text-sm text-blue-800">Password: Admin123!</p>
           </div>
         </div>
 

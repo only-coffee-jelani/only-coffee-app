@@ -14,55 +14,61 @@ const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./user.entity");
 var ProgramEventType;
 (function (ProgramEventType) {
-    ProgramEventType["COUPON_GRANTED"] = "coupon_granted";
-    ProgramEventType["COUPON_REDEEMED"] = "coupon_redeemed";
-    ProgramEventType["COUPON_EXPIRED"] = "coupon_expired";
-    ProgramEventType["PROMO_CODE_REDEEMED"] = "promo_code_redeemed";
+    ProgramEventType["COUPON_GRANTED"] = "COUPON_GRANTED";
+    ProgramEventType["COUPON_REDEEMED"] = "COUPON_REDEEMED";
+    ProgramEventType["COUPON_EXPIRED"] = "COUPON_EXPIRED";
+    ProgramEventType["PROMO_CODE_REDEEMED"] = "PROMO_CODE_REDEEMED";
+    ProgramEventType["PROMO_CODE_USED"] = "PROMO_CODE_USED";
+    ProgramEventType["ORDER_PLACED"] = "ORDER_PLACED";
 })(ProgramEventType || (exports.ProgramEventType = ProgramEventType = {}));
 let ProgramEvent = class ProgramEvent {
 };
 exports.ProgramEvent = ProgramEvent;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'event_id' }),
     __metadata("design:type", String)
-], ProgramEvent.prototype, "id", void 0);
+], ProgramEvent.prototype, "eventId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'user_id', nullable: true }),
     __metadata("design:type", String)
 ], ProgramEvent.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: ProgramEventType }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: ProgramEventType,
+        name: 'event_type',
+    }),
     __metadata("design:type", String)
 ], ProgramEvent.prototype, "eventType", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'coupon_id', nullable: true }),
     __metadata("design:type", String)
 ], ProgramEvent.prototype, "couponId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'order_id', nullable: true }),
     __metadata("design:type", String)
 ], ProgramEvent.prototype, "orderId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'promo_code_id', nullable: true }),
     __metadata("design:type", String)
 ], ProgramEvent.prototype, "promoCodeId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'jsonb', name: 'event_data', nullable: true }),
     __metadata("design:type", Object)
 ], ProgramEvent.prototype, "eventData", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz', name: 'created_at' }),
     __metadata("design:type", Date)
 ], ProgramEvent.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { onDelete: 'SET NULL' }),
+    (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
     __metadata("design:type", user_entity_1.User)
 ], ProgramEvent.prototype, "user", void 0);
 exports.ProgramEvent = ProgramEvent = __decorate([
     (0, typeorm_1.Entity)('program_events'),
-    (0, typeorm_1.Index)(['eventType', 'createdAt']),
-    (0, typeorm_1.Index)(['userId', 'createdAt']),
-    (0, typeorm_1.Index)(['couponId'])
+    (0, typeorm_1.Index)(['userId', 'eventType', 'createdAt']),
+    (0, typeorm_1.Index)(['couponId']),
+    (0, typeorm_1.Index)(['orderId'])
 ], ProgramEvent);
 //# sourceMappingURL=program-event.entity.js.map

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserSegment, User } from '@shared/database/entities';
+import { UserSegment, UserSegmentAssignment, User } from '@shared/database/entities';
 import { FeatureStoreService } from '../features/feature-store.service';
 
 /**
@@ -147,6 +147,8 @@ export class SegmentationService {
   constructor(
     @InjectRepository(UserSegment)
     private readonly userSegmentRepository: Repository<UserSegment>,
+    @InjectRepository(UserSegmentAssignment)
+    private readonly userSegmentAssignmentRepository: Repository<UserSegmentAssignment>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly featureStoreService: FeatureStoreService,
@@ -154,8 +156,9 @@ export class SegmentationService {
 
   /**
    * Assign a user to their appropriate segment based on RFM scores
+   * Returns a simplified object with segment info for backward compatibility
    */
-  async assignUserSegment(userId: string): Promise<UserSegment> {
+  async assignUserSegment(userId: string): Promise<any> {
     // Get RFM features from feature store
     const features = await this.featureStoreService.getUserFeatures({
       userId,
@@ -169,76 +172,61 @@ export class SegmentationService {
     const { recencyScore, frequencyScore, monetaryScore, rfmScore } = features.rfm;
 
     // Determine segment based on RFM scores
-    const segment = this.determineSegment(recencyScore, frequencyScore, monetaryScore);
-    const segmentDef = this.segmentDefinitions.find((s) => s.name === segment)!;
+    const segmentName = this.determineSegment(recencyScore, frequencyScore, monetaryScore);
+    const segmentDef = this.segmentDefinitions.find((s) => s.name === segmentName)!;
 
-    // Check if user already has a segment assignment
-    let userSegment = await this.userSegmentRepository.findOne({
-      where: { userId, isActive: true },
+    // Find the segment in the lookup table
+    const segment = await this.userSegmentRepository.findOne({
+      where: { name: segmentName },
     });
 
-    if (userSegment) {
-      // Check if segment has changed
-      if (userSegment.segmentName !== segment) {
-        // Mark old segment as inactive
-        userSegment.isActive = false;
-        await this.userSegmentRepository.save(userSegment);
+    if (!segment) {
+      this.logger.error(`Segment ${segmentName} not found in lookup table`);
+      throw new Error(`Segment ${segmentName} not found`);
+    }
 
-        // Create new segment assignment
-        userSegment = this.userSegmentRepository.create({
-          userId,
-          segmentName: segment,
-          segmentDisplayName: segmentDef.displayName,
-          rfmScore,
-          recencyScore,
-          frequencyScore,
-          monetaryScore,
-          assignedAt: new Date(),
-          isActive: true,
-          metadata: {
-            previousSegment: userSegment.segmentName,
-            segmentChanged: true,
-            promotionStrategy: segmentDef.promotionStrategy,
-          },
-        });
+    // Check if user already has a segment assignment
+    let assignment = await this.userSegmentAssignmentRepository.findOne({
+      where: { userId },
+      relations: ['segment'],
+    });
+
+    if (assignment) {
+      // Check if segment has changed
+      if (assignment.segmentId !== segment.segmentId) {
+        const oldSegmentName = assignment.segment?.name || 'unknown';
+
+        // Update to new segment
+        assignment.segmentId = segment.segmentId;
+        assignment.assignedAt = new Date();
+        await this.userSegmentAssignmentRepository.save(assignment);
 
         this.logger.log(
-          `User ${userId} segment changed: ${userSegment.segmentName} → ${segment}`,
+          `User ${userId} segment changed: ${oldSegmentName} → ${segmentName}`,
         );
-      } else {
-        // Update scores but keep same segment
-        userSegment.rfmScore = rfmScore;
-        userSegment.recencyScore = recencyScore;
-        userSegment.frequencyScore = frequencyScore;
-        userSegment.monetaryScore = monetaryScore;
-        userSegment.metadata = {
-          ...userSegment.metadata,
-          lastUpdated: new Date().toISOString(),
-          promotionStrategy: segmentDef.promotionStrategy,
-        };
       }
     } else {
       // Create initial segment assignment
-      userSegment = this.userSegmentRepository.create({
+      assignment = this.userSegmentAssignmentRepository.create({
         userId,
-        segmentName: segment,
-        segmentDisplayName: segmentDef.displayName,
-        rfmScore,
-        recencyScore,
-        frequencyScore,
-        monetaryScore,
+        segmentId: segment.segmentId,
         assignedAt: new Date(),
-        isActive: true,
-        metadata: {
-          isInitialAssignment: true,
-          promotionStrategy: segmentDef.promotionStrategy,
-        },
       });
+      await this.userSegmentAssignmentRepository.save(assignment);
 
-      this.logger.log(`User ${userId} assigned to segment: ${segment}`);
+      this.logger.log(`User ${userId} assigned to segment: ${segmentName}`);
     }
 
-    return this.userSegmentRepository.save(userSegment);
+    // Return a backward-compatible object
+    return {
+      segment: segmentName,
+      segmentDisplayName: segmentDef.displayName,
+      rfmScore,
+      recencyScore,
+      frequencyScore,
+      monetaryScore,
+      promotionStrategy: segmentDef.promotionStrategy,
+    };
   }
 
   /**
@@ -272,10 +260,22 @@ export class SegmentationService {
   /**
    * Get user's current segment
    */
-  async getUserSegment(userId: string): Promise<UserSegment | null> {
-    return this.userSegmentRepository.findOne({
-      where: { userId, isActive: true },
+  async getUserSegment(userId: string): Promise<any | null> {
+    const assignment = await this.userSegmentAssignmentRepository.findOne({
+      where: { userId },
+      relations: ['segment'],
     });
+
+    if (!assignment || !assignment.segment) {
+      return null;
+    }
+
+    // Return backward-compatible object
+    return {
+      segment: assignment.segment.name,
+      segmentDisplayName: assignment.segment.name, // UserSegment doesn't have displayName
+      assignedAt: assignment.assignedAt,
+    };
   }
 
   /**
@@ -284,42 +284,58 @@ export class SegmentationService {
   async getUsersInSegment(
     segment: Segment,
     limit: number = 100,
-  ): Promise<UserSegment[]> {
-    return this.userSegmentRepository.find({
-      where: { segmentName: segment, isActive: true },
-      take: limit,
-      order: { rfmScore: 'DESC' },
+  ): Promise<string[]> {
+    // Find the segment in lookup table
+    const segmentEntity = await this.userSegmentRepository.findOne({
+      where: { name: segment },
     });
+
+    if (!segmentEntity) {
+      return [];
+    }
+
+    // Get user IDs assigned to this segment
+    const assignments = await this.userSegmentAssignmentRepository.find({
+      where: { segmentId: segmentEntity.segmentId },
+      take: limit,
+    });
+
+    return assignments.map(a => a.userId);
   }
 
   /**
    * Get segment distribution across all users
    */
   async getSegmentDistribution(): Promise<SegmentDistribution[]> {
-    const results = await this.userSegmentRepository
-      .createQueryBuilder('segment')
-      .select('segment.segmentName', 'segment')
-      .addSelect('COUNT(*)', 'count')
-      .addSelect('AVG(segment.rfmScore)', 'avgRfmScore')
-      .addSelect('AVG(segment.recencyScore)', 'avgRecencyScore')
-      .addSelect('AVG(segment.frequencyScore)', 'avgFrequencyScore')
-      .addSelect('AVG(segment.monetaryScore)', 'avgMonetaryScore')
-      .where('segment.isActive = :isActive', { isActive: true })
-      .groupBy('segment.segmentName')
-      .getRawMany();
+    // Get all segments from lookup table
+    const segments = await this.userSegmentRepository.find();
 
-    const totalUsers = results.reduce((sum, r) => sum + parseInt(r.count, 10), 0);
+    // Count assignments for each segment
+    const distribution: SegmentDistribution[] = [];
+    let totalUsers = 0;
 
-    // Get avg LTV for each segment (would need to join with users/orders)
-    const distribution: SegmentDistribution[] = results.map((r) => ({
-      segment: r.segment as Segment,
-      count: parseInt(r.count, 10),
-      percentage: (parseInt(r.count, 10) / totalUsers) * 100,
-      avgLifetimeValue: 0, // TODO: Calculate from orders
-      avgRecencyScore: parseFloat(r.avgRecencyScore),
-      avgFrequencyScore: parseFloat(r.avgFrequencyScore),
-      avgMonetaryScore: parseFloat(r.avgMonetaryScore),
-    }));
+    for (const segment of segments) {
+      const count = await this.userSegmentAssignmentRepository.count({
+        where: { segmentId: segment.segmentId },
+      });
+
+      totalUsers += count;
+
+      distribution.push({
+        segment: segment.name as Segment,
+        count,
+        percentage: 0, // Will calculate after we have total
+        avgLifetimeValue: 0, // TODO: Calculate from orders
+        avgRecencyScore: 0, // TODO: Calculate from feature store
+        avgFrequencyScore: 0,
+        avgMonetaryScore: 0,
+      });
+    }
+
+    // Calculate percentages
+    distribution.forEach(d => {
+      d.percentage = totalUsers > 0 ? (d.count / totalUsers) * 100 : 0;
+    });
 
     // Sort by segment priority
     return distribution.sort((a, b) => {
@@ -353,7 +369,7 @@ export class SegmentationService {
 
     for (const user of users) {
       try {
-        await this.assignUserSegment(user.id);
+        await this.assignUserSegment(user.userId);
         results.processed++;
 
         // Log progress every 100 users
@@ -362,8 +378,8 @@ export class SegmentationService {
         }
       } catch (error: any) {
         results.failed++;
-        results.errors.push(`User ${user.id}: ${error.message}`);
-        this.logger.error(`Failed to assign segment for user ${user.id}:`, error);
+        results.errors.push(`User ${user.userId}: ${error.message}`);
+        this.logger.error(`Failed to assign segment for user ${user.userId}:`, error);
       }
     }
 

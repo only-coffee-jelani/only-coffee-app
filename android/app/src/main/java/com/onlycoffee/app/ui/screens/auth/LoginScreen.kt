@@ -163,12 +163,12 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         // Sign Up Link
-        Row(
-            horizontalArrangement = Arrangement.Center,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(
-                text = "Don't have an account? ",
+                text = "Don't have an account?",
                 style = MaterialTheme.typography.bodyMedium
             )
             TextButton(onClick = { navController.navigate("signup") }) {
@@ -179,7 +179,7 @@ fun LoginScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Phone Auth Link
         TextButton(onClick = { navController.navigate("phone_auth") }) {

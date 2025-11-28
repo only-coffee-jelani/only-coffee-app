@@ -1,16 +1,15 @@
 import { User } from './user.entity';
-import { PromoCode } from './promo-code.entity';
 export declare enum CouponType {
-    PERCENT_OFF = "percent_off",
-    FIXED_PRICE = "fixed_price",
-    FIXED_AMOUNT = "fixed_amount",
-    FREE_ITEM = "free_item"
+    PERCENT_OFF = "PERCENT_OFF",
+    FIXED_AMOUNT = "FIXED_AMOUNT",
+    FIXED_PRICE = "FIXED_PRICE",
+    FREE_ITEM = "FREE_ITEM"
 }
 export declare enum CouponStatus {
-    ACTIVE = "active",
-    REDEEMED = "redeemed",
-    EXPIRED = "expired",
-    CANCELLED = "cancelled"
+    ACTIVE = "ACTIVE",
+    REDEEMED = "REDEEMED",
+    EXPIRED = "EXPIRED",
+    CANCELLED = "CANCELLED"
 }
 export declare class CouponGrant {
     id: string;
@@ -32,5 +31,4 @@ export declare class CouponGrant {
     metadata: Record<string, any> | null;
     createdAt: Date;
     user: User;
-    promoCode: PromoCode | null;
 }

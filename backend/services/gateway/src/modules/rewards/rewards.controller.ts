@@ -51,7 +51,7 @@ export class RewardsController {
     },
   })
   async getLoyaltySummary(@CurrentUser() user: User) {
-    return this.rewardsService.getLoyaltySummary(user.id);
+    return this.rewardsService.getLoyaltySummary(user.userId);
   }
 
   @Get('history')
@@ -86,7 +86,7 @@ export class RewardsController {
     @Query('limit') limit?: number,
   ) {
     return this.rewardsService.getRewardsHistory(
-      user.id,
+      user.userId,
       limit ? Number(limit) : 50,
     );
   }
@@ -112,7 +112,7 @@ export class RewardsController {
     @CurrentUser() user: User,
     @Body() redeemPointsDto: RedeemPointsDto,
   ) {
-    return this.rewardsService.redeemPoints(user.id, redeemPointsDto);
+    return this.rewardsService.redeemPoints(user.userId, redeemPointsDto);
   }
 
   @Post('users/:userId/adjust')

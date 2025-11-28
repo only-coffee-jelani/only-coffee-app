@@ -6,18 +6,30 @@ import ImageUploader from '../components/ImageUploader';
 import { API_BASE } from '../config';
 
 interface CarouselImage {
-  id: string;
-  title: string;
-  description?: string;
-  imageUrl: string;
-  position: number;
+  carouselItemId: string;
+  carouselId: string;
+  imageAssetId: string;
+  title: string | null;
+  subtitle?: string | null;
+  deeplink?: string | null;
+  sortOrder: number;
   isActive: boolean;
-  displayDuration: number;
-  targetMenuItemId?: string;
-  startDate?: string;
-  endDate?: string;
-  viewCount?: number;
-  createdAt?: string;
+  startAt?: string | null;
+  endAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  imageAsset?: {
+    assetId: string;
+    url: string;
+    altText?: string | null;
+    type: string;
+  };
+  carousel?: {
+    carouselId: string;
+    name: string;
+    placement: string;
+    isActive: boolean;
+  };
 }
 
 const CarouselManager = () => {
@@ -38,14 +50,14 @@ const CarouselManager = () => {
 
   const [formData, setFormData] = useState({
     title: '',
-    description: '',
-    imageUrl: '',
-    displayDuration: 3,
-    position: 0,
-    targetMenuItemId: '',
-    startDate: '',
-    endDate: '',
-    isActive: false,
+    subtitle: '',
+    imageAssetId: '',
+    carouselId: '',
+    sortOrder: 0,
+    isActive: true,
+    deeplink: '',
+    startAt: '',
+    endAt: '',
   });
 
   useEffect(() => {
@@ -79,13 +91,13 @@ const CarouselManager = () => {
     let filtered = images.filter(image => {
       // Search filter
       const searchLower = searchTerm.toLowerCase();
-      const matchesSearch = image.title.toLowerCase().includes(searchLower) ||
-        (image.description && image.description.toLowerCase().includes(searchLower));
+      const matchesSearch = (image.title || '').toLowerCase().includes(searchLower) ||
+        (image.subtitle && image.subtitle.toLowerCase().includes(searchLower));
 
-      // Status filter
+      // Status filter - check if carousel is active
       const matchesStatus = statusFilter === 'all' ||
-        (statusFilter === 'active' && image.isActive) ||
-        (statusFilter === 'inactive' && !image.isActive);
+        (statusFilter === 'active' && image.carousel?.isActive) ||
+        (statusFilter === 'inactive' && !image.carousel?.isActive);
 
       return matchesSearch && matchesStatus;
     });
@@ -96,10 +108,10 @@ const CarouselManager = () => {
 
       switch (sortBy) {
         case 'title':
-          compareValue = a.title.localeCompare(b.title);
+          compareValue = (a.title || '').localeCompare(b.title || '');
           break;
         case 'position':
-          compareValue = a.position - b.position;
+          compareValue = a.sortOrder - b.sortOrder;
           break;
         case 'oldest':
           compareValue = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
@@ -117,32 +129,38 @@ const CarouselManager = () => {
 
   const handleAddNew = () => {
     setEditingId(null);
+    // Get the carousel ID from existing images, or use the default Home Carousel ID
+    const defaultCarouselId = images[0]?.carouselId || '80051bdf-42f0-4ab9-a4ce-ef7f1a7a7671';
+    // Calculate next available sort order
+    const maxSortOrder = images.length > 0 ? Math.max(...images.map(img => img.sortOrder)) : -1;
+    const nextSortOrder = maxSortOrder + 1;
+
     setFormData({
       title: '',
-      description: '',
-      imageUrl: '',
-      displayDuration: 3,
-      position: images.length,
-      targetMenuItemId: '',
-      startDate: '',
-      endDate: '',
-      isActive: false,
+      subtitle: '',
+      imageAssetId: '',
+      carouselId: defaultCarouselId,
+      sortOrder: nextSortOrder,
+      isActive: true,
+      deeplink: '',
+      startAt: '',
+      endAt: '',
     });
     setShowForm(true);
   };
 
   const handleEdit = (image: CarouselImage) => {
-    setEditingId(image.id);
+    setEditingId(image.carouselItemId);
     setFormData({
-      title: image.title,
-      description: image.description || '',
-      imageUrl: image.imageUrl,
-      displayDuration: image.displayDuration,
-      position: image.position,
-      targetMenuItemId: image.targetMenuItemId || '',
-      startDate: image.startDate || '',
-      endDate: image.endDate || '',
+      title: image.title || '',
+      subtitle: image.subtitle || '',
+      imageAssetId: image.imageAssetId,
+      carouselId: image.carouselId,
+      sortOrder: image.sortOrder,
       isActive: image.isActive,
+      deeplink: image.deeplink || '',
+      startAt: image.startAt || '',
+      endAt: image.endAt || '',
     });
     setShowForm(true);
   };
@@ -177,8 +195,36 @@ const CarouselManager = () => {
     }
   };
 
+  const handleToggleActive = async (image: CarouselImage) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${API_BASE}/carousel/${image.carouselItemId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          isActive: !image.isActive,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to toggle status' }));
+        throw new Error(errorData.message || 'Failed to toggle status');
+      }
+
+      await fetchCarouselImages();
+      toast.success(image.isActive ? 'Carousel item deactivated' : 'Carousel item activated');
+    } catch (error) {
+      console.error('Toggle error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to toggle status';
+      toast.error(errorMessage);
+    }
+  };
+
   const handleSave = async () => {
-    if (!formData.title || !formData.imageUrl) {
+    if (!formData.title || !formData.imageAssetId) {
       toast.error('Title and image are required');
       return;
     }
@@ -188,8 +234,8 @@ const CarouselManager = () => {
       const token = localStorage.getItem('adminToken');
       const dataToSave = {
         ...formData,
-        startDate: formData.startDate || null,
-        endDate: formData.endDate || null,
+        startAt: formData.startAt || null,
+        endAt: formData.endAt || null,
       };
 
       const url = editingId
@@ -205,26 +251,30 @@ const CarouselManager = () => {
         body: JSON.stringify(dataToSave),
       });
 
-      if (!response.ok) throw new Error('Failed to save');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to save' }));
+        throw new Error(errorData.message || 'Failed to save');
+      }
 
       await fetchCarouselImages();
       setShowForm(false);
       setEditingId(null);
       setFormData({
         title: '',
-        description: '',
-        imageUrl: '',
-        displayDuration: 3,
-        position: 0,
-        targetMenuItemId: '',
-        startDate: '',
-        endDate: '',
-        isActive: false,
+        subtitle: '',
+        imageAssetId: '',
+        carouselId: '',
+        sortOrder: 0,
+        isActive: true,
+        deeplink: '',
+        startAt: '',
+        endAt: '',
       });
       toast.success(editingId ? 'Carousel image updated!' : 'Carousel image created!');
     } catch (error) {
       console.error('Save error:', error);
-      toast.error('Failed to save carousel image');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save carousel image';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -275,16 +325,12 @@ const CarouselManager = () => {
               <form className="flex-1 overflow-y-auto p-8 space-y-6">
                 {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Image</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">Image *</label>
                   <ImageUploader
-                    onUpload={(url) => setFormData({ ...formData, imageUrl: url })}
+                    onUpload={(assetId, url) => setFormData({ ...formData, imageAssetId: assetId })}
                     folder="carousel"
+                    imageUrl={editingId ? images.find(img => img.carouselItemId === editingId)?.imageAsset?.url : undefined}
                   />
-                  {formData.imageUrl && (
-                    <div className="mt-4 rounded-xl overflow-hidden bg-gray-100 h-48 flex items-center justify-center">
-                      <img src={formData.imageUrl} alt="Preview" className="w-full h-full object-contain" />
-                    </div>
-                  )}
                 </div>
 
                 {/* Title */}
@@ -299,88 +345,92 @@ const CarouselManager = () => {
                   />
                 </div>
 
-                {/* Description */}
+                {/* Subtitle */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Subtitle</label>
                   <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    value={formData.subtitle}
+                    onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white resize-none"
-                    placeholder="Image description"
-                    rows={3}
+                    placeholder="Optional subtitle"
+                    rows={2}
                   />
                 </div>
 
-                {/* Position */}
+                {/* Sort Order */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Position</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Sort Order</label>
                   <input
                     type="number"
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: parseInt(e.target.value) })}
+                    value={formData.sortOrder}
+                    onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
                     className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                     min="0"
-                    max="4"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Lower numbers appear first. {!editingId && `Next available: ${formData.sortOrder}`}
+                  </p>
                 </div>
 
-                {/* Display Duration */}
+                {/* Active Status Toggle */}
+                <div className="bg-gradient-to-r from-pink-50 to-purple-50 p-4 rounded-xl border-2 border-pink-100">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Active Status</label>
+                      <p className="text-xs text-gray-500">
+                        {formData.isActive
+                          ? '✅ This carousel item will be visible to users'
+                          : '⚠️ This carousel item will be hidden from users'}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                      className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 ${
+                        formData.isActive ? 'bg-green-500' : 'bg-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-200 ${
+                          formData.isActive ? 'translate-x-7' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Deeplink */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Display Duration (seconds)</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Deeplink (Optional)</label>
                   <input
-                    type="number"
-                    value={formData.displayDuration}
-                    onChange={(e) => setFormData({ ...formData, displayDuration: parseInt(e.target.value) })}
+                    type="text"
+                    value={formData.deeplink}
+                    onChange={(e) => setFormData({ ...formData, deeplink: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
-                    min="1"
-                    max="30"
+                    placeholder="e.g., /menu/item/123"
                   />
                 </div>
 
                 {/* Start Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Start Date (Optional)</label>
                   <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    min={new Date().toISOString().split('T')[0]}
+                    type="datetime-local"
+                    value={formData.startAt}
+                    onChange={(e) => setFormData({ ...formData, startAt: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                   />
                 </div>
 
                 {/* End Date */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Date</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">End Date (Optional)</label>
                   <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    min={new Date().toISOString().split('T')[0]}
+                    type="datetime-local"
+                    value={formData.endAt}
+                    onChange={(e) => setFormData({ ...formData, endAt: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-pink-100 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-transparent bg-white"
                   />
-                </div>
-
-                {/* Active Toggle */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Active Status</label>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, isActive: !prev.isActive }))}
-                    className={`relative w-full h-12 rounded-xl transition-all duration-300 flex items-center px-1 ${
-                      formData.isActive
-                        ? 'bg-gradient-to-r from-green-400 to-green-500'
-                        : 'bg-gradient-to-r from-gray-300 to-gray-400'
-                    }`}
-                  >
-                    <span
-                      className={`absolute h-10 w-1/2 rounded-lg bg-white shadow-lg transition-all duration-300 flex items-center justify-center font-bold text-sm ${
-                        formData.isActive ? 'right-1' : 'left-1'
-                      }`}
-                    >
-                      {formData.isActive ? '✓ Active' : 'Inactive'}
-                    </span>
-                  </button>
                 </div>
 
                 {/* Buttons */}
@@ -466,22 +516,22 @@ const CarouselManager = () => {
                     <tbody>
                       {filteredAndSortedImages.map((image, index) => (
                         <tr
-                          key={image.id}
+                          key={image.carouselItemId}
                           className={`border-b border-gray-100 transition-all duration-200 group ${
                             index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-gray-50/50 hover:bg-blue-50/50'
                           }`}
                         >
                           <td className="px-6 py-5">
                             <span className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-lg font-bold">
-                              #{image.position + 1}
+                              #{image.sortOrder + 1}
                             </span>
                           </td>
                           <td className="px-6 py-5">
-                            {image.imageUrl ? (
-                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all cursor-pointer" onClick={() => setShowFullImage(image.imageUrl)}>
+                            {image.imageAsset?.url ? (
+                              <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all cursor-pointer" onClick={() => setShowFullImage(image.imageAsset?.url || '')}>
                                 <img
-                                  src={image.imageUrl}
-                                  alt={image.title}
+                                  src={image.imageAsset.url}
+                                  alt={image.title || 'Carousel image'}
                                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                 />
                               </div>
@@ -492,27 +542,52 @@ const CarouselManager = () => {
                             )}
                           </td>
                           <td className="px-6 py-5">
-                            <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{image.title}</p>
+                            <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{image.title || 'Untitled'}</p>
+                            {image.subtitle && <p className="text-sm text-gray-500 mt-1">{image.subtitle}</p>}
                           </td>
                           <td className="px-6 py-5">
                             <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-full text-sm font-bold">
-                              {image.displayDuration}s
+                              Auto
                             </span>
                           </td>
                           <td className="px-6 py-5">
-                            {image.isActive ? (
-                              <span className="inline-block px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-full text-sm font-bold border border-green-200 flex items-center gap-2 w-fit">
-                                <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></span>
-                                Active
-                              </span>
-                            ) : (
-                              <span className="inline-block px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-50 text-gray-800 rounded-full text-sm font-bold border border-gray-200">
-                                Inactive
-                              </span>
-                            )}
+                            <div className="flex flex-col gap-1">
+                              {/* Item-level status */}
+                              {image.isActive ? (
+                                <span className="inline-block px-3 py-1 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-full text-xs font-bold border border-green-200 flex items-center gap-1 w-fit">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-green-600 animate-pulse"></span>
+                                  Item Active
+                                </span>
+                              ) : (
+                                <span className="inline-block px-3 py-1 bg-gradient-to-r from-red-100 to-red-50 text-red-800 rounded-full text-xs font-bold border border-red-200 w-fit">
+                                  Item Inactive
+                                </span>
+                              )}
+                              {/* Carousel-level status */}
+                              {image.carousel?.isActive ? (
+                                <span className="inline-block px-3 py-1 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-full text-xs font-semibold w-fit">
+                                  Carousel Active
+                                </span>
+                              ) : (
+                                <span className="inline-block px-3 py-1 bg-gradient-to-r from-gray-100 to-gray-50 text-gray-600 rounded-full text-xs font-semibold w-fit">
+                                  Carousel Inactive
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-6 py-5">
                             <div className="flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => handleToggleActive(image)}
+                                className={`p-2 rounded-lg transition-colors ${
+                                  image.isActive
+                                    ? 'text-green-600 hover:bg-green-100'
+                                    : 'text-gray-400 hover:bg-gray-100'
+                                }`}
+                                title={image.isActive ? 'Deactivate' : 'Activate'}
+                              >
+                                {image.isActive ? '✓' : '○'}
+                              </button>
                               <button
                                 onClick={() => handleEdit(image)}
                                 className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
@@ -521,7 +596,7 @@ const CarouselManager = () => {
                                 <FiEdit2 size={18} />
                               </button>
                               <button
-                                onClick={() => handleDelete(image.id, image.title)}
+                                onClick={() => handleDelete(image.carouselItemId, image.title || 'Untitled')}
                                 className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                                 title="Delete"
                               >

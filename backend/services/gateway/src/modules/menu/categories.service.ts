@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Category } from '@shared/database/entities';
+import { MenuCategory } from '@shared/database/entities';
 
 @Injectable()
 export class CategoriesService {
   constructor(
-    @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(MenuCategory)
+    private readonly categoryRepository: Repository<MenuCategory>,
   ) {}
 
   async findAll() {
@@ -43,7 +43,7 @@ export class CategoriesService {
   }
 
   async update(id: string, data: { displayName?: string; sortOrder?: number }) {
-    const category = await this.categoryRepository.findOne({ where: { id } });
+    const category = await this.categoryRepository.findOne({ where: { categoryId: id } });
 
     if (!category) {
       throw new NotFoundException('Category not found');
@@ -54,7 +54,7 @@ export class CategoriesService {
   }
 
   async delete(id: string) {
-    const category = await this.categoryRepository.findOne({ where: { id } });
+    const category = await this.categoryRepository.findOne({ where: { categoryId: id } });
 
     if (!category) {
       throw new NotFoundException('Category not found');

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProgramEvent, ProgramEventType } from '@shared/database/entities';
@@ -14,6 +14,8 @@ export interface EmitEventOptions {
 
 @Injectable()
 export class EventEmitterService {
+  private readonly logger = new Logger(EventEmitterService.name);
+
   constructor(
     @InjectRepository(ProgramEvent)
     private readonly programEventRepository: Repository<ProgramEvent>,
@@ -23,16 +25,18 @@ export class EventEmitterService {
    * Emit a program event for analytics tracking
    */
   async emitEvent(options: EmitEventOptions): Promise<ProgramEvent> {
-    const event = this.programEventRepository.create({
-      eventType: options.eventType,
+    const programEvent = this.programEventRepository.create({
       userId: options.userId || null,
+      eventType: options.eventType,
       couponId: options.couponId || null,
       orderId: options.orderId || null,
       promoCodeId: options.promoCodeId || null,
       eventData: options.eventData || null,
     });
 
-    return await this.programEventRepository.save(event);
+    const savedEvent = await this.programEventRepository.save(programEvent);
+    this.logger.log(`Emitted program event: ${options.eventType} for user ${options.userId || 'N/A'}`);
+    return savedEvent;
   }
 
   /**

@@ -12,7 +12,13 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PromoType } from '@shared/database/entities';
+// Note: PromoType doesn't exist in new schema
+// TODO: Refactor to use PromotionDiscountType
+enum PromoType {
+  PERCENT_OFF = 'PERCENT_OFF',
+  FIXED_AMOUNT = 'FIXED_AMOUNT',
+  MULTI_USE = 'MULTI_USE',
+}
 
 export class CreatePromoCodeDto {
   @ApiProperty({

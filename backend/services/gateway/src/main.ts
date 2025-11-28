@@ -8,7 +8,10 @@ import * as express from 'express';
 import { AppDataSource } from '@shared/database/data-source';
 
 async function bootstrap() {
-  // Run migrations before starting the app
+  // TEMPORARILY DISABLED: Run migrations before starting the app
+  // The database schema has been rebuilt manually with enterprise-schema.sql
+  // TODO: Update TypeORM entities to match new schema, then re-enable migrations
+  /*
   console.log('Running database migrations...');
   try {
     await AppDataSource.initialize();
@@ -20,6 +23,7 @@ async function bootstrap() {
     // Don't exit - let the app try to start anyway
     // This prevents the app from being completely down if migrations fail
   }
+  */
 
   const app = await NestFactory.create(AppModule, {
     rawBody: true, // Enable raw body for Stripe webhooks

@@ -9,76 +9,79 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Promotion = exports.PromotionType = void 0;
+exports.Promotion = void 0;
 const typeorm_1 = require("typeorm");
-var PromotionType;
-(function (PromotionType) {
-    PromotionType["LAUNCH_MODAL"] = "launch_modal";
-    PromotionType["BANNER"] = "banner";
-    PromotionType["CARD"] = "card";
-})(PromotionType || (exports.PromotionType = PromotionType = {}));
+const promotion_discount_type_entity_1 = require("./promotion-discount-type.entity");
+const admin_user_entity_1 = require("./admin-user.entity");
+const promotion_redemption_entity_1 = require("./promotion-redemption.entity");
 let Promotion = class Promotion {
+    get id() {
+        return this.promotionId;
+    }
+    get title() {
+        return this.name;
+    }
 };
 exports.Promotion = Promotion;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'promotion_id' }),
     __metadata("design:type", String)
-], Promotion.prototype, "id", void 0);
+], Promotion.prototype, "promotionId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
     __metadata("design:type", String)
-], Promotion.prototype, "title", void 0);
+], Promotion.prototype, "name", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", String)
 ], Promotion.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'promotion_type', type: 'enum', enum: PromotionType }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'discount_type_id' }),
     __metadata("design:type", String)
-], Promotion.prototype, "promotionType", void 0);
+], Promotion.prototype, "discountTypeId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'image_url', type: 'varchar', length: 500 }),
-    __metadata("design:type", String)
-], Promotion.prototype, "imageUrl", void 0);
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, name: 'discount_value' }),
+    __metadata("design:type", Number)
+], Promotion.prototype, "discountValue", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'target_menu_item_id', type: 'uuid', nullable: true }),
-    __metadata("design:type", String)
-], Promotion.prototype, "targetMenuItemId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'target_url', type: 'varchar', length: 500, nullable: true }),
-    __metadata("design:type", String)
-], Promotion.prototype, "targetUrl", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ name: 'start_date', type: 'timestamptz' }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'start_at' }),
     __metadata("design:type", Date)
-], Promotion.prototype, "startDate", void 0);
+], Promotion.prototype, "startAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'end_date', type: 'timestamptz' }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'end_at' }),
     __metadata("design:type", Date)
-], Promotion.prototype, "endDate", void 0);
+], Promotion.prototype, "endAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'is_active', type: 'boolean', default: true }),
+    (0, typeorm_1.Column)({ type: 'boolean', name: 'is_active', default: true }),
     __metadata("design:type", Boolean)
 ], Promotion.prototype, "isActive", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'display_duration', type: 'int', default: 0 }),
-    __metadata("design:type", Number)
-], Promotion.prototype, "displayDuration", void 0);
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'created_by', nullable: true }),
+    __metadata("design:type", String)
+], Promotion.prototype, "createdBy", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ name: 'sort_order', type: 'int', default: 0 }),
-    __metadata("design:type", Number)
-], Promotion.prototype, "sortOrder", void 0);
-__decorate([
-    (0, typeorm_1.CreateDateColumn)({ name: 'created_at', type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz', name: 'created_at' }),
     __metadata("design:type", Date)
 ], Promotion.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)({ name: 'updated_at', type: 'timestamptz' }),
+    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz', name: 'updated_at' }),
     __metadata("design:type", Date)
 ], Promotion.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => promotion_discount_type_entity_1.PromotionDiscountType, (discountType) => discountType.promotions),
+    (0, typeorm_1.JoinColumn)({ name: 'discount_type_id' }),
+    __metadata("design:type", promotion_discount_type_entity_1.PromotionDiscountType)
+], Promotion.prototype, "discountType", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => admin_user_entity_1.AdminUser, (adminUser) => adminUser.promotions),
+    (0, typeorm_1.JoinColumn)({ name: 'created_by' }),
+    __metadata("design:type", admin_user_entity_1.AdminUser)
+], Promotion.prototype, "createdByAdmin", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => promotion_redemption_entity_1.PromotionRedemption, (redemption) => redemption.promotion),
+    __metadata("design:type", Array)
+], Promotion.prototype, "promotionRedemptions", void 0);
 exports.Promotion = Promotion = __decorate([
-    (0, typeorm_1.Entity)('promotions'),
-    (0, typeorm_1.Index)(['isActive', 'startDate', 'endDate']),
-    (0, typeorm_1.Index)(['promotionType'])
+    (0, typeorm_1.Entity)('promotions')
 ], Promotion);
 //# sourceMappingURL=promotion.entity.js.map

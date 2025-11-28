@@ -31,9 +31,9 @@ export class EventsController {
     return {
       success: true,
       event: {
-        id: event.id,
+        id: event.eventId,
         type: event.eventType,
-        timestamp: event.timestamp,
+        timestamp: event.createdAt,
       },
     };
   }
@@ -50,9 +50,9 @@ export class EventsController {
       success: true,
       count: trackedEvents.length,
       events: trackedEvents.map((e) => ({
-        id: e.id,
+        id: e.eventId,
         type: e.eventType,
-        timestamp: e.timestamp,
+        timestamp: e.createdAt,
       })),
     };
   }
@@ -77,11 +77,11 @@ export class EventsController {
       success: true,
       total,
       events: events.map((e) => ({
-        id: e.id,
+        id: e.eventId,
         type: e.eventType,
-        timestamp: e.timestamp,
-        metadata: e.metadata,
-        sessionId: e.sessionId,
+        timestamp: e.createdAt,
+        metadata: e.payload?.metadata || null,
+        sessionId: e.payload?.sessionId || null,
       })),
     };
   }
@@ -111,10 +111,10 @@ export class EventsController {
       success: true,
       sessionId,
       events: events.map((e) => ({
-        id: e.id,
+        id: e.eventId,
         type: e.eventType,
-        timestamp: e.timestamp,
-        metadata: e.metadata,
+        timestamp: e.createdAt,
+        metadata: e.payload?.metadata || null,
       })),
     };
   }

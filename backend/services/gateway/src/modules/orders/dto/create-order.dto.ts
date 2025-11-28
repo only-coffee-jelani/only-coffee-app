@@ -4,12 +4,10 @@ import {
   ValidateNested,
   IsOptional,
   IsNumber,
-  IsEnum,
   Min,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { OrderType } from '@shared/database/entities';
 
 class OrderItemDto {
   @ApiProperty()
@@ -59,10 +57,10 @@ export class CreateOrderDto {
   @Type(() => OrderItemDto)
   items: OrderItemDto[];
 
-  @ApiProperty({ enum: OrderType, required: false })
+  @ApiProperty({ required: false, description: 'Order type (pickup, delivery, etc.)' })
   @IsOptional()
-  @IsEnum(OrderType)
-  orderType?: OrderType;
+  @IsString()
+  orderType?: string;
 
   @ApiProperty({
     description: 'Either "ASAP" or ISO date string',

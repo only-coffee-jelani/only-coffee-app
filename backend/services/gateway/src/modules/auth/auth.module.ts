@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@shared/database/entities';
+import { User, AdminUser } from '@shared/database/entities';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { SmsService } from './sms.service';
@@ -24,7 +24,7 @@ import { CouponsModule } from '../coupons/coupons.module';
         },
       }),
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, AdminUser]),
     CouponsModule,
   ],
   controllers: [AuthController],

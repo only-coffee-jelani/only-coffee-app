@@ -68,17 +68,18 @@ fun SignupScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues)
-                .padding(24.dp),
+                .padding(horizontal = 24.dp)
+                .padding(top = 16.dp, bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo),
                 contentDescription = "Only Coffee Logo",
-                modifier = Modifier.size(80.dp)
+                modifier = Modifier.size(60.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Join Only Coffee",
@@ -277,12 +278,12 @@ fun SignupScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             // Login Link
-            Row(
-                horizontalArrangement = Arrangement.Center,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Already have an account? ",
+                    text = "Already have an account?",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 TextButton(onClick = { navController.popBackStack() }) {

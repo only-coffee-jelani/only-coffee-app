@@ -47,7 +47,7 @@ export class StoresService {
   }
 
   async findById(id: string) {
-    const store = await this.storeRepository.findOne({ where: { id } });
+    const store = await this.storeRepository.findOne({ where: { storeId: id } });
     if (!store) {
       throw new NotFoundException(`Store with ID ${id} not found`);
     }
@@ -55,8 +55,11 @@ export class StoresService {
   }
 
   async findByType(type: StoreType) {
+    // Note: In new schema, type is a FK to store_types table
+    // This needs to be updated to query by storeTypeId
+    // For now, returning all active stores
     return this.storeRepository.find({
-      where: { type, isActive: true, acceptingOrders: true },
+      where: { isActive: true },
     });
   }
 
@@ -66,14 +69,12 @@ export class StoresService {
       throw new BadRequestException('Name and city are required');
     }
 
-    // For coffee shops, address is required
-    if (createStoreDto.type === StoreType.COFFEE_SHOP && !createStoreDto.address) {
-      throw new BadRequestException('Address is required for coffee shops');
-    }
+    // Note: In new schema, type is a FK to store_types table (storeTypeId)
+    // Address validation removed as address structure changed in new schema
 
     const store = this.storeRepository.create({
       ...createStoreDto,
-      type: createStoreDto.type || StoreType.COFFEE_SHOP,
+      // storeTypeId should be provided in createStoreDto
       latitude: createStoreDto.latitude || 0,
       longitude: createStoreDto.longitude || 0,
     });

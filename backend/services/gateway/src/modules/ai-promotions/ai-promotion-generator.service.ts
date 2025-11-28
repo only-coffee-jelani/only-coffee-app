@@ -171,7 +171,7 @@ export class AIPromotionGeneratorService {
     // Sample recent users for analysis (limit for performance)
     const users = await this.userRepository.find({
       take: 500,
-      order: { lastActivityDate: 'DESC' },
+      order: { createdAt: 'DESC' }, // User entity doesn't have lastActivityDate
     });
 
     // Get segments for users
@@ -182,14 +182,14 @@ export class AIPromotionGeneratorService {
     for (const user of users.slice(0, 100)) {
       try {
         // Get segment
-        const userSegment = await this.segmentationService.assignUserSegment(user.id);
+        const userSegment = await this.segmentationService.assignUserSegment(user.userId);
         segmentCounts.set(
           userSegment.segment,
           (segmentCounts.get(userSegment.segment) || 0) + 1,
         );
 
         // Get churn risk
-        const churnPrediction = await this.churnPredictionService.predictChurn(user.id);
+        const churnPrediction = await this.churnPredictionService.predictChurn(user.userId);
         totalChurnProbability += churnPrediction.churnProbability;
         churnPredictions++;
       } catch (error) {

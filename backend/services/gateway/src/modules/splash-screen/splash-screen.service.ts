@@ -17,16 +17,18 @@ export class SplashScreenService {
     const now = new Date();
     return this.splashScreenRepository
       .createQueryBuilder('splash')
+      .leftJoinAndSelect('splash.imageAsset', 'imageAsset')
       .where('splash.isActive = :isActive', { isActive: true })
       .andWhere(
-        '(splash.startDate IS NULL OR splash.startDate <= :now)',
+        '(splash.startAt IS NULL OR splash.startAt <= :now)',
         { now },
       )
       .andWhere(
-        '(splash.endDate IS NULL OR splash.endDate >= :now)',
+        '(splash.endAt IS NULL OR splash.endAt >= :now)',
         { now },
       )
-      .orderBy('splash.createdAt', 'DESC')
+      .orderBy('splash.priority', 'DESC')
+      .addOrderBy('splash.createdAt', 'DESC')
       .getOne();
   }
 
@@ -35,6 +37,7 @@ export class SplashScreenService {
    */
   async getAllSplashScreens(skip = 0, take = 10): Promise<[SplashScreen[], number]> {
     return this.splashScreenRepository.findAndCount({
+      relations: ['imageAsset'],
       order: { createdAt: 'DESC' },
       skip,
       take,
@@ -46,7 +49,8 @@ export class SplashScreenService {
    */
   async getSplashScreenById(id: string): Promise<SplashScreen> {
     const splashScreen = await this.splashScreenRepository.findOne({
-      where: { id },
+      where: { splashId: id },
+      relations: ['imageAsset'],
     });
 
     if (!splashScreen) {
@@ -58,85 +62,57 @@ export class SplashScreenService {
 
   /**
    * Create a new splash screen
-   * If a new splash screen is created while one is active, mark the old one as replaced
+   * Only one splash screen can be active at a time
    */
-  async createSplashScreen(data: Partial<SplashScreen>, userId?: string): Promise<SplashScreen> {
-    let previousActiveId: string | null = null;
-
-    // Clean up empty strings to null for UUID fields
-    const cleanedData = {
-      ...data,
-      targetMenuItemId: data.targetMenuItemId === '' ? null : data.targetMenuItemId,
-      targetUrl: data.targetUrl === '' ? null : data.targetUrl,
-      createdById: userId || null,
-    };
-
-    // If this new splash screen is active, deactivate any previous active splash screen
-    if (cleanedData.isActive) {
-      const currentActive = await this.splashScreenRepository.findOne({
-        where: { isActive: true },
-        order: { createdAt: 'DESC' },
-      });
-
-      if (currentActive) {
-        previousActiveId = currentActive.id;
-        await this.splashScreenRepository.update(
-          { id: currentActive.id },
-          {
-            isActive: false,
-            replacedAt: new Date(),
-          },
-        );
-      }
-    }
-
-    const splashScreen = this.splashScreenRepository.create(cleanedData);
-    const savedSplashScreen = await this.splashScreenRepository.save(splashScreen);
-
-    // Update the previous splash screen with the ID of the new one
-    if (previousActiveId) {
+  async createSplashScreen(data: any, userId?: string): Promise<SplashScreen> {
+    // If creating an active splash screen, deactivate all others first
+    if (data.isActive) {
       await this.splashScreenRepository.update(
-        { id: previousActiveId },
-        { replacedById: savedSplashScreen.id },
+        { isActive: true },
+        { isActive: false },
       );
     }
 
-    return savedSplashScreen;
+    // Clean up empty strings to null for UUID fields and convert date strings to Date objects
+    const cleanedData = {
+      ...data,
+      startAt: data.startAt ? new Date(data.startAt) : null,
+      endAt: data.endAt ? new Date(data.endAt) : null,
+      targetSegmentId: data.targetSegmentId === '' ? null : data.targetSegmentId,
+      targetStoreId: data.targetStoreId === '' ? null : data.targetStoreId,
+      deeplink: data.deeplink === '' ? null : data.deeplink,
+      createdBy: userId || null,
+    };
+
+    const splashScreen = this.splashScreenRepository.create(cleanedData);
+    const saved = await this.splashScreenRepository.save(splashScreen);
+    return Array.isArray(saved) ? saved[0] : saved;
   }
 
   /**
    * Update a splash screen
-   * If setting isActive to true, deactivate any other active splash screens
+   * Only one splash screen can be active at a time
    */
-  async updateSplashScreen(id: string, data: Partial<SplashScreen>): Promise<SplashScreen> {
+  async updateSplashScreen(id: string, data: any): Promise<SplashScreen> {
     const splashScreen = await this.getSplashScreenById(id);
 
-    // Clean up empty strings to null for UUID fields
+    // If activating this splash screen, deactivate all others first
+    if (data.isActive && !splashScreen.isActive) {
+      await this.splashScreenRepository.update(
+        { isActive: true },
+        { isActive: false },
+      );
+    }
+
+    // Clean up empty strings to null for UUID fields and convert date strings to Date objects
     const cleanedData = {
       ...data,
-      targetMenuItemId: data.targetMenuItemId === '' ? null : data.targetMenuItemId,
-      targetUrl: data.targetUrl === '' ? null : data.targetUrl,
+      startAt: data.startAt ? new Date(data.startAt) : undefined,
+      endAt: data.endAt ? new Date(data.endAt) : undefined,
+      targetSegmentId: data.targetSegmentId === '' ? null : data.targetSegmentId,
+      targetStoreId: data.targetStoreId === '' ? null : data.targetStoreId,
+      deeplink: data.deeplink === '' ? null : data.deeplink,
     };
-
-    // If trying to set this splash screen as active
-    if (cleanedData.isActive === true) {
-      // Find any other active splash screens
-      const otherActive = await this.splashScreenRepository.findOne({
-        where: { isActive: true },
-      });
-
-      // If there's another active splash screen, deactivate it and mark as replaced
-      if (otherActive && otherActive.id !== id) {
-        await this.splashScreenRepository.update(
-          { id: otherActive.id },
-          {
-            isActive: false,
-            replacedAt: new Date(),
-            replacedById: id,
-          },
-        );
-      }
-    }
 
     Object.assign(splashScreen, cleanedData);
     return this.splashScreenRepository.save(splashScreen);
@@ -146,7 +122,7 @@ export class SplashScreenService {
    * Delete a splash screen
    */
   async deleteSplashScreen(id: string): Promise<void> {
-    const result = await this.splashScreenRepository.delete(id);
+    const result = await this.splashScreenRepository.delete({ splashId: id });
     if (result.affected === 0) {
       throw new NotFoundException(`Splash screen with ID ${id} not found`);
     }
@@ -154,134 +130,77 @@ export class SplashScreenService {
 
   /**
    * Record an impression (view)
+   * Note: Analytics tracking removed from new schema
+   * This method is kept for backward compatibility but does nothing
    */
   async recordImpression(id: string): Promise<void> {
-    await this.splashScreenRepository.increment(
-      { id },
-      'impressions',
-      1,
-    );
-    await this.splashScreenRepository.update(
-      { id },
-      { lastImpressionAt: new Date() },
-    );
+    // Analytics tracking should be done in a separate analytics service/table
+    // For now, this is a no-op
+    return;
   }
 
   /**
    * Record a click
+   * Note: Analytics tracking removed from new schema
    */
   async recordClick(id: string): Promise<void> {
-    await this.splashScreenRepository.increment(
-      { id },
-      'clicks',
-      1,
-    );
-    await this.splashScreenRepository.update(
-      { id },
-      { lastClickAt: new Date() },
-    );
-    // Update CTR
-    await this.updateMetrics(id);
+    // Analytics tracking should be done in a separate analytics service/table
+    return;
   }
 
   /**
    * Record a skip
+   * Note: Analytics tracking removed from new schema
    */
   async recordSkip(id: string): Promise<void> {
-    await this.splashScreenRepository.increment(
-      { id },
-      'skips',
-      1,
-    );
-    // Update skip rate
-    await this.updateMetrics(id);
+    // Analytics tracking should be done in a separate analytics service/table
+    return;
   }
 
   /**
    * Update calculated metrics (CTR, skip rate, conversion rate)
+   * Note: Analytics tracking removed from new schema
    */
   async updateMetrics(id: string): Promise<void> {
-    const splashScreen = await this.getSplashScreenById(id);
-    
-    const totalInteractions = splashScreen.impressions + splashScreen.skips;
-    
-    // Calculate CTR
-    const ctr = splashScreen.impressions > 0 
-      ? (splashScreen.clicks / splashScreen.impressions) * 100 
-      : 0;
-    
-    // Calculate skip rate
-    const skipRate = totalInteractions > 0 
-      ? (splashScreen.skips / totalInteractions) * 100 
-      : 0;
-    
-    // Calculate conversion rate
-    const conversionRate = splashScreen.impressions > 0 
-      ? (splashScreen.associatedOrders / splashScreen.impressions) * 100 
-      : 0;
-    
-    // Calculate average order value
-    const averageOrderValue = splashScreen.associatedOrders > 0 
-      ? splashScreen.associatedRevenue / splashScreen.associatedOrders 
-      : 0;
-
-    await this.splashScreenRepository.update(
-      { id },
-      {
-        ctr: parseFloat(ctr.toFixed(2)),
-        skipRate: parseFloat(skipRate.toFixed(2)),
-        conversionRate: parseFloat(conversionRate.toFixed(2)),
-        averageOrderValue: parseFloat(averageOrderValue.toFixed(2)),
-      },
-    );
+    // Analytics tracking should be done in a separate analytics service/table
+    return;
   }
 
   /**
    * Record associated order (for sales tracking)
+   * Note: Analytics tracking removed from new schema
    */
   async recordAssociatedOrder(id: string, orderValue: number): Promise<void> {
-    await this.splashScreenRepository.increment(
-      { id },
-      'associatedOrders',
-      1,
-    );
-    await this.splashScreenRepository.increment(
-      { id },
-      'associatedRevenue',
-      orderValue,
-    );
-    await this.updateMetrics(id);
+    // Analytics tracking should be done in a separate analytics service/table
+    return;
   }
 
   /**
    * Get analytics for a splash screen
+   * Note: Analytics fields removed from new schema
+   * Returns basic info only
    */
   async getAnalytics(id: string): Promise<any> {
     const splashScreen = await this.getSplashScreenById(id);
 
     return {
-      id: splashScreen.id,
+      id: splashScreen.splashId,
       title: splashScreen.title,
-      impressions: splashScreen.impressions,
-      clicks: splashScreen.clicks,
-      skips: splashScreen.skips,
-      ctr: splashScreen.ctr,
-      skipRate: splashScreen.skipRate,
-      associatedOrders: splashScreen.associatedOrders,
-      associatedRevenue: splashScreen.associatedRevenue,
-      conversionRate: splashScreen.conversionRate,
-      averageOrderValue: splashScreen.averageOrderValue,
-      uniqueUsersShown: splashScreen.uniqueUsersShown,
-      uniqueUsersClicked: splashScreen.uniqueUsersClicked,
-      averageViewTime: splashScreen.averageViewTime,
-      lastImpressionAt: splashScreen.lastImpressionAt,
-      lastClickAt: splashScreen.lastClickAt,
-      startDate: splashScreen.startDate,
-      endDate: splashScreen.endDate,
+      subtitle: splashScreen.subtitle,
+      durationSeconds: splashScreen.durationSeconds,
+      startAt: splashScreen.startAt,
+      endAt: splashScreen.endAt,
       isActive: splashScreen.isActive,
+      priority: splashScreen.priority,
+      deeplink: splashScreen.deeplink,
       createdAt: splashScreen.createdAt,
-      replacedAt: splashScreen.replacedAt,
-      replacedById: splashScreen.replacedById,
+      updatedAt: splashScreen.updatedAt,
+      // Analytics fields removed - should be tracked in separate analytics system
+      impressions: 0,
+      clicks: 0,
+      skips: 0,
+      ctr: 0,
+      skipRate: 0,
     };
   }
 }

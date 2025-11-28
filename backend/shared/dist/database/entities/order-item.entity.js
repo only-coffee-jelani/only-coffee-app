@@ -13,66 +13,49 @@ exports.OrderItem = void 0;
 const typeorm_1 = require("typeorm");
 const order_entity_1 = require("./order.entity");
 const menu_item_entity_1 = require("./menu-item.entity");
+const order_item_modifier_entity_1 = require("./order-item-modifier.entity");
 let OrderItem = class OrderItem {
 };
 exports.OrderItem = OrderItem;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'order_item_id' }),
     __metadata("design:type", String)
-], OrderItem.prototype, "id", void 0);
+], OrderItem.prototype, "orderItemId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid' }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'order_id' }),
     __metadata("design:type", String)
 ], OrderItem.prototype, "orderId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'menu_item_id' }),
     __metadata("design:type", String)
 ], OrderItem.prototype, "menuItemId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255 }),
-    __metadata("design:type", String)
-], OrderItem.prototype, "itemName", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], OrderItem.prototype, "toastItemId", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'int', default: 1 }),
     __metadata("design:type", Number)
 ], OrderItem.prototype, "quantity", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, name: 'unit_price' }),
     __metadata("design:type", Number)
-], OrderItem.prototype, "basePrice", void 0);
+], OrderItem.prototype, "unitPrice", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, default: 0 }),
-    __metadata("design:type", Number)
-], OrderItem.prototype, "modifiersPrice", void 0);
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz', name: 'created_at' }),
+    __metadata("design:type", Date)
+], OrderItem.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
-    __metadata("design:type", Number)
-], OrderItem.prototype, "totalPrice", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'jsonb', default: [] }),
-    __metadata("design:type", Array)
-], OrderItem.prototype, "modifiers", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", String)
-], OrderItem.prototype, "specialInstructions", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => order_entity_1.Order, (order) => order.items, { onDelete: 'CASCADE' }),
-    (0, typeorm_1.JoinColumn)({ name: 'orderId' }),
+    (0, typeorm_1.ManyToOne)(() => order_entity_1.Order, (order) => order.orderItems, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'order_id' }),
     __metadata("design:type", order_entity_1.Order)
 ], OrderItem.prototype, "order", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => menu_item_entity_1.MenuItem, { nullable: true }),
-    (0, typeorm_1.JoinColumn)({ name: 'menuItemId' }),
+    (0, typeorm_1.ManyToOne)(() => menu_item_entity_1.MenuItem, (menuItem) => menuItem.orderItems),
+    (0, typeorm_1.JoinColumn)({ name: 'menu_item_id' }),
     __metadata("design:type", menu_item_entity_1.MenuItem)
 ], OrderItem.prototype, "menuItem", void 0);
+__decorate([
+    (0, typeorm_1.OneToMany)(() => order_item_modifier_entity_1.OrderItemModifier, (orderItemModifier) => orderItemModifier.orderItem),
+    __metadata("design:type", Array)
+], OrderItem.prototype, "orderItemModifiers", void 0);
 exports.OrderItem = OrderItem = __decorate([
-    (0, typeorm_1.Entity)('order_items'),
-    (0, typeorm_1.Index)(['orderId']),
-    (0, typeorm_1.Index)(['menuItemId'])
+    (0, typeorm_1.Entity)('order_items')
 ], OrderItem);
 //# sourceMappingURL=order-item.entity.js.map

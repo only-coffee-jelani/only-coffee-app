@@ -439,7 +439,7 @@ export class ContextualBanditService {
     });
 
     for (const promotion of promotions) {
-      await this.addArm(promotion.id, promotion.title);
+      await this.addArm(promotion.promotionId, promotion.name);
     }
 
     this.logger.log(`Initialized ${this.arms.size} bandit arms`);

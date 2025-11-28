@@ -9,101 +9,68 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GiftCard = exports.GiftCardStatus = exports.GiftCardType = void 0;
+exports.GiftCard = void 0;
 const typeorm_1 = require("typeorm");
-var GiftCardType;
-(function (GiftCardType) {
-    GiftCardType["AMOUNT"] = "amount";
-    GiftCardType["FREE_COFFEE"] = "free_coffee";
-})(GiftCardType || (exports.GiftCardType = GiftCardType = {}));
-var GiftCardStatus;
-(function (GiftCardStatus) {
-    GiftCardStatus["PENDING"] = "pending";
-    GiftCardStatus["ACTIVE"] = "active";
-    GiftCardStatus["REDEEMED"] = "redeemed";
-    GiftCardStatus["EXPIRED"] = "expired";
-    GiftCardStatus["CANCELLED"] = "cancelled";
-})(GiftCardStatus || (exports.GiftCardStatus = GiftCardStatus = {}));
+const user_entity_1 = require("./user.entity");
 let GiftCard = class GiftCard {
 };
 exports.GiftCard = GiftCard;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'gift_card_id' }),
     __metadata("design:type", String)
-], GiftCard.prototype, "id", void 0);
+], GiftCard.prototype, "giftCardId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 32, unique: true }),
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, unique: true }),
     __metadata("design:type", String)
 ], GiftCard.prototype, "code", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: GiftCardType }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'purchased_by_user_id', nullable: true }),
     __metadata("design:type", String)
-], GiftCard.prototype, "type", void 0);
+], GiftCard.prototype, "purchasedByUserId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: GiftCardStatus, default: GiftCardStatus.PENDING }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'redeemed_by_user_id', nullable: true }),
     __metadata("design:type", String)
-], GiftCard.prototype, "status", void 0);
+], GiftCard.prototype, "redeemedByUserId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid' }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "senderUserId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "recipientUserId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "recipientEmail", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 20, nullable: true }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "recipientPhone", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, name: 'initial_balance' }),
     __metadata("design:type", Number)
-], GiftCard.prototype, "amount", void 0);
+], GiftCard.prototype, "initialBalance", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
+    (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 2, name: 'current_balance' }),
     __metadata("design:type", Number)
-], GiftCard.prototype, "remainingBalance", void 0);
+], GiftCard.prototype, "currentBalance", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2, nullable: true }),
-    __metadata("design:type", Number)
-], GiftCard.prototype, "maxRedeemValue", void 0);
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'purchased_at', nullable: true }),
+    __metadata("design:type", Date)
+], GiftCard.prototype, "purchasedAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'text', nullable: true }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "message", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'varchar', length: 255, nullable: true }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "stripePaymentIntentId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'redeemed_at', nullable: true }),
     __metadata("design:type", Date)
 ], GiftCard.prototype, "redeemedAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
-    __metadata("design:type", String)
-], GiftCard.prototype, "redeemedOrderId", void 0);
-__decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz' }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'expires_at', nullable: true }),
     __metadata("design:type", Date)
 ], GiftCard.prototype, "expiresAt", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz', name: 'created_at' }),
     __metadata("design:type", Date)
 ], GiftCard.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.UpdateDateColumn)({ type: 'timestamptz', name: 'updated_at' }),
     __metadata("design:type", Date)
 ], GiftCard.prototype, "updatedAt", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.giftCardsPurchased),
+    (0, typeorm_1.JoinColumn)({ name: 'purchased_by_user_id' }),
+    __metadata("design:type", user_entity_1.User)
+], GiftCard.prototype, "purchasedByUser", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.giftCardsRedeemed),
+    (0, typeorm_1.JoinColumn)({ name: 'redeemed_by_user_id' }),
+    __metadata("design:type", user_entity_1.User)
+], GiftCard.prototype, "redeemedByUser", void 0);
 exports.GiftCard = GiftCard = __decorate([
     (0, typeorm_1.Entity)('gift_cards'),
-    (0, typeorm_1.Index)(['code'], { unique: true }),
-    (0, typeorm_1.Index)(['senderUserId']),
-    (0, typeorm_1.Index)(['recipientUserId']),
-    (0, typeorm_1.Index)(['status'])
+    (0, typeorm_1.Index)(['code'], { unique: true })
 ], GiftCard);
 //# sourceMappingURL=gift-card.entity.js.map

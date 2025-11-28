@@ -12,7 +12,8 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { User, OrderStatus } from '@shared/database/entities';
+import { User } from '@shared/database/entities';
+import { OrderStatus } from '@shared/enums/order-status.enum';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ConfirmOrderDto } from './dto/confirm-order.dto';
@@ -47,7 +48,7 @@ export class OrdersController {
   @ApiResponse({ status: 400, description: 'Invalid order data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createOrder(@CurrentUser() user: User, @Body() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(user.id, createOrderDto);
+    return this.ordersService.create(user.userId, createOrderDto);
   }
 
   @Get('my-orders')
@@ -77,7 +78,7 @@ export class OrdersController {
     },
   })
   async getMyOrders(@CurrentUser() user: User, @Query('limit') limit?: number) {
-    return this.ordersService.findByUser(user.id, limit ? Number(limit) : 20);
+    return this.ordersService.findByUser(user.userId, limit ? Number(limit) : 20);
   }
 
   @Get('active')
@@ -90,7 +91,7 @@ export class OrdersController {
     description: 'List of active orders',
   })
   async getActiveOrders(@CurrentUser() user: User) {
-    return this.ordersService.getActiveOrders(user.id);
+    return this.ordersService.getActiveOrders(user.userId);
   }
 
   @Get(':id')
@@ -106,7 +107,7 @@ export class OrdersController {
   @ApiResponse({ status: 404, description: 'Order not found' })
   @ApiResponse({ status: 403, description: 'Forbidden - order belongs to another user' })
   async getOrder(@CurrentUser() user: User, @Param('id') orderId: string) {
-    return this.ordersService.findById(orderId, user.id);
+    return this.ordersService.findById(orderId, user.userId);
   }
 
   @Put(':id/confirm')
@@ -126,7 +127,7 @@ export class OrdersController {
     @Param('id') orderId: string,
     @Body() confirmOrderDto: ConfirmOrderDto,
   ) {
-    return this.ordersService.confirmOrder(user.id, orderId, confirmOrderDto);
+    return this.ordersService.confirmOrder(user.userId, orderId, confirmOrderDto);
   }
 
   @Patch(':id/cancel')
@@ -143,7 +144,7 @@ export class OrdersController {
   @ApiResponse({ status: 400, description: 'Order cannot be cancelled in current state' })
   async cancelOrder(@CurrentUser() user: User, @Param('id') orderId: string) {
     // Verify ownership
-    await this.ordersService.findById(orderId, user.id);
+    await this.ordersService.findById(orderId, user.userId);
     return this.ordersService.updateStatus(orderId, OrderStatus.CANCELLED);
   }
 }

@@ -28,15 +28,18 @@ fun RewardsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-    ) {
-        if (uiState.isAuthenticated && uiState.currentUser != null) {
+    if (uiState.isAuthenticated && uiState.currentUser != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp)
+        ) {
             AuthenticatedRewardsContent(uiState.currentUser!!)
-        } else {
+        }
+    } else {
+        // No scroll or padding for unauthenticated state to allow proper centering
+        Box(modifier = Modifier.fillMaxSize()) {
             UnauthenticatedRewardsContent(navController)
         }
     }

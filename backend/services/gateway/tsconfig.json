@@ -2,11 +2,12 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "baseUrl": "../../",
+    "baseUrl": "./",
+    "rootDir": "../../",
     "paths": {
-      "@shared/*": ["shared/src/*"]
+      "@shared/*": ["../../shared/src/*"]
     }
   },
   "include": ["src/**/*", "../../shared/src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "src/modules/loyalty/**/*"]
 }

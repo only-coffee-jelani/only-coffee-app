@@ -1,61 +1,65 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  Index,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { PromotionDiscountType } from './promotion-discount-type.entity';
+import { AdminUser } from './admin-user.entity';
+import { PromotionRedemption } from './promotion-redemption.entity';
 
-export enum PromotionType {
-  LAUNCH_MODAL = 'launch_modal',
-  BANNER = 'banner',
-  CARD = 'card',
-}
-
+/**
+ * Promotion Entity
+ * Represents promotional offers and discounts
+ */
 @Entity('promotions')
-@Index(['isActive', 'startDate', 'endDate'])
-@Index(['promotionType'])
 export class Promotion {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'promotion_id' })
+  promotionId: string;
 
   @Column({ type: 'varchar', length: 255 })
-  title: string;
+  name: string;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @Column({ name: 'promotion_type', type: 'enum', enum: PromotionType })
-  promotionType: PromotionType;
+  @Column({ type: 'uuid', name: 'discount_type_id' })
+  discountTypeId: string;
 
-  @Column({ name: 'image_url', type: 'varchar', length: 500 })
-  imageUrl: string;
+  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'discount_value' })
+  discountValue: number;
 
-  @Column({ name: 'target_menu_item_id', type: 'uuid', nullable: true })
-  targetMenuItemId: string | null;
+  @Column({ type: 'timestamptz', name: 'start_at' })
+  startAt: Date;
 
-  @Column({ name: 'target_url', type: 'varchar', length: 500, nullable: true })
-  targetUrl: string | null;
+  @Column({ type: 'timestamptz', name: 'end_at' })
+  endAt: Date;
 
-  @Column({ name: 'start_date', type: 'timestamptz' })
-  startDate: Date;
-
-  @Column({ name: 'end_date', type: 'timestamptz' })
-  endDate: Date;
-
-  @Column({ name: 'is_active', type: 'boolean', default: true })
+  @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ name: 'display_duration', type: 'int', default: 0 })
-  displayDuration: number; // in seconds (for launch modals)
+  @Column({ type: 'uuid', name: 'created_by', nullable: true })
+  createdBy: string | null;
 
-  @Column({ name: 'sort_order', type: 'int', default: 0 })
-  sortOrder: number;
-
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   updatedAt: Date;
+
+  // Aliases for backward compatibility
+  get id(): string {
+    return this.promotionId;
+  }
+
+  get title(): string {
+    return this.name;
+  }
+
+  // Relations
+  @ManyToOne(() => PromotionDiscountType, (discountType) => discountType.promotions)
+  @JoinColumn({ name: 'discount_type_id' })
+  discountType: PromotionDiscountType;
+
+  @ManyToOne(() => AdminUser, (adminUser) => adminUser.promotions)
+  @JoinColumn({ name: 'created_by' })
+  createdByAdmin: AdminUser;
+
+  @OneToMany(() => PromotionRedemption, (redemption) => redemption.promotion)
+  promotionRedemptions: PromotionRedemption[];
 }

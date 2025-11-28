@@ -60,10 +60,11 @@ export class UploadController {
       folder = 'uploads';
     }
 
-    const imageUrl = await this.uploadService.uploadImage(file, folder);
+    const result = await this.uploadService.uploadImage(file, folder);
 
     return {
-      url: imageUrl,
+      url: result.url,
+      assetId: result.assetId,
       message: 'Image uploaded successfully',
     };
   }
@@ -102,13 +103,14 @@ export class UploadController {
       throw new BadRequestException('File is required');
     }
 
-    const imageUrl = await this.uploadService.uploadImage(
+    const result = await this.uploadService.uploadImage(
       file,
       'menu-items',
     );
 
     return {
-      url: imageUrl,
+      url: result.url,
+      assetId: result.assetId,
       message: 'Image uploaded successfully',
     };
   }
@@ -147,13 +149,14 @@ export class UploadController {
       throw new BadRequestException('File is required');
     }
 
-    const imageUrl = await this.uploadService.uploadImage(
+    const result = await this.uploadService.uploadImage(
       file,
       'stores',
     );
 
     return {
-      url: imageUrl,
+      url: result.url,
+      assetId: result.assetId,
       message: 'Image uploaded successfully',
     };
   }
@@ -192,13 +195,14 @@ export class UploadController {
       throw new BadRequestException('File is required');
     }
 
-    const imageUrl = await this.uploadService.uploadImage(
+    const result = await this.uploadService.uploadImage(
       file,
       'profiles',
     );
 
     return {
-      url: imageUrl,
+      url: result.url,
+      assetId: result.assetId,
       message: 'Image uploaded successfully',
     };
   }

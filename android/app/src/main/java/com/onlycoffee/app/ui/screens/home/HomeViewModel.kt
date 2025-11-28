@@ -2,6 +2,7 @@ package com.onlycoffee.app.ui.screens.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.onlycoffee.app.data.model.CarouselItem
 import com.onlycoffee.app.data.model.MenuItem
 import com.onlycoffee.app.data.model.Store
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,6 +16,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val menuApiService: com.onlycoffee.app.data.api.MenuApiService,
     private val storeApiService: com.onlycoffee.app.data.api.StoreApiService,
+    private val carouselApiService: com.onlycoffee.app.data.api.CarouselApiService,
     private val authManager: com.onlycoffee.app.managers.AuthenticationManager
 ) : ViewModel() {
 
@@ -28,34 +30,44 @@ class HomeViewModel @Inject constructor(
     private fun loadHomeData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            try {
-                // Fetch data in parallel
-                val user = authManager.currentUser.value
-                val featuredItemsResponse = menuApiService.getFeaturedItems()
-                val nearbyStoresResponse = storeApiService.getNearbyStores(
+
+            // Fetch user data
+            val user = authManager.currentUser.value
+
+            // Fetch featured items with fallback
+            val featuredItems = try {
+                menuApiService.getFeaturedItems().data
+            } catch (e: Exception) {
+                MenuItem.sampleItems.filter { it.isFeatured }
+            }
+
+            // Fetch nearby stores with fallback
+            val nearbyStores = try {
+                storeApiService.getNearbyStores(
                     latitude = 29.9584, // Default to New Orleans French Quarter
                     longitude = -90.0644,
                     radius = 10.0
-                )
-
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    userName = user?.firstName ?: "Coffee Lover",
-                    loyaltyPoints = user?.loyaltyPoints ?: 0,
-                    nearbyStores = nearbyStoresResponse.data,
-                    featuredItems = featuredItemsResponse.data
-                )
+                ).data
             } catch (e: Exception) {
-                // Fallback to sample data if API fails
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    userName = "Coffee Lover",
-                    loyaltyPoints = 0,
-                    nearbyStores = Store.sampleStores,
-                    featuredItems = MenuItem.sampleItems.filter { it.isFeatured },
-                    error = "Using offline data. ${e.message}"
-                )
+                Store.sampleStores
             }
+
+            // Fetch carousel images from backend with fallback
+            val carouselItems = try {
+                carouselApiService.getActiveCarouselImages()
+            } catch (e: Exception) {
+                emptyList()
+            }
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                userName = user?.firstName ?: "Coffee Lover",
+                loyaltyPoints = user?.loyaltyPoints ?: 0,
+                nearbyStores = nearbyStores,
+                featuredItems = featuredItems,
+                carouselItems = carouselItems,
+                error = null
+            )
         }
     }
     
@@ -80,5 +92,6 @@ data class HomeUiState(
     val loyaltyPoints: Int = 0,
     val nearbyStores: List<Store> = emptyList(),
     val featuredItems: List<MenuItem> = emptyList(),
+    val carouselItems: List<CarouselItem> = emptyList(),
     val error: String? = null
 )

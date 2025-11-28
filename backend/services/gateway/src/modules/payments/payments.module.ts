@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { User, Order } from '@shared/database/entities';
+import { User, Order, PaymentProvider } from '@shared/database/entities';
 import { PaymentService } from '@shared/services';
 import stripeConfig from '@shared/config/stripe.config';
 import { PaymentsController } from './payments.controller';
@@ -10,7 +10,7 @@ import { RewardsModule } from '../rewards/rewards.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Order]),
+    TypeOrmModule.forFeature([User, Order, PaymentProvider]),
     ConfigModule.forFeature(stripeConfig),
     forwardRef(() => RewardsModule),
   ],

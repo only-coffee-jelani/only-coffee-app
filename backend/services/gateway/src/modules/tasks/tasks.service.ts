@@ -46,7 +46,9 @@ export class TasksService {
     this.logger.log('Checking for coupons expiring in 48 hours...');
 
     try {
-      const coupons = await this.couponsService.getCouponsExpiringSoon(48);
+      // Note: getCouponsExpiringSoon method doesn't exist in CouponsService
+      // TODO: Implement this method or remove this task
+      const coupons = []; // await this.couponsService.getCouponsExpiringSoon(48);
 
       if (coupons.length > 0) {
         this.logger.log(
@@ -84,7 +86,9 @@ export class TasksService {
     this.logger.log('Checking for coupons expiring today...');
 
     try {
-      const coupons = await this.couponsService.getCouponsExpiringSoon(12); // Last 12 hours
+      // Note: getCouponsExpiringSoon method doesn't exist in CouponsService
+      // TODO: Implement this method or remove this task
+      const coupons = []; // await this.couponsService.getCouponsExpiringSoon(12); // Last 12 hours
 
       if (coupons.length > 0) {
         this.logger.log(

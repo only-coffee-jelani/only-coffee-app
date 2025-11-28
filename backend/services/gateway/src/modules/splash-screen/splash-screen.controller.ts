@@ -10,16 +10,28 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { SplashScreenService } from './splash-screen.service';
+import { SplashAnalyticsService } from './splash-analytics.service';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { SplashScreen } from '@shared/database/entities';
+import {
+  CreateSplashScreenDto,
+  UpdateSplashScreenDto,
+  TrackSplashEventDto,
+  StartSplashSessionDto,
+  EndSplashSessionDto,
+  GetSplashAnalyticsDto,
+} from './dto';
 
 @ApiTags('splash-screen')
 @Controller('splash-screen')
 export class SplashScreenController {
-  constructor(private readonly splashScreenService: SplashScreenService) {}
+  constructor(
+    private readonly splashScreenService: SplashScreenService,
+    private readonly splashAnalyticsService: SplashAnalyticsService,
+  ) {}
 
   /**
    * Get the current active splash screen (public endpoint for mobile app)
@@ -31,6 +43,18 @@ export class SplashScreenController {
   @ApiResponse({ status: 404, description: 'No active splash screen' })
   async getCurrentSplashScreen(): Promise<SplashScreen | null> {
     return this.splashScreenService.getCurrentSplashScreen();
+  }
+
+  /**
+   * Get analytics for splash screens (admin dashboard)
+   * IMPORTANT: This must come before the :id route to avoid route conflicts
+   */
+  @Get('analytics')
+  @Public()
+  @ApiOperation({ summary: 'Get splash screen analytics' })
+  @ApiResponse({ status: 200, description: 'Analytics data' })
+  async getAnalytics(@Query() query: GetSplashAnalyticsDto): Promise<any> {
+    return this.splashAnalyticsService.getAnalytics(query);
   }
 
   /**
@@ -65,8 +89,10 @@ export class SplashScreenController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create a new splash screen' })
   @ApiResponse({ status: 201, description: 'Splash screen created' })
+  @ApiResponse({ status: 400, description: 'Invalid input - imageAssetId is required' })
+  @ApiBody({ type: CreateSplashScreenDto })
   async createSplashScreen(
-    @Body() data: Partial<SplashScreen>,
+    @Body() data: CreateSplashScreenDto,
     @CurrentUser() user: any,
   ): Promise<SplashScreen> {
     return this.splashScreenService.createSplashScreen(data, user?.id);
@@ -80,9 +106,10 @@ export class SplashScreenController {
   @ApiOperation({ summary: 'Update a splash screen' })
   @ApiResponse({ status: 200, description: 'Splash screen updated' })
   @ApiResponse({ status: 404, description: 'Splash screen not found' })
+  @ApiBody({ type: UpdateSplashScreenDto })
   async updateSplashScreen(
     @Param('id') id: string,
-    @Body() data: Partial<SplashScreen>,
+    @Body() data: UpdateSplashScreenDto,
   ): Promise<SplashScreen> {
     return this.splashScreenService.updateSplashScreen(id, data);
   }
@@ -100,50 +127,45 @@ export class SplashScreenController {
   }
 
   /**
-   * Record an impression (view) - called by mobile app
+   * Track a splash event (impression, click, skip, complete, order) - called by mobile app
    */
-  @Post(':id/impression')
+  @Post('events/track')
   @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Record a splash screen impression' })
-  async recordImpression(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.splashScreenService.recordImpression(id);
-    return { success: true };
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Track a splash screen event' })
+  @ApiResponse({ status: 201, description: 'Event tracked successfully' })
+  @ApiBody({ type: TrackSplashEventDto })
+  async trackEvent(@Body() data: TrackSplashEventDto): Promise<{ success: boolean; eventId: string }> {
+    const event = await this.splashAnalyticsService.trackEvent(data);
+    return { success: true, eventId: event.splashEventId };
   }
 
   /**
-   * Record a click - called by mobile app
+   * Start a splash session - called by mobile app when splash is shown
    */
-  @Post(':id/click')
+  @Post('sessions/start')
   @Public()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Record a splash screen click' })
-  async recordClick(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.splashScreenService.recordClick(id);
-    return { success: true };
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Start a splash screen session' })
+  @ApiResponse({ status: 201, description: 'Session started successfully' })
+  @ApiBody({ type: StartSplashSessionDto })
+  async startSession(@Body() data: StartSplashSessionDto): Promise<{ success: boolean; sessionId: string }> {
+    const session = await this.splashAnalyticsService.startSession(data);
+    return { success: true, sessionId: session.splashSessionId };
   }
 
   /**
-   * Record a skip - called by mobile app
+   * End a splash session - called by mobile app when splash is dismissed
    */
-  @Post(':id/skip')
+  @Post('sessions/end')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Record a splash screen skip' })
-  async recordSkip(@Param('id') id: string): Promise<{ success: boolean }> {
-    await this.splashScreenService.recordSkip(id);
+  @ApiOperation({ summary: 'End a splash screen session' })
+  @ApiResponse({ status: 200, description: 'Session ended successfully' })
+  @ApiBody({ type: EndSplashSessionDto })
+  async endSession(@Body() data: EndSplashSessionDto): Promise<{ success: boolean }> {
+    await this.splashAnalyticsService.endSession(data);
     return { success: true };
-  }
-
-  /**
-   * Get analytics for a splash screen
-   */
-  @Get(':id/analytics')
-  @ApiOperation({ summary: 'Get analytics for a splash screen' })
-  @ApiResponse({ status: 200, description: 'Analytics data' })
-  @ApiResponse({ status: 404, description: 'Splash screen not found' })
-  async getAnalytics(@Param('id') id: string): Promise<any> {
-    return this.splashScreenService.getAnalytics(id);
   }
 }
 

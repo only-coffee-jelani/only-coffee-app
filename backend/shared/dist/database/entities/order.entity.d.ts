@@ -1,60 +1,41 @@
 import { User } from './user.entity';
 import { Store } from './store.entity';
+import { OrderStatus } from './order-status.entity';
+import { PaymentMethod } from './payment-method.entity';
 import { OrderItem } from './order-item.entity';
-import { CouponGrant } from './coupon-grant.entity';
-export declare enum OrderStatus {
-    INITIATED = "initiated",
-    SLOT_RESERVED = "slot_reserved",
-    PAYMENT_PROCESSING = "payment_processing",
-    PAYMENT_FAILED = "payment_failed",
-    CONFIRMED = "confirmed",
-    IN_PROGRESS = "in_progress",
-    READY = "ready",
-    COMPLETED = "completed",
-    CANCELLED = "cancelled",
-    REFUNDED = "refunded"
-}
-export declare enum OrderType {
-    PICKUP = "pickup",
-    DELIVERY = "delivery",
-    CATERING = "catering"
-}
-export declare enum PaymentMethod {
-    STRIPE = "stripe",
-    APPLE_PAY = "apple_pay",
-    GOOGLE_PAY = "google_pay",
-    REWARD_REDEMPTION = "reward_redemption"
-}
+import { Payment } from './payment.entity';
+import { LoyaltyLedger } from './loyalty-ledger.entity';
+import { PromotionRedemption } from './promotion-redemption.entity';
+import { RefundRequest } from './refund-request.entity';
+import { Refund } from './refund.entity';
+import { FactOrders } from './fact-orders.entity';
+import { SplashEvent } from './splash-event.entity';
+import { SplashSession } from './splash-session.entity';
 export declare class Order {
-    id: string;
-    userId: string;
+    orderId: string;
+    userId: string | null;
     storeId: string;
-    orderType: OrderType;
-    status: OrderStatus;
-    toastOrderId: string | null;
-    toastCheckId: string | null;
+    orderStatusId: string;
     subtotal: number;
     tax: number;
-    tip: number;
-    deliveryFee: number;
-    discountAmount: number;
-    appliedCouponId: string | null;
+    discountTotal: number;
     total: number;
-    paymentMethod: PaymentMethod | null;
-    stripePaymentIntentId: string | null;
-    pointsEarned: number;
-    pointsRedeemed: number;
+    paymentMethodId: string | null;
     pickupTime: Date | null;
-    specialInstructions: string | null;
-    deliveryInfo: Record<string, any> | null;
-    completedAt: Date | null;
-    cancelledAt: Date | null;
+    placedAt: Date;
     createdAt: Date;
     updatedAt: Date;
     user: User;
     store: Store;
-    items: OrderItem[];
-    appliedCoupon: CouponGrant | null;
-    get totalAmount(): number;
-    get promoCodeId(): string | null;
+    orderStatus: OrderStatus;
+    paymentMethod: PaymentMethod;
+    orderItems: OrderItem[];
+    payments: Payment[];
+    loyaltyLedger: LoyaltyLedger[];
+    promotionRedemptions: PromotionRedemption[];
+    refundRequests: RefundRequest[];
+    refunds: Refund[];
+    factOrders: FactOrders[];
+    splashEvents: SplashEvent[];
+    splashSessions: SplashSession[];
 }

@@ -1,31 +1,36 @@
 import { Order } from './order.entity';
-import { Review } from './review.entity';
-export declare enum StoreType {
-    COFFEE_SHOP = "coffee_shop",
-    MOBILE_COFFEE_BAR = "mobile_coffee_bar"
-}
+import { StoreType } from './store-type.entity';
+import { StoreHours } from './store-hours.entity';
+import { StoreStatusHistory } from './store-status-history.entity';
+import { User } from './user.entity';
+import { SplashScreen } from './splash-screen.entity';
+import { InventoryItem } from './inventory-item.entity';
+import { SplashEvent } from './splash-event.entity';
+import { SplashSession } from './splash-session.entity';
 export declare class Store {
-    id: string;
+    storeId: string;
     name: string;
-    type: StoreType;
-    toastLocationId: string | null;
+    storeTypeId: string | null;
     address: string | null;
-    city: string;
-    state: string;
-    zipCode: string;
-    latitude: number;
-    longitude: number;
+    latitude: number | null;
+    longitude: number | null;
     phone: string | null;
     email: string | null;
-    operatingHours: Record<string, any>;
-    capacity: number;
+    toastLocationId: string | null;
     isActive: boolean;
     acceptingOrders: boolean;
-    averageRating: number;
-    totalReviews: number;
-    features: Record<string, any>;
+    storeImageUrl: string | null;
+    description: string | null;
+    openedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;
+    storeType: StoreType;
+    storeHours: StoreHours[];
+    storeStatusHistory: StoreStatusHistory[];
+    defaultUsers: User[];
     orders: Order[];
-    reviews: Review[];
+    splashScreens: SplashScreen[];
+    inventoryItems: InventoryItem[];
+    splashEvents: SplashEvent[];
+    splashSessions: SplashSession[];
 }

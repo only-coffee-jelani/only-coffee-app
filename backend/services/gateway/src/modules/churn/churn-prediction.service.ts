@@ -377,7 +377,7 @@ export class ChurnPredictionService {
 
     for (const user of users) {
       try {
-        const prediction = await this.predictChurn(user.id);
+        const prediction = await this.predictChurn(user.userId);
 
         // Filter by minimum risk level
         const riskLevels = [
@@ -393,7 +393,7 @@ export class ChurnPredictionService {
           predictions.push(prediction);
         }
       } catch (error) {
-        this.logger.error(`Failed to predict churn for user ${user.id}:`, error);
+        this.logger.error(`Failed to predict churn for user ${user.userId}:`, error);
       }
     }
 
@@ -447,7 +447,7 @@ export class ChurnPredictionService {
 
     for (const user of users) {
       try {
-        const prediction = await this.predictChurn(user.id);
+        const prediction = await this.predictChurn(user.userId);
         results.distribution[prediction.riskLevel]++;
         results.processed++;
 
@@ -456,7 +456,7 @@ export class ChurnPredictionService {
         }
       } catch (error: any) {
         results.failed++;
-        this.logger.error(`Failed to compute churn for user ${user.id}:`, error);
+        this.logger.error(`Failed to compute churn for user ${user.userId}:`, error);
       }
     }
 

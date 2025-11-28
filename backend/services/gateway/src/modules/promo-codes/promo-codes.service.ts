@@ -7,25 +7,28 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import {
-  PromoCode,
-  PromoType,
-  CouponGrant,
-} from '@shared/database/entities';
+// Note: PromoCode and CouponGrant entities don't exist in new enterprise schema
+// Promotions are now handled via the Promotion entity
+// TODO: Refactor this module to use new Promotion schema
 import { DateTime } from 'luxon';
 
 // Timezone constant
 const TIMEZONE = 'America/Chicago';
+
+// Stub types for backward compatibility
+type PromoCode = any;
+type PromoType = any;
+type CouponGrant = any;
 
 @Injectable()
 export class PromoCodesService {
   private readonly logger = new Logger(PromoCodesService.name);
 
   constructor(
-    @InjectRepository(PromoCode)
-    private readonly promoCodeRepository: Repository<PromoCode>,
-    @InjectRepository(CouponGrant)
-    private readonly couponGrantRepository: Repository<CouponGrant>,
+    // @InjectRepository(PromoCode)
+    // private readonly promoCodeRepository: Repository<PromoCode>,
+    // @InjectRepository(CouponGrant)
+    // private readonly couponGrantRepository: Repository<CouponGrant>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -42,49 +45,9 @@ export class PromoCodesService {
     metadata?: any;
     createdBy: string;
   }): Promise<PromoCode> {
-    // Normalize code to uppercase
-    const normalizedCode = data.code.toUpperCase().trim();
-
-    // Check if code already exists
-    const existing = await this.promoCodeRepository.findOne({
-      where: { code: normalizedCode },
-    });
-
-    if (existing) {
-      throw new ConflictException('Promo code already exists');
-    }
-
-    // Validate expiration date if provided
-    if (data.expiresAt) {
-      const now = DateTime.now().setZone(TIMEZONE);
-      const expiryDate = DateTime.fromJSDate(data.expiresAt).setZone(TIMEZONE);
-
-      if (expiryDate <= now) {
-        throw new BadRequestException('Expiration date must be in the future');
-      }
-    }
-
-    // Create promo code
-    const promoCode = this.promoCodeRepository.create({
-      code: normalizedCode,
-      description: data.description,
-      type: data.type,
-      maxUses: data.maxUses,
-      expiresAt: data.expiresAt,
-      couponConfig: data.couponConfig,
-      metadata: data.metadata,
-      createdBy: data.createdBy,
-      isActive: true,
-      usedCount: 0,
-    });
-
-    await this.promoCodeRepository.save(promoCode);
-
-    this.logger.log(
-      `Promo code created: ${normalizedCode} by ${data.createdBy}`,
-    );
-
-    return promoCode;
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('createPromoCode called but PromoCode entity does not exist. Use Promotion entity instead.');
+    throw new BadRequestException('Promo codes are not supported. Use promotions instead.');
   }
 
   /**
@@ -95,63 +58,18 @@ export class PromoCodesService {
     promoCode?: PromoCode;
     reason?: string;
   }> {
-    const normalizedCode = code.toUpperCase().trim();
-
-    const promoCode = await this.promoCodeRepository.findOne({
-      where: { code: normalizedCode },
-    });
-
-    if (!promoCode) {
-      return { valid: false, reason: 'Promo code not found' };
-    }
-
-    if (!promoCode.isActive) {
-      return { valid: false, reason: 'Promo code is inactive' };
-    }
-
-    // Check expiration
-    if (promoCode.expiresAt) {
-      const now = DateTime.now().setZone(TIMEZONE);
-      const expiryDate = DateTime.fromJSDate(promoCode.expiresAt).setZone(
-        TIMEZONE,
-      );
-
-      if (now >= expiryDate) {
-        return { valid: false, reason: 'This code is no longer valid' };
-      }
-    }
-
-    // Check usage limit
-    if (
-      promoCode.type !== PromoType.UNLIMITED &&
-      promoCode.maxUses &&
-      promoCode.usedCount >= promoCode.maxUses
-    ) {
-      return {
-        valid: false,
-        reason: 'Promo code has reached its usage limit',
-      };
-    }
-
-    return { valid: true, promoCode };
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('validatePromoCode called but PromoCode entity does not exist.');
+    return { valid: false, reason: 'Promo codes are not supported. Use promotions instead.' };
   }
 
   /**
    * Increment usage count for a promo code
    */
   async incrementUsage(promoCodeId: string): Promise<void> {
-    await this.dataSource.transaction(async (manager) => {
-      const promoCode = await manager.findOne(PromoCode, {
-        where: { id: promoCodeId },
-      });
-
-      if (!promoCode) {
-        throw new NotFoundException('Promo code not found');
-      }
-
-      promoCode.usedCount += 1;
-      await manager.save(PromoCode, promoCode);
-    });
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('incrementUsage called but PromoCode entity does not exist.');
+    throw new BadRequestException('Promo codes are not supported. Use promotions instead.');
   }
 
   /**
@@ -162,59 +80,27 @@ export class PromoCodesService {
     limit?: number;
     isActive?: boolean;
   }): Promise<{ data: PromoCode[]; total: number }> {
-    const page = params.page || 1;
-    const limit = params.limit || 50;
-    const skip = (page - 1) * limit;
-
-    const whereClause: any = {};
-    if (params.isActive !== undefined) {
-      whereClause.isActive = params.isActive;
-    }
-
-    const [data, total] = await this.promoCodeRepository.findAndCount({
-      where: whereClause,
-      order: { createdAt: 'DESC' },
-      skip,
-      take: limit,
-    });
-
-    return { data, total };
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('getAllPromoCodes called but PromoCode entity does not exist.');
+    return { data: [], total: 0 };
   }
 
   /**
    * Get promo code by ID with usage stats (admin only)
    */
   async getPromoCodeById(id: string): Promise<PromoCode> {
-    const promoCode = await this.promoCodeRepository.findOne({
-      where: { id },
-      relations: ['coupons'],
-    });
-
-    if (!promoCode) {
-      throw new NotFoundException('Promo code not found');
-    }
-
-    return promoCode;
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('getPromoCodeById called but PromoCode entity does not exist.');
+    throw new NotFoundException('Promo codes are not supported. Use promotions instead.');
   }
 
   /**
    * Deactivate a promo code (admin only)
    */
   async deactivatePromoCode(id: string): Promise<PromoCode> {
-    const promoCode = await this.promoCodeRepository.findOne({
-      where: { id },
-    });
-
-    if (!promoCode) {
-      throw new NotFoundException('Promo code not found');
-    }
-
-    promoCode.isActive = false;
-    await this.promoCodeRepository.save(promoCode);
-
-    this.logger.log(`Promo code deactivated: ${promoCode.code}`);
-
-    return promoCode;
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('deactivatePromoCode called but PromoCode entity does not exist.');
+    throw new NotFoundException('Promo codes are not supported. Use promotions instead.');
   }
 
   /**
@@ -226,29 +112,13 @@ export class PromoCodesService {
     totalCouponsRedeemed: number;
     redemptionRate: number;
   }> {
-    const promoCode = await this.getPromoCodeById(id);
-
-    const totalCouponsGranted = await this.couponGrantRepository.count({
-      where: { promoCodeId: id },
-    });
-
-    const totalCouponsRedeemed = await this.couponGrantRepository.count({
-      where: {
-        promoCodeId: id,
-        status: 'redeemed' as any,
-      },
-    });
-
-    const redemptionRate =
-      totalCouponsGranted > 0
-        ? (totalCouponsRedeemed / totalCouponsGranted) * 100
-        : 0;
-
+    // STUB: PromoCode entity doesn't exist in new schema
+    this.logger.warn('getPromoCodeStats called but PromoCode entity does not exist.');
     return {
-      totalUses: promoCode.usedCount,
-      totalCouponsGranted,
-      totalCouponsRedeemed,
-      redemptionRate: Math.round(redemptionRate * 100) / 100,
+      totalUses: 0,
+      totalCouponsGranted: 0,
+      totalCouponsRedeemed: 0,
+      redemptionRate: 0,
     };
   }
 }

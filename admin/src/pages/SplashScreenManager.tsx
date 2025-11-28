@@ -25,7 +25,8 @@ const SplashScreenManager = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    imageUrl: '',
+    imageUrl: '', // This will store the assetId (UUID)
+    imagePreviewUrl: '', // This will store the actual URL for display
     displayDuration: 3,
     targetMenuItemId: '',
     targetUrl: '',
@@ -51,7 +52,24 @@ const SplashScreenManager = () => {
       if (!response.ok) throw new Error('Failed to fetch splash screens');
 
       const data = await response.json();
-      setSplashScreens(data.data || []);
+
+      // Map backend field names to frontend field names
+      const mappedData = (data.data || []).map((splash: any) => ({
+        id: splash.splashId,
+        title: splash.title,
+        description: splash.subtitle,
+        imageUrl: splash.imageAsset?.url || '', // Get the actual image URL from the imageAsset relation
+        imageAssetId: splash.imageAssetId, // Keep the UUID for updates
+        displayDuration: splash.durationSeconds,
+        targetUrl: splash.deeplink,
+        startDate: splash.startAt,
+        endDate: splash.endAt,
+        isActive: splash.isActive,
+        createdAt: splash.createdAt,
+        updatedAt: splash.updatedAt,
+      }));
+
+      setSplashScreens(mappedData);
     } catch (error) {
       console.error('Error fetching splash screens:', error);
       toast.error('Failed to load splash screens');
@@ -114,10 +132,11 @@ const SplashScreenManager = () => {
     }));
   };
 
-  const handleImageUpload = (url: string) => {
+  const handleImageUpload = (assetId: string, url: string) => {
     setFormData(prev => ({
       ...prev,
-      imageUrl: url,
+      imageUrl: assetId, // Store the assetId (UUID) for saving
+      imagePreviewUrl: url, // Store the URL for display
     }));
     toast.success('Image uploaded successfully!');
   };
@@ -127,6 +146,7 @@ const SplashScreenManager = () => {
       title: '',
       description: '',
       imageUrl: '',
+      imagePreviewUrl: '',
       displayDuration: 3,
       targetMenuItemId: '',
       targetUrl: '',
@@ -142,9 +162,10 @@ const SplashScreenManager = () => {
     setFormData({
       title: splash.title || '',
       description: splash.description || '',
-      imageUrl: splash.imageUrl || '',
+      imageUrl: splash.imageAssetId || '', // UUID for saving
+      imagePreviewUrl: splash.imageUrl || '', // URL for display
       displayDuration: splash.displayDuration || 3,
-      targetMenuItemId: splash.targetMenuItemId || '',
+      targetMenuItemId: '',
       targetUrl: splash.targetUrl || '',
       startDate: splash.startDate ? splash.startDate.split('T')[0] : '',
       endDate: splash.endDate ? splash.endDate.split('T')[0] : '',
@@ -218,13 +239,21 @@ const SplashScreenManager = () => {
     try {
       setSaving(true);
       const token = localStorage.getItem('adminToken');
+
+      // Map frontend field names to backend field names
       const dataToSave = {
-        ...formData,
-        startDate: formData.startDate || null,
-        endDate: formData.endDate || null,
+        title: formData.title,
+        subtitle: formData.description || null,
+        imageAssetId: formData.imageUrl, // This should be a UUID from media_assets
+        durationSeconds: formData.displayDuration,
+        startAt: formData.startDate || null,
+        endAt: formData.endDate || null,
+        isActive: formData.isActive,
+        deeplink: formData.targetUrl || null,
+        priority: 0,
       };
 
-      const url = editingId 
+      const url = editingId
         ? `${API_BASE}/splash-screen/${editingId}`
         : `${API_BASE}/splash-screen`;
 
@@ -237,7 +266,11 @@ const SplashScreenManager = () => {
         body: JSON.stringify(dataToSave),
       });
 
-      if (!response.ok) throw new Error('Failed to save');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Save error:', errorData);
+        throw new Error(errorData.message || 'Failed to save');
+      }
 
       await fetchSplashScreens();
       setShowForm(false);
@@ -246,6 +279,7 @@ const SplashScreenManager = () => {
         title: '',
         description: '',
         imageUrl: '',
+        imagePreviewUrl: '',
         displayDuration: 3,
         targetMenuItemId: '',
         targetUrl: '',
@@ -325,8 +359,8 @@ const SplashScreenManager = () => {
                     <ImageUploader
                       onUpload={handleImageUpload}
                       folder="splash-screens"
-                      imageUrl={formData.imageUrl}
-                      onClear={() => setFormData(prev => ({ ...prev, imageUrl: '' }))}
+                      imageUrl={formData.imagePreviewUrl}
+                      onClear={() => setFormData(prev => ({ ...prev, imageUrl: '', imagePreviewUrl: '' }))}
                     />
                   </div>
                 </div>

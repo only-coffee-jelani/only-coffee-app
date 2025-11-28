@@ -8,90 +8,102 @@ import {
   Index,
 } from 'typeorm';
 import { User } from './user.entity';
-import { PromoCode } from './promo-code.entity';
 
+/**
+ * CouponType Enum
+ * Types of coupons that can be granted
+ */
 export enum CouponType {
-  PERCENT_OFF = 'percent_off',
-  FIXED_PRICE = 'fixed_price',
-  FIXED_AMOUNT = 'fixed_amount',
-  FREE_ITEM = 'free_item',
+  PERCENT_OFF = 'PERCENT_OFF',
+  FIXED_AMOUNT = 'FIXED_AMOUNT',
+  FIXED_PRICE = 'FIXED_PRICE',
+  FREE_ITEM = 'FREE_ITEM',
 }
 
+/**
+ * CouponStatus Enum
+ * Status of a coupon grant
+ */
 export enum CouponStatus {
-  ACTIVE = 'active',
-  REDEEMED = 'redeemed',
-  EXPIRED = 'expired',
-  CANCELLED = 'cancelled',
+  ACTIVE = 'ACTIVE',
+  REDEEMED = 'REDEEMED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
 }
 
+/**
+ * CouponGrant Entity
+ * Represents a coupon granted to a user
+ * Enterprise-grade loyalty and promotion system
+ */
 @Entity('coupon_grants')
 @Index(['userId', 'status'])
-@Index(['status', 'expiresAt'])
-@Index(['promoCodeId'])
+@Index(['expiresAt'])
 export class CouponGrant {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  promoCodeId: string | null; // null if not from promo code (e.g., loyalty reward)
+  @Column({ type: 'uuid', name: 'promo_code_id', nullable: true })
+  promoCodeId: string | null;
 
-  @Column({ type: 'enum', enum: CouponType })
+  @Column({
+    type: 'enum',
+    enum: CouponType,
+  })
   type: CouponType;
 
   @Column({ type: 'varchar', length: 255 })
-  label: string; // Display name (e.g., "50% Off Drink", "First Sip")
+  label: string;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  // Value fields (only one should be set based on type)
-  @Column({ type: 'int', nullable: true })
-  valueCents: number | null; // For FIXED_AMOUNT
+  @Column({ type: 'int', name: 'value_cents', nullable: true })
+  valueCents: number | null;
 
-  @Column({ type: 'int', nullable: true })
-  percentOff: number | null; // For PERCENT_OFF (0-100)
+  @Column({ type: 'int', name: 'percent_off', nullable: true })
+  percentOff: number | null;
 
-  @Column({ type: 'int', nullable: true })
-  priceOverrideCents: number | null; // For FIXED_PRICE (e.g., $1.99 = 199)
+  @Column({ type: 'int', name: 'price_override_cents', nullable: true })
+  priceOverrideCents: number | null;
 
-  @Column({ type: 'jsonb', nullable: true })
-  eligibleItems: Record<string, any> | null; // { exclude: ["waffolino", "pistacchio"] } or { include: [...] }
+  @Column({ type: 'jsonb', name: 'eligible_items', nullable: true })
+  eligibleItems: Record<string, any> | null;
 
   @Column({ type: 'varchar', length: 50, default: 'both' })
-  channels: string; // 'app_only', 'in_store', 'both'
+  channels: string;
 
-  @Column({ type: 'timestamptz' })
+  @Column({ type: 'timestamptz', name: 'expires_at' })
   expiresAt: Date;
 
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', name: 'redeemed_at', nullable: true })
   redeemedAt: Date | null;
 
-  @Column({ type: 'uuid', nullable: true })
+  @Column({ type: 'uuid', name: 'redeemed_order_id', nullable: true })
   redeemedOrderId: string | null;
 
-  @Column({ type: 'enum', enum: CouponStatus, default: CouponStatus.ACTIVE })
+  @Column({
+    type: 'enum',
+    enum: CouponStatus,
+    default: CouponStatus.ACTIVE,
+  })
   status: CouponStatus;
 
   @Column({ type: 'varchar', length: 100 })
-  source: string; // 'promo_code', 'loyalty_reward', 'referral', 'admin_grant', 'new_user'
+  source: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any> | null; // Additional data
+  metadata: Record<string, any> | null;
 
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;
 
   // Relations
-  @ManyToOne(() => User, (user) => user.rewardsLedger)
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
-
-  @ManyToOne(() => PromoCode, (promoCode) => promoCode.coupons, {
-    nullable: true,
-  })
-  @JoinColumn({ name: 'promoCodeId' })
-  promoCode: PromoCode | null;
 }
+

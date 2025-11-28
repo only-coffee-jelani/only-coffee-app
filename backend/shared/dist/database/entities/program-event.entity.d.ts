@@ -1,12 +1,14 @@
 import { User } from './user.entity';
 export declare enum ProgramEventType {
-    COUPON_GRANTED = "coupon_granted",
-    COUPON_REDEEMED = "coupon_redeemed",
-    COUPON_EXPIRED = "coupon_expired",
-    PROMO_CODE_REDEEMED = "promo_code_redeemed"
+    COUPON_GRANTED = "COUPON_GRANTED",
+    COUPON_REDEEMED = "COUPON_REDEEMED",
+    COUPON_EXPIRED = "COUPON_EXPIRED",
+    PROMO_CODE_REDEEMED = "PROMO_CODE_REDEEMED",
+    PROMO_CODE_USED = "PROMO_CODE_USED",
+    ORDER_PLACED = "ORDER_PLACED"
 }
 export declare class ProgramEvent {
-    id: string;
+    eventId: string;
     userId: string | null;
     eventType: ProgramEventType;
     couponId: string | null;

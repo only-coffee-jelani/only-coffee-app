@@ -23,7 +23,8 @@ import { CouponsModule } from './modules/coupons/coupons.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
-import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+// Note: LoyaltyModule disabled - depends on entities that don't exist in new schema
+// import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { EventsModule } from './modules/events/events.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { FeatureStoreModule } from './modules/features/feature-store.module';
@@ -82,7 +83,7 @@ import { PersonalizedOffersModule } from './modules/personalized-offers/personal
     NotificationsModule,
     TasksModule,
     AnalyticsModule,
-    LoyaltyModule,
+    // LoyaltyModule, // Disabled - depends on entities that don't exist in new schema
     EventsModule,
     WeatherModule,
     FeatureStoreModule,

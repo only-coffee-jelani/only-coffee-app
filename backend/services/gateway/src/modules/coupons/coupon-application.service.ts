@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { CouponGrant, CouponType, CouponStatus } from '@shared/database/entities/coupon-grant.entity';
 import { DateTime } from 'luxon';
+import { CouponGrant, CouponType, CouponStatus } from '@shared/database/entities';
 
 const TIMEZONE = 'America/Chicago';
 

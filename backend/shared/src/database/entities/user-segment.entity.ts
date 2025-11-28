@@ -1,51 +1,42 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
-import { User } from './user.entity';
-import { UserSegment } from './user-profile.entity';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { UserSegmentAssignment } from './user-segment-assignment.entity';
+import { UserProfile } from './user-profile.entity';
+import { SplashScreen } from './splash-screen.entity';
+import { SplashEvent } from './splash-event.entity';
+import { SplashSession } from './splash-session.entity';
 
+/**
+ * UserSegment Entity
+ * Represents user segments for AI personalization (high_value, at_risk, new_user, etc.)
+ * This is a lookup/reference table
+ */
 @Entity('user_segments')
-@Index(['userId', 'assignedAt'])
-@Index(['segment'])
-export class UserSegmentHistory {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+export class UserSegment {
+  @PrimaryGeneratedColumn('uuid', { name: 'segment_id' })
+  segmentId: string;
 
-  @Column({ type: 'uuid' })
-  userId: string;
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
 
-  @Column({ type: 'enum', enum: UserSegment })
-  segment: UserSegment;
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
 
-  @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
-  confidence: number | null;
-
-  @Column({ type: 'jsonb', nullable: true })
-  features: Record<string, any> | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
-  assignedAt: Date;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  validUntil: Date | null;
-
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  modelVersion: string | null;
-
-  @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any> | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;
 
   // Relations
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
-  user: User;
+  @OneToMany(() => UserSegmentAssignment, (assignment) => assignment.segment)
+  segmentAssignments: UserSegmentAssignment[];
+
+  @OneToMany(() => UserProfile, (profile) => profile.segmentPrimary)
+  userProfiles: UserProfile[];
+
+  @OneToMany(() => SplashScreen, (splash) => splash.targetSegment)
+  splashScreens: SplashScreen[];
+
+  @OneToMany(() => SplashEvent, (event) => event.segment)
+  splashEvents: SplashEvent[];
+
+  @OneToMany(() => SplashSession, (session) => session.segment)
+  splashSessions: SplashSession[];
 }

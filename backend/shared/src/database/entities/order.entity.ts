@@ -11,140 +11,107 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Store } from './store.entity';
+import { OrderStatus } from './order-status.entity';
+import { PaymentMethod } from './payment-method.entity';
 import { OrderItem } from './order-item.entity';
-import { CouponGrant } from './coupon-grant.entity';
+import { Payment } from './payment.entity';
+import { LoyaltyLedger } from './loyalty-ledger.entity';
+import { PromotionRedemption } from './promotion-redemption.entity';
+import { RefundRequest } from './refund-request.entity';
+import { Refund } from './refund.entity';
+import { FactOrders } from './fact-orders.entity';
+import { SplashEvent } from './splash-event.entity';
+import { SplashSession } from './splash-session.entity';
 
-export enum OrderStatus {
-  INITIATED = 'initiated',
-  SLOT_RESERVED = 'slot_reserved',
-  PAYMENT_PROCESSING = 'payment_processing',
-  PAYMENT_FAILED = 'payment_failed',
-  CONFIRMED = 'confirmed',
-  IN_PROGRESS = 'in_progress',
-  READY = 'ready',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-  REFUNDED = 'refunded',
-}
-
-export enum OrderType {
-  PICKUP = 'pickup',
-  DELIVERY = 'delivery',
-  CATERING = 'catering',
-}
-
-export enum PaymentMethod {
-  STRIPE = 'stripe',
-  APPLE_PAY = 'apple_pay',
-  GOOGLE_PAY = 'google_pay',
-  REWARD_REDEMPTION = 'reward_redemption',
-}
+/**
+ * Order Entity
+ * Represents customer orders with simplified structure
+ */
 
 @Entity('orders')
-@Index(['userId', 'createdAt'])
-@Index(['storeId', 'createdAt'])
-@Index(['status'])
-@Index(['pickupTime'])
+@Index(['userId', 'placedAt'])
+@Index(['storeId', 'placedAt'])
 export class Order {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'order_id' })
+  orderId: string;
 
-  @Column({ type: 'uuid' })
-  @Index()
-  userId: string;
+  @Column({ type: 'uuid', name: 'user_id', nullable: true })
+  userId: string | null;
 
-  @Column({ type: 'uuid' })
-  @Index()
+  @Column({ type: 'uuid', name: 'store_id' })
   storeId: string;
 
-  @Column({ type: 'enum', enum: OrderType, default: OrderType.PICKUP })
-  orderType: OrderType;
+  @Column({ type: 'uuid', name: 'order_status_id' })
+  orderStatusId: string;
 
-  @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.INITIATED })
-  status: OrderStatus;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  toastOrderId: string | null;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  toastCheckId: string | null;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   subtotal: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   tax: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  tip: number;
+  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'discount_total', default: 0 })
+  discountTotal: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  deliveryFee: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  discountAmount: number;
-
-  @Column({ type: 'uuid', nullable: true })
-  appliedCouponId: string | null;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'numeric', precision: 10, scale: 2, default: 0 })
   total: number;
 
-  @Column({ type: 'enum', enum: PaymentMethod, nullable: true })
-  paymentMethod: PaymentMethod | null;
+  @Column({ type: 'uuid', name: 'payment_method_id', nullable: true })
+  paymentMethodId: string | null;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  stripePaymentIntentId: string | null;
-
-  @Column({ type: 'int', default: 0 })
-  pointsEarned: number;
-
-  @Column({ type: 'int', default: 0 })
-  pointsRedeemed: number;
-
-  @Column({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', name: 'pickup_time', nullable: true })
   pickupTime: Date | null;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  specialInstructions: string | null;
+  @Column({ type: 'timestamptz', name: 'placed_at', default: () => 'NOW()' })
+  placedAt: Date;
 
-  @Column({ type: 'jsonb', nullable: true })
-  deliveryInfo: Record<string, any> | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  completedAt: Date | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  cancelledAt: Date | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   updatedAt: Date;
 
   // Relations
   @ManyToOne(() => User, (user) => user.orders)
-  @JoinColumn({ name: 'userId' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
   @ManyToOne(() => Store, (store) => store.orders)
-  @JoinColumn({ name: 'storeId' })
+  @JoinColumn({ name: 'store_id' })
   store: Store;
 
-  @OneToMany(() => OrderItem, (item) => item.order, { cascade: true })
-  items: OrderItem[];
+  @ManyToOne(() => OrderStatus, (orderStatus) => orderStatus.orders)
+  @JoinColumn({ name: 'order_status_id' })
+  orderStatus: OrderStatus;
 
-  @ManyToOne(() => CouponGrant, { nullable: true })
-  @JoinColumn({ name: 'appliedCouponId' })
-  appliedCoupon: CouponGrant | null;
+  @ManyToOne(() => PaymentMethod, (paymentMethod) => paymentMethod.orders)
+  @JoinColumn({ name: 'payment_method_id' })
+  paymentMethod: PaymentMethod;
 
-  // Computed properties for backward compatibility
-  get totalAmount(): number {
-    return this.total;
-  }
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
+  orderItems: OrderItem[];
 
-  get promoCodeId(): string | null {
-    return this.appliedCouponId;
-  }
+  @OneToMany(() => Payment, (payment) => payment.order)
+  payments: Payment[];
+
+  @OneToMany(() => LoyaltyLedger, (ledger) => ledger.order)
+  loyaltyLedger: LoyaltyLedger[];
+
+  @OneToMany(() => PromotionRedemption, (redemption) => redemption.order)
+  promotionRedemptions: PromotionRedemption[];
+
+  @OneToMany(() => RefundRequest, (refundRequest) => refundRequest.order)
+  refundRequests: RefundRequest[];
+
+  @OneToMany(() => Refund, (refund) => refund.order)
+  refunds: Refund[];
+
+  @OneToMany(() => FactOrders, (factOrder) => factOrder.order)
+  factOrders: FactOrders[];
+
+  @OneToMany(() => SplashEvent, (event) => event.order)
+  splashEvents: SplashEvent[];
+
+  @OneToMany(() => SplashSession, (session) => session.order)
+  splashSessions: SplashSession[];
 }

@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import { CouponGrant, CouponType, CouponStatus } from '@shared/database/entities/coupon-grant.entity';
 import { EventEmitterService } from '../../common/services/event-emitter.service';
+import { CouponGrant, CouponType, CouponStatus } from '@shared/database/entities';
 
 const TIMEZONE = 'America/Chicago';
 
@@ -84,47 +84,35 @@ export class CouponGrantService {
     metadata?: any;
     idempotencyKey?: string;
   }): Promise<CouponGrant> {
-    const now = DateTime.now().setZone(TIMEZONE);
-    const expiresAt = now
-      .plus({ days: data.expiresInDays })
-      .endOf('day')
-      .toJSDate();
+    const expiresAt = DateTime.now().setZone(TIMEZONE).plus({ days: data.expiresInDays }).toJSDate();
 
-    const coupon = this.couponGrantRepository.create({
+    const couponGrant = this.couponGrantRepository.create({
       userId: data.userId,
-      promoCodeId: data.promoCodeId,
+      promoCodeId: data.promoCodeId || null,
       type: data.type,
       label: data.label,
-      description: data.description,
-      valueCents: data.valueCents,
-      percentOff: data.percentOff,
-      priceOverrideCents: data.priceOverrideCents,
-      eligibleItems: data.eligibleItems,
+      description: data.description || null,
+      valueCents: data.valueCents || null,
+      percentOff: data.percentOff || null,
+      priceOverrideCents: data.priceOverrideCents || null,
+      eligibleItems: data.eligibleItems || null,
       channels: data.channels,
       expiresAt,
       status: CouponStatus.ACTIVE,
       source: data.source,
-      metadata: data.metadata,
-      idempotencyKey: data.idempotencyKey,
-    } as any) as unknown as CouponGrant;
+      metadata: data.metadata || null,
+    });
 
-    const savedCoupon = await this.couponGrantRepository.save(coupon);
+    const savedCoupon = await this.couponGrantRepository.save(couponGrant);
 
-    this.logger.log(
-      `Granted ${data.type} coupon to user ${data.userId} (source: ${data.source})`,
-    );
+    // Emit event
+    await this.eventEmitterService.emitCouponGranted(data.userId, savedCoupon.id, {
+      type: data.type,
+      source: data.source,
+      label: data.label,
+    });
 
-    // Emit coupon granted event
-    await this.eventEmitterService.emitCouponGranted(
-      savedCoupon.userId!,
-      savedCoupon.id,
-      {
-        type: savedCoupon.type,
-        source: savedCoupon.source,
-        label: savedCoupon.label,
-      },
-    );
-
+    this.logger.log(`Granted coupon ${savedCoupon.id} to user ${data.userId}`);
     return savedCoupon;
   }
 

@@ -2,60 +2,48 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
   ManyToOne,
   JoinColumn,
-  Index,
+  OneToMany,
 } from 'typeorm';
 import { Order } from './order.entity';
 import { MenuItem } from './menu-item.entity';
+import { OrderItemModifier } from './order-item-modifier.entity';
 
+/**
+ * OrderItem Entity
+ * Represents individual items within an order
+ */
 @Entity('order_items')
-@Index(['orderId'])
-@Index(['menuItemId'])
 export class OrderItem {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'order_item_id' })
+  orderItemId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'order_id' })
   orderId: string;
 
-  @Column({ type: 'uuid', nullable: true })
-  menuItemId: string | null;
-
-  @Column({ type: 'varchar', length: 255 })
-  itemName: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  toastItemId: string | null;
+  @Column({ type: 'uuid', name: 'menu_item_id' })
+  menuItemId: string;
 
   @Column({ type: 'int', default: 1 })
   quantity: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  basePrice: number;
+  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'unit_price' })
+  unitPrice: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-  modifiersPrice: number;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalPrice: number;
-
-  @Column({ type: 'jsonb', default: [] })
-  modifiers: Array<{
-    name: string;
-    value: string;
-    price: number;
-  }>;
-
-  @Column({ type: 'text', nullable: true })
-  specialInstructions: string | null;
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
+  createdAt: Date;
 
   // Relations
-  @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'orderId' })
+  @ManyToOne(() => Order, (order) => order.orderItems, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'order_id' })
   order: Order;
 
-  @ManyToOne(() => MenuItem, { nullable: true })
-  @JoinColumn({ name: 'menuItemId' })
-  menuItem: MenuItem | null;
+  @ManyToOne(() => MenuItem, (menuItem) => menuItem.orderItems)
+  @JoinColumn({ name: 'menu_item_id' })
+  menuItem: MenuItem;
+
+  @OneToMany(() => OrderItemModifier, (orderItemModifier) => orderItemModifier.orderItem)
+  orderItemModifiers: OrderItemModifier[];
 }

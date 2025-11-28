@@ -1,9 +1,21 @@
 import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { GiftCard, GiftCardType, GiftCardStatus, Order, OrderStatus } from '@shared/database/entities';
+import { GiftCard, Order, OrderStatus } from '@shared/database/entities';
 import { CreateGiftCardDto, RedeemGiftCardDto } from './dto';
 import { randomBytes } from 'crypto';
+
+// Stub enums since they don't exist in new schema
+enum GiftCardType {
+  AMOUNT = 'AMOUNT',
+  FREE_COFFEE = 'FREE_COFFEE',
+}
+enum GiftCardStatus {
+  ACTIVE = 'ACTIVE',
+  REDEEMED = 'REDEEMED',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
 
 @Injectable()
 export class GiftsService {
@@ -19,19 +31,15 @@ export class GiftsService {
 
   /**
    * Create a new gift card
+   * Note: GiftCard entity simplified in new schema - only has giftCardId, code, purchasedByUserId,
+   * redeemedByUserId, initialBalance, currentBalance, purchasedAt, redeemedAt, expiresAt
    */
   async create(userId: string, createGiftCardDto: CreateGiftCardDto) {
-    const { type, amount, maxRedeemValue, recipientEmail, recipientPhone, message } = createGiftCardDto;
+    const { amount } = createGiftCardDto;
 
-    // Validate based on type
-    if (type === GiftCardType.AMOUNT) {
-      if (!amount) {
-        throw new BadRequestException('Amount is required for AMOUNT type gift cards');
-      }
-    } else if (type === GiftCardType.FREE_COFFEE) {
-      if (!maxRedeemValue) {
-        throw new BadRequestException('Max redeem value is required for FREE_COFFEE type gift cards');
-      }
+    // Validate amount
+    if (!amount || amount <= 0) {
+      throw new BadRequestException('Amount must be greater than 0');
     }
 
     // Generate unique code
@@ -40,21 +48,16 @@ export class GiftsService {
     // Create gift card
     const giftCard = this.giftCardRepository.create({
       code,
-      type,
-      status: GiftCardStatus.PENDING, // Will be ACTIVE after payment
-      senderUserId: userId,
-      recipientEmail,
-      recipientPhone,
-      amount: type === GiftCardType.AMOUNT ? amount : null,
-      remainingBalance: type === GiftCardType.AMOUNT ? amount : null,
-      maxRedeemValue: type === GiftCardType.FREE_COFFEE ? maxRedeemValue : null,
-      message,
+      purchasedByUserId: userId,
+      initialBalance: amount,
+      currentBalance: amount,
+      purchasedAt: new Date(),
       expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year from now
     });
 
     const savedGiftCard = await this.giftCardRepository.save(giftCard);
 
-    this.logger.log(`Created gift card ${savedGiftCard.id} with code ${code}`);
+    this.logger.log(`Created gift card ${savedGiftCard.giftCardId} with code ${code}`);
 
     return savedGiftCard;
   }
@@ -75,22 +78,22 @@ export class GiftsService {
   }
 
   /**
-   * Get user's sent gift cards
+   * Get user's purchased gift cards
    */
   async findBySender(userId: string, limit: number = 20) {
     return this.giftCardRepository.find({
-      where: { senderUserId: userId },
+      where: { purchasedByUserId: userId },
       order: { createdAt: 'DESC' },
       take: limit,
     });
   }
 
   /**
-   * Get user's received gift cards
+   * Get user's redeemed gift cards
    */
   async findByRecipient(userId: string, limit: number = 20) {
     return this.giftCardRepository.find({
-      where: { recipientUserId: userId },
+      where: { redeemedByUserId: userId },
       order: { createdAt: 'DESC' },
       take: limit,
     });
@@ -98,26 +101,21 @@ export class GiftsService {
 
   /**
    * Activate gift card (after payment)
+   * Note: GiftCard entity no longer has status or stripePaymentIntentId
    */
   async activate(giftCardId: string, stripePaymentIntentId: string) {
     const giftCard = await this.giftCardRepository.findOne({
-      where: { id: giftCardId },
+      where: { giftCardId },
     });
 
     if (!giftCard) {
       throw new NotFoundException('Gift card not found');
     }
 
-    if (giftCard.status !== GiftCardStatus.PENDING) {
-      throw new BadRequestException('Gift card is not in pending status');
-    }
+    // Gift card is already active when created with purchasedAt set
+    // No status field in new schema
 
-    giftCard.status = GiftCardStatus.ACTIVE;
-    giftCard.stripePaymentIntentId = stripePaymentIntentId;
-
-    await this.giftCardRepository.save(giftCard);
-
-    this.logger.log(`Activated gift card ${giftCardId}`);
+    this.logger.log(`Gift card ${giftCardId} is active`);
 
     // TODO: Send gift card notification to recipient
 
@@ -126,6 +124,7 @@ export class GiftsService {
 
   /**
    * Redeem gift card for an order
+   * Note: GiftCard entity simplified - no status, type, maxRedeemValue, redeemedOrderId
    */
   async redeem(userId: string, redeemGiftCardDto: RedeemGiftCardDto) {
     const { code, orderId, redeemAmount } = redeemGiftCardDto;
@@ -140,72 +139,50 @@ export class GiftsService {
     }
 
     // Validate gift card
-    if (giftCard.status !== GiftCardStatus.ACTIVE) {
-      throw new BadRequestException(`Gift card is ${giftCard.status}`);
+    if (giftCard.redeemedAt) {
+      throw new BadRequestException('Gift card has already been redeemed');
     }
 
-    if (new Date() > giftCard.expiresAt) {
-      giftCard.status = GiftCardStatus.EXPIRED;
-      await this.giftCardRepository.save(giftCard);
+    if (giftCard.expiresAt && new Date() > giftCard.expiresAt) {
       throw new BadRequestException('Gift card has expired');
     }
 
     // Get order
     const order = await this.orderRepository.findOne({
-      where: { id: orderId, userId },
+      where: { orderId, userId },
     });
 
     if (!order) {
       throw new NotFoundException('Order not found');
     }
 
-    // Validate order status
-    if (order.status !== OrderStatus.INITIATED && order.status !== OrderStatus.SLOT_RESERVED) {
-      throw new BadRequestException('Order is not in a valid state for gift card redemption');
-    }
-
-    // Process redemption based on type
+    // Process redemption
     return await this.dataSource.transaction(async (manager) => {
+      const availableBalance = parseFloat(giftCard.currentBalance?.toString() || '0');
+      const orderTotal = parseFloat(order.total.toString());
+
       let discountAmount = 0;
 
-      if (giftCard.type === GiftCardType.AMOUNT) {
-        // Amount-based gift card
-        const availableBalance = parseFloat(giftCard.remainingBalance?.toString() || '0');
-        const orderTotal = parseFloat(order.total.toString());
-
-        if (redeemAmount) {
-          // Partial redemption
-          if (redeemAmount > availableBalance) {
-            throw new BadRequestException('Insufficient gift card balance');
-          }
-          if (redeemAmount > orderTotal) {
-            throw new BadRequestException('Redeem amount exceeds order total');
-          }
-          discountAmount = redeemAmount;
-        } else {
-          // Full redemption (or up to order total)
-          discountAmount = Math.min(availableBalance, orderTotal);
+      if (redeemAmount) {
+        // Partial redemption
+        if (redeemAmount > availableBalance) {
+          throw new BadRequestException('Insufficient gift card balance');
         }
-
-        giftCard.remainingBalance = availableBalance - discountAmount;
-
-        // Mark as redeemed if fully used
-        if (giftCard.remainingBalance === 0) {
-          giftCard.status = GiftCardStatus.REDEEMED;
-          giftCard.redeemedAt = new Date();
-          giftCard.redeemedOrderId = orderId;
+        if (redeemAmount > orderTotal) {
+          throw new BadRequestException('Redeem amount exceeds order total');
         }
-      } else if (giftCard.type === GiftCardType.FREE_COFFEE) {
-        // Free coffee voucher (one-time use)
-        const maxValue = parseFloat(giftCard.maxRedeemValue?.toString() || '0');
-        const orderTotal = parseFloat(order.total.toString());
+        discountAmount = redeemAmount;
+      } else {
+        // Full redemption (or up to order total)
+        discountAmount = Math.min(availableBalance, orderTotal);
+      }
 
-        discountAmount = Math.min(maxValue, orderTotal);
+      giftCard.currentBalance = availableBalance - discountAmount;
 
-        giftCard.status = GiftCardStatus.REDEEMED;
+      // Mark as redeemed if fully used
+      if (giftCard.currentBalance === 0) {
         giftCard.redeemedAt = new Date();
-        giftCard.redeemedOrderId = orderId;
-        giftCard.remainingBalance = 0;
+        giftCard.redeemedByUserId = userId;
       }
 
       // Update order with discount
@@ -233,50 +210,51 @@ export class GiftsService {
 
   /**
    * Check gift card balance
+   * Note: GiftCard entity simplified - no type, status, maxRedeemValue
    */
   async checkBalance(code: string) {
     const giftCard = await this.findByCode(code);
 
     return {
       code: giftCard.code,
-      type: giftCard.type,
-      status: giftCard.status,
-      remainingBalance: giftCard.remainingBalance,
-      maxRedeemValue: giftCard.maxRedeemValue,
+      currentBalance: giftCard.currentBalance,
+      initialBalance: giftCard.initialBalance,
       expiresAt: giftCard.expiresAt,
-      isExpired: new Date() > giftCard.expiresAt,
+      isExpired: giftCard.expiresAt ? new Date() > giftCard.expiresAt : false,
+      isRedeemed: !!giftCard.redeemedAt,
     };
   }
 
   /**
-   * Cancel gift card (admin or sender can cancel unused cards)
+   * Cancel gift card (admin or purchaser can cancel unused cards)
+   * Note: GiftCard entity no longer has status field
    */
   async cancel(giftCardId: string, userId: string) {
     const giftCard = await this.giftCardRepository.findOne({
-      where: { id: giftCardId },
+      where: { giftCardId },
     });
 
     if (!giftCard) {
       throw new NotFoundException('Gift card not found');
     }
 
-    // Only sender can cancel
-    if (giftCard.senderUserId !== userId) {
-      throw new BadRequestException('You can only cancel gift cards you created');
+    // Only purchaser can cancel
+    if (giftCard.purchasedByUserId !== userId) {
+      throw new BadRequestException('You can only cancel gift cards you purchased');
     }
 
-    if (giftCard.status !== GiftCardStatus.ACTIVE && giftCard.status !== GiftCardStatus.PENDING) {
-      throw new BadRequestException('Can only cancel active or pending gift cards');
+    if (giftCard.redeemedAt) {
+      throw new BadRequestException('Cannot cancel redeemed gift cards');
     }
 
-    giftCard.status = GiftCardStatus.CANCELLED;
-    await this.giftCardRepository.save(giftCard);
+    // Delete the gift card (no status field to set to CANCELLED)
+    await this.giftCardRepository.remove(giftCard);
 
     this.logger.log(`Cancelled gift card ${giftCardId}`);
 
     // TODO: Process refund if already paid
 
-    return giftCard;
+    return { message: 'Gift card cancelled successfully' };
   }
 
   /**

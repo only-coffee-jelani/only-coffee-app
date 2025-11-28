@@ -178,7 +178,7 @@ export class TriggerEngineService {
     const now = context?.timestamp || new Date();
 
     // Get user data
-    const user = await this.userRepository.findOne({ where: { id: userId } });
+    const user = await this.userRepository.findOne({ where: { userId } });
     if (!user) {
       return results;
     }

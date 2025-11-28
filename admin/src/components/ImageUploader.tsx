@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { API_BASE } from '../config';
 
 interface ImageUploaderProps {
-  onUpload: (url: string) => void;
+  onUpload: (assetId: string, url: string) => void;
   folder: string;
   imageUrl?: string;
   onClear?: () => void;
@@ -77,7 +77,8 @@ const ImageUploader = React.forwardRef<ImageUploaderRef, ImageUploaderProps>(
       if (!response.ok) throw new Error('Upload failed');
 
       const data = await response.json();
-      onUpload(data.url);
+      // Pass both assetId and URL to parent
+      onUpload(data.assetId, data.url);
       toast.success('Image uploaded successfully!');
       // Keep the preview visible after upload
     } catch (error) {

@@ -1,0 +1,160 @@
+{
+  "splashScreens": [
+    {
+      "id": "92522bb3-0791-4f1f-a883-e590c808defe",
+      "title": "Fall Special: Waffolino",
+      "description": "Try our signature Waffolino - a perfect blend of espresso and waffle flavors",
+      "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v3.webp",
+      "imageSizeBytes": null,
+      "displayDuration": 5,
+      "startDate": null,
+      "endDate": null,
+      "isActive": false,
+      "targetMenuItemId": null,
+      "targetUrl": null,
+      "notes": null,
+      "createdAt": "2025-10-18T23:29:05.200Z",
+      "createdById": null,
+      "replacedAt": "2025-10-19T00:21:12.606Z",
+      "replacedById": "e67bd26f-0134-465a-af15-570d7485291a"
+    },
+    {
+      "id": "79c07f7c-a456-44a2-9a00-d27295ca3182",
+      "title": "Fall Special: Waffolino",
+      "description": "Try our signature Waffolino - a perfect blend of espresso and waffle flavors",
+      "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v3.webp",
+      "imageSizeBytes": null,
+      "displayDuration": 4,
+      "startDate": null,
+      "endDate": null,
+      "isActive": false,
+      "targetMenuItemId": null,
+      "targetUrl": null,
+      "notes": null,
+      "createdAt": "2025-10-18T23:22:09.862Z",
+      "createdById": null,
+      "replacedAt": "2025-10-18T23:29:05.449Z",
+      "replacedById": "92522bb3-0791-4f1f-a883-e590c808defe"
+    },
+    {
+      "id": "1da0c8bb-8cfb-484c-8b1a-b141705eb8f9",
+      "title": "Current Splash",
+      "description": "",
+      "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/splash-screens/d458fb93-5209-47df-9a57-9faf986353ba.png",
+      "imageSizeBytes": null,
+      "displayDuration": 4,
+      "startDate": "2025-10-20T00:00:00.000Z",
+      "endDate": "2026-02-28T00:00:00.000Z",
+      "isActive": true,
+      "targetMenuItemId": null,
+      "targetUrl": null,
+      "notes": null,
+      "createdAt": "2025-10-20T07:42:36.113Z",
+      "createdById": null,
+      "replacedAt": null,
+      "replacedById": null
+    }
+  ],
+  "carouselImages": [
+    {
+      "id": "0d2f5da5-0bb5-47a3-80a3-e19358ea6fea",
+      "title": "No Lines No Waiting",
+      "description": null,
+      "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/6c7f44da-f323-498d-8413-e0f2ecb0dd44.jpeg",
+      "imageSizeBytes": null,
+      "imageWidth": null,
+      "imageHeight": null,
+      "position": 0,
+      "isActive": true,
+      "targetMenuItemId": null,
+      "startDate": null,
+      "endDate": null,
+      "displayDuration": 3,
+      "createdBy": "60275819-97a9-4c07-a51b-99c753ec31af",
+      "notes": null,
+      "createdAt": "2025-10-20T00:37:45.257Z"
+    },
+    {
+      "id": "2acb0141-cfe3-44f0-9305-70f44c95cf34",
+      "title": "Order Now",
+      "description": null,
+      "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/ed328e70-ea47-4fb1-8ad1-dab47d8ec64d.jpeg",
+      "imageSizeBytes": null,
+      "imageWidth": null,
+      "imageHeight": null,
+      "position": 1,
+      "isActive": true,
+      "targetMenuItemId": null,
+      "startDate": null,
+      "endDate": null,
+      "displayDuration": 3,
+      "createdBy": "60275819-97a9-4c07-a51b-99c753ec31af",
+      "notes": null,
+      "createdAt": "2025-10-20T00:55:05.089Z"
+    },
+    {
+      "id": "29304c0a-93a6-4994-bb88-6aec6cbb0484",
+      "title": "Share The Love",
+      "description": null,
+      "imageUrl": "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/7206bd79-ab1a-46f1-95a9-2cf4191ca81c.png",
+      "imageSizeBytes": null,
+      "imageWidth": null,
+      "imageHeight": null,
+      "position": 2,
+      "isActive": true,
+      "targetMenuItemId": null,
+      "startDate": null,
+      "endDate": null,
+      "displayDuration": 3,
+      "createdBy": "60275819-97a9-4c07-a51b-99c753ec31af",
+      "notes": null,
+      "createdAt": "2025-10-20T00:58:55.083Z"
+    }
+  ],
+  "menuItems": [
+    {
+      "id": "eedbedea-ba73-420f-b5f6-a22c04b88fd4",
+      "name": "Waffolino",
+      "description": "Single espresso shot and foamed milk in a waffle cone",
+      "imageUrl": "",
+      "category": "signature",
+      "basePrice": "9.50",
+      "storeIds": [
+        "148615b6-6ec3-43e2-8f57-04aaef799144",
+        "76232be6-3a7a-4e92-a5df-ace1cc3f65d6",
+        "eaa6b86a-48db-4555-8426-858aacaabda8",
+        "746b88b7-a0cc-478d-88c5-16a0e35e8788"
+      ]
+    },
+    {
+      "id": "653fd03f-e6da-48ac-8948-7818e76ed58e",
+      "name": "King Kong Cold Brew (Large)",
+      "description": "Smooth cold brewed coffee",
+      "imageUrl": "",
+      "category": "cold_brew",
+      "basePrice": "5.50",
+      "storeIds": [
+        "148615b6-6ec3-43e2-8f57-04aaef799144",
+        "76232be6-3a7a-4e92-a5df-ace1cc3f65d6",
+        "eaa6b86a-48db-4555-8426-858aacaabda8",
+        "746b88b7-a0cc-478d-88c5-16a0e35e8788"
+      ]
+    },
+    {
+      "id": "6c58382e-6fa0-4b64-85a9-efb24d5656c6",
+      "name": "Waffolino Affogato",
+      "description": "Double espresso shot with a scoop of ice cream in a waffle cone",
+      "imageUrl": "",
+      "category": "signature",
+      "basePrice": "11.50",
+      "storeIds": [
+        "148615b6-6ec3-43e2-8f57-04aaef799144",
+        "76232be6-3a7a-4e92-a5df-ace1cc3f65d6",
+        "eaa6b86a-48db-4555-8426-858aacaabda8",
+        "746b88b7-a0cc-478d-88c5-16a0e35e8788"
+      ]
+    }
+  ],
+  "promotions": [],
+  "backupDate": "2025-11-24T23:37:37.267Z"
+}

@@ -31,13 +31,14 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)
-    ) {
-        if (uiState.isAuthenticated && uiState.currentUser != null) {
+    if (uiState.isAuthenticated && uiState.currentUser != null) {
+        // Authenticated state - use scrollable column with padding
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp)
+        ) {
             val user = uiState.currentUser!!
 
             // Profile Header
@@ -139,8 +140,10 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sign Out", style = MaterialTheme.typography.titleMedium)
             }
-        } else {
-            // Unauthenticated state
+        }
+    } else {
+        // Unauthenticated state - use Box for proper centering
+        Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,

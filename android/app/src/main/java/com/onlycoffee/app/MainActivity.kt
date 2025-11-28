@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import com.onlycoffee.app.ui.navigation.OnlyCoffeeNavigation
 import com.onlycoffee.app.ui.theme.OnlyCoffeeTheme
 import com.onlycoffee.app.managers.PushNotificationManager
+import com.onlycoffee.app.data.repository.SplashScreenRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var pushNotificationManager: PushNotificationManager
+
+    @Inject
+    lateinit var splashScreenRepository: SplashScreenRepository
 
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -48,7 +52,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             OnlyCoffeeTheme {
-                OnlyCoffeeApp(pushNotificationManager)
+                OnlyCoffeeApp(
+                    pushNotificationManager = pushNotificationManager,
+                    splashScreenRepository = splashScreenRepository
+                )
             }
         }
     }
@@ -66,28 +73,22 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun OnlyCoffeeApp(pushNotificationManager: PushNotificationManager) {
+fun OnlyCoffeeApp(
+    pushNotificationManager: PushNotificationManager,
+    splashScreenRepository: SplashScreenRepository
+) {
     val navController = rememberNavController()
-    var activePromotion by remember { mutableStateOf<Promotion?>(null) }
+    var activeSplashScreen by remember { mutableStateOf<com.onlycoffee.app.data.model.SplashScreen?>(null) }
 
-    // Fetch active launch modal promotion on app start
+    // Fetch active splash screen from API on app start
     LaunchedEffect(Unit) {
-        // Hardcoded Waffolino promotion for now
-        // TODO: Replace with actual API call
-        activePromotion = Promotion(
-            id = "1",
-            title = "Fall Special: Waffolino",
-            description = "Try our signature Waffolino - a perfect blend of espresso and waffle flavors",
-            promotionType = com.onlycoffee.app.data.model.PromotionType.LAUNCH_MODAL,
-            imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v2.webp",
-            targetMenuItemId = null,
-            targetUrl = null,
-            startDate = "2025-10-01T00:00:00Z",
-            endDate = "2025-12-31T23:59:59Z",
-            isActive = true,
-            displayDuration = 3,
-            sortOrder = 0
-        )
+        try {
+            val splashScreen = splashScreenRepository.getCurrentSplashScreen()
+            activeSplashScreen = splashScreen
+        } catch (e: Exception) {
+            // Log error and continue without splash screen
+            e.printStackTrace()
+        }
     }
 
     Scaffold(
@@ -98,16 +99,17 @@ fun OnlyCoffeeApp(pushNotificationManager: PushNotificationManager) {
             modifier = Modifier.padding(innerPadding)
         )
 
-        // Launch modal overlay
-        if (activePromotion != null) {
+        // Launch modal overlay with splash screen
+        if (activeSplashScreen != null) {
             LaunchModalScreen(
-                promotion = activePromotion!!,
-                onDismiss = { activePromotion = null },
+                splashScreen = activeSplashScreen!!,
+                onDismiss = { activeSplashScreen = null },
                 onNavigateToMenuItem = { menuItemId ->
-                    activePromotion = null
+                    activeSplashScreen = null
                     navController.navigate("product/$menuItemId")
                 },
-                navController = navController
+                navController = navController,
+                splashScreenRepository = splashScreenRepository
             )
         }
     }

@@ -1,21 +1,14 @@
 import { Order } from './order.entity';
 import { MenuItem } from './menu-item.entity';
+import { OrderItemModifier } from './order-item-modifier.entity';
 export declare class OrderItem {
-    id: string;
+    orderItemId: string;
     orderId: string;
-    menuItemId: string | null;
-    itemName: string;
-    toastItemId: string | null;
+    menuItemId: string;
     quantity: number;
-    basePrice: number;
-    modifiersPrice: number;
-    totalPrice: number;
-    modifiers: Array<{
-        name: string;
-        value: string;
-        price: number;
-    }>;
-    specialInstructions: string | null;
+    unitPrice: number;
+    createdAt: Date;
     order: Order;
-    menuItem: MenuItem | null;
+    menuItem: MenuItem;
+    orderItemModifiers: OrderItemModifier[];
 }

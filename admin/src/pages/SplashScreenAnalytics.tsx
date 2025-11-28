@@ -34,13 +34,33 @@ const SplashScreenAnalytics = () => {
   const [loading, setLoading] = useState(true);
   const [selectedScreen, setSelectedScreen] = useState<SplashScreen | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [timeRange, setTimeRange] = useState('last_7_days');
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
 
   useEffect(() => {
     loadSplashScreens();
-  }, []);
+    loadAnalytics();
+  }, [timeRange]);
+
+  const loadAnalytics = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/splash-screen/analytics?timeRange=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to load analytics');
+      const data = await response.json();
+      setAnalyticsData(data);
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+      toast.error('Failed to load analytics data');
+    }
+  };
 
   const loadSplashScreens = async () => {
     try {
+      // Fetch splash screens
       const response = await fetch(`${API_BASE}/splash-screen?skip=0&take=100`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
@@ -48,7 +68,76 @@ const SplashScreenAnalytics = () => {
       });
       if (!response.ok) throw new Error('Failed to load');
       const data = await response.json();
-      setSplashScreens(data.data.sort((a: SplashScreen, b: SplashScreen) =>
+
+      // Fetch analytics for each splash screen
+      const mappedData = await Promise.all(data.data.map(async (screen: any) => {
+        let analytics = {
+          impressions: 0,
+          clicks: 0,
+          skips: 0,
+          completions: 0,
+          ctr: '0.00',
+          skipRate: '0.00',
+          associatedOrders: 0,
+          associatedRevenue: '0.00',
+          conversionRate: '0.00',
+          averageOrderValue: '0.00',
+          uniqueUsersShown: 0,
+          uniqueUsersClicked: 0,
+          averageViewTime: '0.00',
+        };
+
+        try {
+          // Fetch analytics for this specific splash screen
+          const analyticsResponse = await fetch(
+            `${API_BASE}/splash-screen/analytics?timeRange=${timeRange}&splashId=${screen.splashId}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+              },
+            }
+          );
+          if (analyticsResponse.ok) {
+            const analyticsData = await analyticsResponse.json();
+            if (analyticsData.summary) {
+              analytics = {
+                impressions: analyticsData.summary.impressions || 0,
+                clicks: analyticsData.summary.clicks || 0,
+                skips: analyticsData.summary.skips || 0,
+                completions: analyticsData.summary.completions || 0,
+                ctr: analyticsData.summary.ctr || '0.00',
+                skipRate: analyticsData.summary.skipRate || '0.00',
+                associatedOrders: analyticsData.summary.orders || 0,
+                associatedRevenue: analyticsData.summary.revenue || '0.00',
+                conversionRate: analyticsData.summary.conversionRate || '0.00',
+                averageOrderValue: analyticsData.summary.avgOrderValue || '0.00',
+                uniqueUsersShown: analyticsData.summary.uniqueUsers || 0,
+                uniqueUsersClicked: analyticsData.summary.uniqueUsersClicked || 0,
+                averageViewTime: analyticsData.summary.avgViewTime || '0.0',
+              };
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to load analytics for splash ${screen.splashId}:`, error);
+        }
+
+        return {
+          id: screen.splashId,
+          title: screen.title || 'Untitled',
+          description: screen.subtitle || '',
+          imageUrl: screen.imageAsset?.url || '',
+          displayDuration: screen.durationSeconds || 3,
+          isActive: screen.isActive || false,
+          ...analytics,
+          lastImpressionAt: null,
+          lastClickAt: null,
+          createdAt: screen.createdAt,
+          replacedAt: screen.replacedAt || null,
+          createdById: screen.createdBy || null,
+        };
+      }));
+
+      setSplashScreens(mappedData.sort((a: SplashScreen, b: SplashScreen) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ));
     } catch (error) {
@@ -102,6 +191,31 @@ const SplashScreenAnalytics = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-8">
+
+        {/* Time Range Selector */}
+        <div className="mb-8 flex justify-between items-center">
+          <div className="flex gap-2">
+            {[
+              { value: 'today', label: 'Today' },
+              { value: 'yesterday', label: 'Yesterday' },
+              { value: 'last_7_days', label: 'Last 7 Days' },
+              { value: 'last_30_days', label: 'Last 30 Days' },
+              { value: 'last_90_days', label: 'Last 90 Days' },
+            ].map((range) => (
+              <button
+                key={range.value}
+                onClick={() => setTimeRange(range.value)}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  timeRange === range.value
+                    ? 'bg-pink-500 text-white shadow-lg'
+                    : 'bg-white text-gray-700 hover:bg-pink-50 border border-gray-200'
+                }`}
+              >
+                {range.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
       {/* Splash Screens List */}
       <div className="space-y-8 max-w-6xl mx-auto">

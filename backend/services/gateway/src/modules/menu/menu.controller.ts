@@ -19,9 +19,9 @@ export class MenuController {
   @ApiParam({ name: 'storeId', description: 'Store ID' })
   @ApiQuery({
     name: 'category',
-    enum: MenuCategory,
+    type: String,
     required: false,
-    description: 'Filter by menu category',
+    description: 'Filter by menu category ID',
   })
   @ApiResponse({
     status: 200,

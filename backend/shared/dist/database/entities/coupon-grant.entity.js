@@ -12,38 +12,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CouponGrant = exports.CouponStatus = exports.CouponType = void 0;
 const typeorm_1 = require("typeorm");
 const user_entity_1 = require("./user.entity");
-const promo_code_entity_1 = require("./promo-code.entity");
 var CouponType;
 (function (CouponType) {
-    CouponType["PERCENT_OFF"] = "percent_off";
-    CouponType["FIXED_PRICE"] = "fixed_price";
-    CouponType["FIXED_AMOUNT"] = "fixed_amount";
-    CouponType["FREE_ITEM"] = "free_item";
+    CouponType["PERCENT_OFF"] = "PERCENT_OFF";
+    CouponType["FIXED_AMOUNT"] = "FIXED_AMOUNT";
+    CouponType["FIXED_PRICE"] = "FIXED_PRICE";
+    CouponType["FREE_ITEM"] = "FREE_ITEM";
 })(CouponType || (exports.CouponType = CouponType = {}));
 var CouponStatus;
 (function (CouponStatus) {
-    CouponStatus["ACTIVE"] = "active";
-    CouponStatus["REDEEMED"] = "redeemed";
-    CouponStatus["EXPIRED"] = "expired";
-    CouponStatus["CANCELLED"] = "cancelled";
+    CouponStatus["ACTIVE"] = "ACTIVE";
+    CouponStatus["REDEEMED"] = "REDEEMED";
+    CouponStatus["EXPIRED"] = "EXPIRED";
+    CouponStatus["CANCELLED"] = "CANCELLED";
 })(CouponStatus || (exports.CouponStatus = CouponStatus = {}));
 let CouponGrant = class CouponGrant {
 };
 exports.CouponGrant = CouponGrant;
 __decorate([
-    (0, typeorm_1.PrimaryGeneratedColumn)('uuid'),
+    (0, typeorm_1.PrimaryGeneratedColumn)('uuid', { name: 'id' }),
     __metadata("design:type", String)
 ], CouponGrant.prototype, "id", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid' }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'user_id' }),
     __metadata("design:type", String)
 ], CouponGrant.prototype, "userId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'promo_code_id', nullable: true }),
     __metadata("design:type", String)
 ], CouponGrant.prototype, "promoCodeId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: CouponType }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: CouponType,
+    }),
     __metadata("design:type", String)
 ], CouponGrant.prototype, "type", void 0);
 __decorate([
@@ -55,19 +57,19 @@ __decorate([
     __metadata("design:type", String)
 ], CouponGrant.prototype, "description", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'int', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'int', name: 'value_cents', nullable: true }),
     __metadata("design:type", Number)
 ], CouponGrant.prototype, "valueCents", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'int', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'int', name: 'percent_off', nullable: true }),
     __metadata("design:type", Number)
 ], CouponGrant.prototype, "percentOff", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'int', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'int', name: 'price_override_cents', nullable: true }),
     __metadata("design:type", Number)
 ], CouponGrant.prototype, "priceOverrideCents", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'jsonb', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'jsonb', name: 'eligible_items', nullable: true }),
     __metadata("design:type", Object)
 ], CouponGrant.prototype, "eligibleItems", void 0);
 __decorate([
@@ -75,19 +77,23 @@ __decorate([
     __metadata("design:type", String)
 ], CouponGrant.prototype, "channels", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz' }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'expires_at' }),
     __metadata("design:type", Date)
 ], CouponGrant.prototype, "expiresAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'timestamptz', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'timestamptz', name: 'redeemed_at', nullable: true }),
     __metadata("design:type", Date)
 ], CouponGrant.prototype, "redeemedAt", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'uuid', nullable: true }),
+    (0, typeorm_1.Column)({ type: 'uuid', name: 'redeemed_order_id', nullable: true }),
     __metadata("design:type", String)
 ], CouponGrant.prototype, "redeemedOrderId", void 0);
 __decorate([
-    (0, typeorm_1.Column)({ type: 'enum', enum: CouponStatus, default: CouponStatus.ACTIVE }),
+    (0, typeorm_1.Column)({
+        type: 'enum',
+        enum: CouponStatus,
+        default: CouponStatus.ACTIVE,
+    }),
     __metadata("design:type", String)
 ], CouponGrant.prototype, "status", void 0);
 __decorate([
@@ -99,25 +105,17 @@ __decorate([
     __metadata("design:type", Object)
 ], CouponGrant.prototype, "metadata", void 0);
 __decorate([
-    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz' }),
+    (0, typeorm_1.CreateDateColumn)({ type: 'timestamptz', name: 'created_at' }),
     __metadata("design:type", Date)
 ], CouponGrant.prototype, "createdAt", void 0);
 __decorate([
-    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, (user) => user.rewardsLedger),
-    (0, typeorm_1.JoinColumn)({ name: 'userId' }),
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { onDelete: 'CASCADE' }),
+    (0, typeorm_1.JoinColumn)({ name: 'user_id' }),
     __metadata("design:type", user_entity_1.User)
 ], CouponGrant.prototype, "user", void 0);
-__decorate([
-    (0, typeorm_1.ManyToOne)(() => promo_code_entity_1.PromoCode, (promoCode) => promoCode.coupons, {
-        nullable: true,
-    }),
-    (0, typeorm_1.JoinColumn)({ name: 'promoCodeId' }),
-    __metadata("design:type", promo_code_entity_1.PromoCode)
-], CouponGrant.prototype, "promoCode", void 0);
 exports.CouponGrant = CouponGrant = __decorate([
     (0, typeorm_1.Entity)('coupon_grants'),
     (0, typeorm_1.Index)(['userId', 'status']),
-    (0, typeorm_1.Index)(['status', 'expiresAt']),
-    (0, typeorm_1.Index)(['promoCodeId'])
+    (0, typeorm_1.Index)(['expiresAt'])
 ], CouponGrant);
 //# sourceMappingURL=coupon-grant.entity.js.map

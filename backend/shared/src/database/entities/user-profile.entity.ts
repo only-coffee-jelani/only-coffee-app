@@ -1,117 +1,62 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
   JoinColumn,
   ManyToOne,
-  Index,
 } from 'typeorm';
 import { User } from './user.entity';
-import { Store } from './store.entity';
-import { MenuItem } from './menu-item.entity';
+import { UserSegment } from './user-segment.entity';
 
-export enum UserSegment {
-  MORNING_REGULAR = 'morning_regular',
-  WEEKEND_WARRIOR = 'weekend_warrior',
-  DAILY_DEPENDENT = 'daily_dependent',
-  OCCASIONAL_VISITOR = 'occasional_visitor',
-  PRICE_SENSITIVE = 'price_sensitive',
-  LOYALIST = 'loyalist',
-  AT_RISK = 'at_risk',
-  LAPSED = 'lapsed',
-  NEW_USER = 'new_user',
-}
-
+/**
+ * UserProfile Entity
+ * AI-focused user profile for personalization and analytics
+ * Uses user_id as primary key (one-to-one with users table)
+ */
 @Entity('user_profiles')
-@Index(['segment'])
-@Index(['churnRiskScore'])
-@Index(['lastPurchaseDate'])
 export class UserProfile {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Column({ type: 'uuid', unique: true })
+  @PrimaryColumn({ type: 'uuid', name: 'user_id' })
   userId: string;
 
-  @Column({ type: 'enum', enum: UserSegment, nullable: true })
-  segment: UserSegment | null;
+  @Column({ type: 'int', name: 'orders_last_30d', default: 0 })
+  ordersLast30d: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
-  churnRiskScore: number | null;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-  lifetimeValue: number | null;
-
-  @Column({ type: 'decimal', precision: 8, scale: 2, nullable: true })
-  avgPurchaseInterval: number | null;
-
-  @Column({ type: 'uuid', nullable: true })
-  preferredStoreId: string | null;
-
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  favoriteCategory: string | null;
-
-  @Column({ type: 'uuid', nullable: true })
-  favoriteDrinkId: string | null;
-
-  @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'avg_order_value', nullable: true })
   avgOrderValue: number | null;
 
-  @Column({ type: 'int', default: 0 })
-  totalPurchases: number;
+  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'total_ltv', nullable: true })
+  totalLtv: number | null;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  lastPurchaseDate: Date | null;
+  @Column({ type: 'varchar', length: 255, name: 'favorite_category', nullable: true })
+  favoriteCategory: string | null;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  firstPurchaseDate: Date | null;
+  @Column({ type: 'timestamptz', name: 'last_order_at', nullable: true })
+  lastOrderAt: Date | null;
 
-  @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
-  notificationOpenRate: number | null;
+  @Column({ type: 'numeric', precision: 5, scale: 4, name: 'churn_risk_score', nullable: true })
+  churnRiskScore: number | null;
 
-  @Column({ type: 'decimal', precision: 5, scale: 4, nullable: true })
-  notificationFatigueScore: number | null;
+  @Column({ type: 'numeric', precision: 10, scale: 4, name: 'ltv_score', nullable: true })
+  ltvScore: number | null;
 
-  @Column({ type: 'int', nullable: true })
-  preferredNotificationTime: number | null;
+  @Column({ type: 'uuid', name: 'segment_primary_id', nullable: true })
+  segmentPrimaryId: string | null;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
-  timeZone: string | null;
-
-  @Column({ type: 'jsonb', nullable: true })
-  features: Record<string, any> | null;
-
-  @Column({ type: 'jsonb', nullable: true })
-  featureVector: Record<string, any> | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  lastPromotionDate: Date | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  lastSegmentUpdate: Date | null;
-
-  @Column({ type: 'timestamptz', nullable: true })
-  lastFeatureUpdate: Date | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   updatedAt: Date;
 
   // Relations
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @OneToOne(() => User, (user) => user.userProfile, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Store, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'preferredStoreId' })
-  preferredStore: Store | null;
-
-  @ManyToOne(() => MenuItem, { onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'favoriteDrinkId' })
-  favoriteDrink: MenuItem | null;
+  @ManyToOne(() => UserSegment, (segment) => segment.userProfiles)
+  @JoinColumn({ name: 'segment_primary_id' })
+  segmentPrimary: UserSegment;
 }

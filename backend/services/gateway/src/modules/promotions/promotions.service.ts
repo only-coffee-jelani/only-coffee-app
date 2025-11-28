@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Promotion, PromotionType } from '@shared/database/entities';
+import { Promotion } from '@shared/database/entities';
+
+// Note: PromotionType doesn't exist as enum in new schema
+enum PromotionType {
+  PERCENT_OFF = 'percent_off',
+  FIXED_AMOUNT = 'fixed_amount',
+  BOGO = 'bogo',
+}
 
 @Injectable()
 export class PromotionsService {
@@ -29,7 +36,7 @@ export class PromotionsService {
   }
 
   async findById(id: string) {
-    return this.promotionRepository.findOne({ where: { id } });
+    return this.promotionRepository.findOne({ where: { promotionId: id } });
   }
 
   async create(data: Partial<Promotion>) {

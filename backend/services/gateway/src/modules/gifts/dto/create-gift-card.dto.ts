@@ -1,6 +1,11 @@
 import { IsEnum, IsString, IsNumber, IsOptional, Min, Max, IsEmail, IsPhoneNumber, MaxLength } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { GiftCardType } from '@shared/database/entities';
+
+// Stub enum since GiftCardType doesn't exist in new schema
+enum GiftCardType {
+  AMOUNT = 'AMOUNT',
+  FREE_COFFEE = 'FREE_COFFEE',
+}
 
 export class CreateGiftCardDto {
   @ApiProperty({

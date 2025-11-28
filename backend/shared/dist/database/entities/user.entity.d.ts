@@ -1,48 +1,56 @@
 import { Order } from './order.entity';
-import { RewardsLedger } from './rewards-ledger.entity';
-import { Review } from './review.entity';
-export declare enum UserRole {
-    CUSTOMER = "customer",
-    STORE_STAFF = "store_staff",
-    ADMIN = "admin"
-}
-export declare enum UserTier {
-    BRONZE = "bronze",
-    SILVER = "silver",
-    GOLD = "gold",
-    PLATINUM = "platinum",
-    BLACK = "black"
-}
+import { LoyaltyTier } from './loyalty-tier.entity';
+import { Store } from './store.entity';
+import { UserDevice } from './user-device.entity';
+import { UserSession } from './user-session.entity';
+import { UserProfile } from './user-profile.entity';
+import { UserSegmentAssignment } from './user-segment-assignment.entity';
+import { UserEvent } from './user-event.entity';
+import { AIRecommendation } from './ai-recommendation.entity';
+import { LoyaltyLedger } from './loyalty-ledger.entity';
+import { GiftCard } from './gift-card.entity';
+import { PromotionRedemption } from './promotion-redemption.entity';
+import { RefundRequest } from './refund-request.entity';
+import { PaymentProvider } from './payment-provider.entity';
+import { SplashEvent } from './splash-event.entity';
+import { SplashSession } from './splash-session.entity';
 export declare class User {
-    id: string;
+    userId: string;
     email: string;
     phone: string | null;
-    firstName: string;
-    lastName: string;
     passwordHash: string | null;
-    birthDate: Date | null;
-    role: UserRole;
-    loyaltyTier: UserTier;
-    loyaltyPoints: number;
-    preferences: Record<string, any>;
-    isActive: boolean;
+    firstName: string | null;
+    lastName: string | null;
+    birthdate: Date | null;
+    get birthDate(): Date | null;
     emailVerified: boolean;
     phoneVerified: boolean;
     marketingOptIn: boolean;
-    profileCompleted: boolean;
-    isLoyaltyMember: boolean;
-    notificationsEnabled: boolean;
-    deletedAt: Date | null;
-    verificationCode: string | null;
-    verificationCodeExpiry: Date | null;
-    auth0Id: string | null;
-    stripeCustomerId: string | null;
+    isActive: boolean;
     lastLoginAt: Date | null;
-    lastActivityDate: Date | null;
+    role: string;
+    loyaltyTierId: string | null;
+    loyaltyPoints: number;
+    defaultStoreId: string | null;
     createdAt: Date;
     updatedAt: Date;
+    get id(): string;
+    loyaltyTier: LoyaltyTier;
+    defaultStore: Store;
+    userDevices: UserDevice[];
+    userSessions: UserSession[];
+    userProfile: UserProfile;
+    segmentAssignments: UserSegmentAssignment[];
+    userEvents: UserEvent[];
     orders: Order[];
-    rewardsLedger: RewardsLedger[];
-    reviews: Review[];
+    loyaltyLedger: LoyaltyLedger[];
+    giftCardsPurchased: GiftCard[];
+    giftCardsRedeemed: GiftCard[];
+    promotionRedemptions: PromotionRedemption[];
+    aiRecommendations: AIRecommendation[];
+    refundRequests: RefundRequest[];
+    paymentProviders: PaymentProvider[];
+    splashEvents: SplashEvent[];
+    splashSessions: SplashSession[];
     get name(): string;
 }

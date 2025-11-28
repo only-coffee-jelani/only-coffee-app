@@ -139,7 +139,7 @@ export class CarouselController {
     @Body() createDto: CreateCarouselImageDto,
     @CurrentUser() user: User,
   ) {
-    return this.carouselService.create(createDto, user.id);
+    return this.carouselService.create(createDto, user.userId);
   }
 
   /**
@@ -166,7 +166,7 @@ export class CarouselController {
     @Body() updateDto: UpdateCarouselImageDto,
     @CurrentUser() user: User,
   ) {
-    return this.carouselService.update(id, updateDto, user.id);
+    return this.carouselService.update(id, updateDto, user.userId);
   }
 
   /**
@@ -295,5 +295,4 @@ export class CarouselController {
   async reorder(@Body() body: { imageIds: string[] }) {
     return this.carouselService.reorder(body.imageIds);
   }
-}
 

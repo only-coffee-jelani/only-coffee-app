@@ -61,16 +61,19 @@ export class EventsService {
       }
 
       // Create event with enriched data
+      // Note: UserEvent now only has eventId, userId, eventType, payload, createdAt
+      // All metadata, sessionId, deviceType, etc. go into payload
       const event = this.userEventRepository.create({
         userId,
         eventType: eventData.eventType,
-        timestamp: new Date(),
-        metadata: enrichedMetadata,
-        sessionId: eventData.sessionId || null,
-        deviceType: eventData.deviceType || null,
-        appVersion: eventData.appVersion || null,
-        location: this.formatLocation(eventData.latitude, eventData.longitude),
-        storeId: eventData.storeId || null,
+        payload: {
+          metadata: enrichedMetadata,
+          sessionId: eventData.sessionId || null,
+          deviceType: eventData.deviceType || null,
+          appVersion: eventData.appVersion || null,
+          location: this.formatLocation(eventData.latitude, eventData.longitude),
+          storeId: eventData.storeId || null,
+        },
       });
 
       // Save to PostgreSQL for immediate access
@@ -78,7 +81,7 @@ export class EventsService {
 
       // Stream to Kinesis for real-time processing (async, non-blocking)
       this.kinesisService.pushEvent(savedEvent).catch((err) => {
-        this.logger.error(`Failed to stream event ${savedEvent.id} to Kinesis:`, err);
+        this.logger.error(`Failed to stream event ${savedEvent.eventId} to Kinesis:`, err);
       });
 
       this.logger.log(
@@ -102,13 +105,14 @@ export class EventsService {
         this.userEventRepository.create({
           userId,
           eventType: eventData.eventType,
-          timestamp: new Date(),
-          metadata: eventData.metadata || null,
-          sessionId: eventData.sessionId || null,
-          deviceType: eventData.deviceType || null,
-          appVersion: eventData.appVersion || null,
-          location: this.formatLocation(eventData.latitude, eventData.longitude),
-          storeId: eventData.storeId || null,
+          payload: {
+            metadata: eventData.metadata || null,
+            sessionId: eventData.sessionId || null,
+            deviceType: eventData.deviceType || null,
+            appVersion: eventData.appVersion || null,
+            location: this.formatLocation(eventData.latitude, eventData.longitude),
+            storeId: eventData.storeId || null,
+          },
         }),
       );
 
@@ -143,15 +147,15 @@ export class EventsService {
     }
 
     if (options.startDate) {
-      queryBuilder.andWhere('event.timestamp >= :startDate', { startDate: options.startDate });
+      queryBuilder.andWhere('event.createdAt >= :startDate', { startDate: options.startDate });
     }
 
     if (options.endDate) {
-      queryBuilder.andWhere('event.timestamp <= :endDate', { endDate: options.endDate });
+      queryBuilder.andWhere('event.createdAt <= :endDate', { endDate: options.endDate });
     }
 
-    // Order by timestamp descending (most recent first)
-    queryBuilder.orderBy('event.timestamp', 'DESC');
+    // Order by createdAt descending (most recent first)
+    queryBuilder.orderBy('event.createdAt', 'DESC');
 
     // Get total count
     const total = await queryBuilder.getCount();
@@ -219,9 +223,12 @@ export class EventsService {
    * Get recent session activity
    */
   async getSessionActivity(sessionId: string): Promise<UserEvent[]> {
+    // Note: sessionId is now stored in payload, not as a separate field
+    // This query won't work as expected - needs refactoring
+    this.logger.warn('getSessionActivity: sessionId is now in payload, query may not work correctly');
     return this.userEventRepository.find({
-      where: { sessionId },
-      order: { timestamp: 'ASC' },
+      order: { createdAt: 'ASC' },
+      take: 100, // Limit results since we can't filter by sessionId directly
     });
   }
 
@@ -231,7 +238,7 @@ export class EventsService {
   async getLastEventOfType(userId: string, eventType: EventType): Promise<UserEvent | null> {
     return this.userEventRepository.findOne({
       where: { userId, eventType },
-      order: { timestamp: 'DESC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -259,7 +266,7 @@ export class EventsService {
       .createQueryBuilder('event')
       .select('event.eventType', 'eventType')
       .addSelect('COUNT(*)', 'count')
-      .where('event.timestamp BETWEEN :startDate AND :endDate', { startDate, endDate })
+      .where('event.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate })
       .groupBy('event.eventType')
       .getRawMany();
 

@@ -27,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -68,6 +69,7 @@ fun HomeScreen(
 ) {
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
+    val uiState by viewModel.uiState.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -76,8 +78,8 @@ fun HomeScreen(
         contentPadding = PaddingValues(top = Spacing.md, bottom = Spacing.lg)
     ) {
         item {
-            // Promotional Carousel (No title, 5 slides)
-            PromoCarousel()
+            // Promotional Carousel - fetched from backend
+            PromoCarousel(carouselItems = uiState.carouselItems)
         }
 
         item {
@@ -250,23 +252,22 @@ fun SignInCard(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PromoCarousel() {
-    val promotionalImages = listOf(
-        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch.webp",
-        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v2.webp",
-        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/waffolino-launch-v3.webp",
-        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/share-drink-promo.webp",
-        "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/welcome-card.webp"
-    )
+fun PromoCarousel(carouselItems: List<com.onlycoffee.app.data.model.CarouselItem>) {
+    // If no carousel items from backend, don't show anything
+    if (carouselItems.isEmpty()) {
+        return
+    }
 
-    val pagerState = rememberPagerState(pageCount = { promotionalImages.size })
+    val pagerState = rememberPagerState(pageCount = { carouselItems.size })
 
-    // Auto-scroll
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(3000)
-            val nextPage = (pagerState.currentPage + 1) % promotionalImages.size
-            pagerState.animateScrollToPage(nextPage)
+    // Auto-scroll every 3 seconds
+    LaunchedEffect(carouselItems.size) {
+        if (carouselItems.size > 1) {
+            while (true) {
+                delay(3000)
+                val nextPage = (pagerState.currentPage + 1) % carouselItems.size
+                pagerState.animateScrollToPage(nextPage)
+            }
         }
     }
 
@@ -277,6 +278,7 @@ fun PromoCarousel() {
                 .fillMaxWidth()
                 .height(200.dp)
         ) { page ->
+            val carouselItem = carouselItems[page]
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -285,8 +287,8 @@ fun PromoCarousel() {
                 contentAlignment = Alignment.Center
             ) {
                 coil.compose.AsyncImage(
-                    model = promotionalImages[page],
-                    contentDescription = "Promotion ${page + 1}",
+                    model = carouselItem.imageUrl,
+                    contentDescription = carouselItem.title ?: "Promotion ${page + 1}",
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(200.dp)
@@ -298,23 +300,25 @@ fun PromoCarousel() {
             }
         }
 
-        // Simple page indicator
-        Row(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-                .padding(Spacing.sm),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(promotionalImages.size) { index ->
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .size(8.dp)
-                        .background(
-                            color = if (index == pagerState.currentPage) BrandPrimary else TextSecondary.copy(alpha = 0.3f),
-                            shape = CircleShape
-                        )
-                )
+        // Simple page indicator - only show if more than 1 item
+        if (carouselItems.size > 1) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(Spacing.sm),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                repeat(carouselItems.size) { index ->
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 4.dp)
+                            .size(8.dp)
+                            .background(
+                                color = if (index == pagerState.currentPage) BrandPrimary else TextSecondary.copy(alpha = 0.3f),
+                                shape = CircleShape
+                            )
+                    )
+                }
             }
         }
     }

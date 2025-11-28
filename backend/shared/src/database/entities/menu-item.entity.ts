@@ -5,34 +5,28 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Index,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
 } from 'typeorm';
+import { MenuCategory } from './menu-category.entity';
+import { MediaAsset } from './media-asset.entity';
+import { OrderItem } from './order-item.entity';
+import { MenuItemModifierGroup } from './menu-item-modifier-group.entity';
+import { AIRecommendation } from './ai-recommendation.entity';
 
-export enum MenuCategory {
-  BEST_SELLERS = 'best_sellers',
-  SEASONAL_SPECIALS = 'seasonal_specials',
-  SIGNATURE = 'signature',
-  HOT_COFFEE = 'hot_coffee',
-  ICED_COFFEE = 'iced_coffee',
-  COLD_BREW = 'cold_brew',
-  OTHER_DRINKS = 'other_drinks', // formerly CHOCOLATE
-  ICE_CREAM = 'ice_cream',
-  ADD_ONS = 'add_ons',
-  // Legacy support
-  CHOCOLATE = 'chocolate', // Deprecated: use OTHER_DRINKS
-}
-
+/**
+ * MenuItem Entity
+ * Represents menu items with category and image asset relations
+ */
 @Entity('menu_items')
-@Index(['category'])
-@Index(['toastItemId'])
+@Index(['categoryId'])
 export class MenuItem {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'menu_item_id' })
+  menuItemId: string;
 
-  @Column({ type: 'uuid', array: true, default: [] })
-  storeIds: string[];
-
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  toastItemId: string | null;
+  @Column({ type: 'uuid', name: 'category_id', nullable: true })
+  categoryId: string | null;
 
   @Column({ type: 'varchar', length: 255 })
   name: string;
@@ -40,76 +34,42 @@ export class MenuItem {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
-  @Column({ type: 'enum', enum: MenuCategory })
-  category: MenuCategory;
-
-  // New categories array field - supports multiple categories per item
-  @Column({
-    type: 'text',
-    array: true,
-    default: () => 'ARRAY[]::text[]'
-  })
-  categories: string[];
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'numeric', precision: 10, scale: 2, name: 'base_price' })
   basePrice: number;
 
-  @Column({ type: 'varchar', length: 500, nullable: true })
-  imageUrl: string | null;
+  @Column({ type: 'int', nullable: true })
+  calories: number | null;
 
-  @Column({ type: 'jsonb', default: [] })
-  availableModifiers: Array<{
-    id: string;
-    name: string;
-    type: string; // 'size', 'milk', 'syrup', 'ice', etc.
-    options: Array<{ value: string; price: number }>;
-    required: boolean;
-  }>;
+  @Column({ type: 'uuid', name: 'image_asset_id', nullable: true })
+  imageAssetId: string | null;
 
-  @Column({ type: 'jsonb', default: {} })
-  nutritionalInfo: Record<string, any>;
+  @Column({ type: 'varchar', length: 100, name: 'toast_item_id', nullable: true })
+  toastItemId: string | null;
 
-  @Column({ type: 'jsonb', default: [] })
-  allergens: string[];
-
-  @Column({ type: 'boolean', default: true })
-  isAvailable: boolean;
-
-  @Column({ type: 'boolean', default: true })
+  @Column({ type: 'boolean', name: 'is_active', default: true })
   isActive: boolean;
 
-  @Column({ type: 'int', default: 0 })
-  preparationTime: number; // in minutes
-
-  @Column({ type: 'int', default: 999 })
-  sortOrder: number;
-
-  @CreateDateColumn({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamptz' })
+  @UpdateDateColumn({ type: 'timestamptz', name: 'updated_at' })
   updatedAt: Date;
 
-  @Column({ type: 'timestamptz', nullable: true })
-  lastSyncedAt: Date | null;
-}
+  // Relations
+  @ManyToOne(() => MenuCategory, (category) => category.menuItems)
+  @JoinColumn({ name: 'category_id' })
+  category: MenuCategory;
 
-// Helper function to get category display names
-export function getCategoryDisplayName(category: string): string {
-  const displayNames: Record<string, string> = {
-    'best_sellers': 'Best Sellers',
-    'seasonal_specials': 'Seasonal Specials',
-    'signature': 'Signature',
-    'hot_coffee': 'Hot Coffee',
-    'iced_coffee': 'Iced Coffee',
-    'cold_brew': 'Cold Brew',
-    'other_drinks': 'Other Drinks',
-    'chocolate': 'Other Drinks', // Legacy support - map to Other Drinks
-    'ice_cream': 'Ice Cream',
-    'add_ons': 'Add Ons',
-  };
-  // Convert snake_case to Title Case for unknown categories
-  return displayNames[category] || category.split('_').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1)
-  ).join(' ');
+  @ManyToOne(() => MediaAsset, (mediaAsset) => mediaAsset.menuItems)
+  @JoinColumn({ name: 'image_asset_id' })
+  imageAsset: MediaAsset;
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.menuItem)
+  orderItems: OrderItem[];
+
+  @OneToMany(() => MenuItemModifierGroup, (menuItemModifierGroup) => menuItemModifierGroup.menuItem)
+  menuItemModifierGroups: MenuItemModifierGroup[];
+
+  @OneToMany(() => AIRecommendation, (recommendation) => recommendation.menuItem)
+  aiRecommendations: AIRecommendation[];
 }

@@ -48,7 +48,7 @@ export class PaymentsController {
     @Body() createPaymentIntentDto: CreatePaymentIntentDto,
   ) {
     return this.paymentsService.createPaymentIntent(
-      user.id,
+      user.userId,
       createPaymentIntentDto,
     );
   }
@@ -60,7 +60,7 @@ export class PaymentsController {
     @CurrentUser() user: User,
     @Body() confirmPaymentDto: ConfirmPaymentDto,
   ) {
-    return this.paymentsService.confirmPayment(user.id, confirmPaymentDto);
+    return this.paymentsService.confirmPayment(user.userId, confirmPaymentDto);
   }
 
   @Get('intent/:paymentIntentId')
@@ -73,7 +73,7 @@ export class PaymentsController {
     @CurrentUser() user: User,
     @Param('paymentIntentId') paymentIntentId: string,
   ) {
-    return this.paymentsService.getPaymentIntent(user.id, paymentIntentId);
+    return this.paymentsService.getPaymentIntent(user.userId, paymentIntentId);
   }
 
   @Delete('intent/:paymentIntentId')
@@ -83,7 +83,7 @@ export class PaymentsController {
     @CurrentUser() user: User,
     @Param('paymentIntentId') paymentIntentId: string,
   ) {
-    return this.paymentsService.cancelPaymentIntent(user.id, paymentIntentId);
+    return this.paymentsService.cancelPaymentIntent(user.userId, paymentIntentId);
   }
 
   @Post('payment-methods/attach')
@@ -94,7 +94,7 @@ export class PaymentsController {
     @Body() attachPaymentMethodDto: AttachPaymentMethodDto,
   ) {
     return this.paymentsService.attachPaymentMethod(
-      user.id,
+      user.userId,
       attachPaymentMethodDto.paymentMethodId,
     );
   }
@@ -103,7 +103,7 @@ export class PaymentsController {
   @ApiOperation({ summary: 'List saved payment methods' })
   @ApiResponse({ status: 200, description: 'Payment methods retrieved' })
   async listPaymentMethods(@CurrentUser() user: User) {
-    return this.paymentsService.listPaymentMethods(user.id);
+    return this.paymentsService.listPaymentMethods(user.userId);
   }
 
   @Delete('payment-methods/:paymentMethodId')
@@ -113,7 +113,7 @@ export class PaymentsController {
     @CurrentUser() user: User,
     @Param('paymentMethodId') paymentMethodId: string,
   ) {
-    return this.paymentsService.detachPaymentMethod(user.id, paymentMethodId);
+    return this.paymentsService.detachPaymentMethod(user.userId, paymentMethodId);
   }
 
   @Post('webhook')

@@ -1,69 +1,32 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
-  Index,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from './user.entity';
+import { UserSegment } from './user-segment.entity';
 
-// Import the UserSegment enum from user-profile
-export { UserSegment } from './user-profile.entity';
-import { UserSegment } from './user-profile.entity';
-
+/**
+ * UserSegmentAssignment Entity
+ * Junction table for user-segment many-to-many relationship
+ */
 @Entity('user_segment_assignments')
-@Index(['userId', 'isActive'])
-@Index(['segmentName'])
+@Index(['userId', 'segmentId'], { unique: true })
 export class UserSegmentAssignment {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn('uuid', { name: 'assignment_id' })
+  assignmentId: string;
 
-  @Column({ type: 'uuid' })
+  @Column({ type: 'uuid', name: 'user_id' })
   userId: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  segmentName: string;
+  @Column({ type: 'uuid', name: 'segment_id' })
+  segmentId: string;
 
-  @Column({ type: 'varchar', length: 255 })
-  segmentDisplayName: string;
-
-  @Column({ type: 'boolean', default: true })
-  isActive: boolean;
-
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  rfmScore: number | null;
-
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  recencyScore: number | null;
-
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  frequencyScore: number | null;
-
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
-  monetaryScore: number | null;
-
-  @Column({ type: 'timestamptz' })
+  @CreateDateColumn({ type: 'timestamptz', name: 'assigned_at' })
   assignedAt: Date;
 
-  @Column({ type: 'jsonb', nullable: true })
-  metadata: Record<string, any> | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
-
   // Relations
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'userId' })
+  @ManyToOne(() => User, (user) => user.segmentAssignments, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
   user: User;
 
-  // Computed property for backward compatibility
-  get segment(): string {
-    return this.segmentName;
-  }
+  @ManyToOne(() => UserSegment, (segment) => segment.segmentAssignments, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'segment_id' })
+  segment: UserSegment;
 }

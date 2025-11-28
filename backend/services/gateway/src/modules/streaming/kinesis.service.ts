@@ -74,10 +74,10 @@ export class KinesisService {
       const response = await this.kinesisClient.send(command);
 
       this.logger.debug(
-        `Event ${event.id} pushed to Kinesis. Shard: ${response.ShardId}, Sequence: ${response.SequenceNumber}`,
+        `Event ${event.eventId} pushed to Kinesis. Shard: ${response.ShardId}, Sequence: ${response.SequenceNumber}`,
       );
     } catch (error) {
-      this.logger.error(`Failed to push event ${event.id} to Kinesis:`, error);
+      this.logger.error(`Failed to push event ${event.eventId} to Kinesis:`, error);
       // Don't throw - we've already saved to PostgreSQL, Kinesis is supplementary
     }
     */
@@ -140,22 +140,25 @@ export class KinesisService {
    * Includes metadata needed for downstream processing
    */
   private serializeEvent(event: UserEvent): any {
+    // Extract metadata from payload
+    const payload = event.payload || {};
+
     return {
       // Event identification
-      eventId: event.id,
+      eventId: event.eventId,
       userId: event.userId,
       eventType: event.eventType,
-      timestamp: event.timestamp.toISOString(),
+      timestamp: event.createdAt.toISOString(),
 
-      // Event data
-      metadata: event.metadata,
-      sessionId: event.sessionId,
-      deviceType: event.deviceType,
-      appVersion: event.appVersion,
-      storeId: event.storeId,
+      // Event data (from payload)
+      metadata: payload.metadata || null,
+      sessionId: payload.sessionId || null,
+      deviceType: payload.deviceType || null,
+      appVersion: payload.appVersion || null,
+      storeId: payload.storeId || null,
 
-      // Location (converted from PostGIS format)
-      location: this.parseLocation(event.location),
+      // Location (from payload)
+      location: payload.location || null,
 
       // Processing metadata
       streamedAt: new Date().toISOString(),
