@@ -295,4 +295,4 @@ export class CarouselController {
   async reorder(@Body() body: { imageIds: string[] }) {
     return this.carouselService.reorder(body.imageIds);
   }
-
+}
