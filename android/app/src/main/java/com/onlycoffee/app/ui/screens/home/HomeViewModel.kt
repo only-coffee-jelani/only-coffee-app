@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onlycoffee.app.data.model.CarouselItem
 import com.onlycoffee.app.data.model.MenuItem
-import com.onlycoffee.app.data.model.Store
+import com.onlycoffee.app.data.model.StoreResponse
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -49,7 +49,7 @@ class HomeViewModel @Inject constructor(
                     radius = 10.0
                 ).data
             } catch (e: Exception) {
-                Store.sampleStores
+                emptyList() // No fallback to sample data - use real backend data only
             }
 
             // Fetch carousel images from backend with fallback
@@ -90,7 +90,7 @@ data class HomeUiState(
     val isLoading: Boolean = true,
     val userName: String = "",
     val loyaltyPoints: Int = 0,
-    val nearbyStores: List<Store> = emptyList(),
+    val nearbyStores: List<StoreResponse> = emptyList(),
     val featuredItems: List<MenuItem> = emptyList(),
     val carouselItems: List<CarouselItem> = emptyList(),
     val error: String? = null

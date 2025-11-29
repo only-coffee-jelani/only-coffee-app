@@ -29,17 +29,16 @@ class MenuViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
             try {
-                val response = menuApiService.getAllMenuItems()
+                // Load all menu items from backend (not filtered by store yet)
+                val response = menuApiService.getAllMenuItems(storeId = null)
                 allMenuItems = response.data
                 filterItems()
                 _uiState.value = _uiState.value.copy(isLoading = false)
             } catch (e: Exception) {
-                // Fallback to sample data if API fails
-                allMenuItems = MenuItem.sampleItems
-                filterItems()
+                // Don't fallback to sample data - show error instead
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
-                    error = "Using offline menu. ${e.message}"
+                    error = "Failed to load menu from backend. ${e.message}"
                 )
             }
         }

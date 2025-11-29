@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -30,7 +30,7 @@ export class MenuItemsController {
   @Get()
   @ApiOperation({
     summary: 'Get all menu items',
-    description: 'Retrieve all menu items across all stores. Used by admin dashboard.',
+    description: 'Retrieve all menu items across all stores. Used by admin dashboard and mobile app.',
   })
   @ApiResponse({
     status: 200,

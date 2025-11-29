@@ -39,6 +39,24 @@ export class Store {
   @Column({ type: 'text', nullable: true })
   address: string | null;
 
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  city: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  state: string | null;
+
+  @Column({ type: 'varchar', length: 20, name: 'zip_code', nullable: true })
+  zipCode: string | null;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  country: string | null;
+
+  @Column({ type: 'varchar', length: 2, name: 'country_code', nullable: true })
+  countryCode: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  continent: string | null;
+
   @Column({ type: 'numeric', precision: 10, scale: 7, nullable: true })
   latitude: number | null;
 
@@ -65,6 +83,9 @@ export class Store {
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  @Column({ type: 'varchar', length: 50, default: 'America/Chicago' })
+  timezone: string;
 
   @Column({ type: 'timestamptz', name: 'opened_at', nullable: true })
   openedAt: Date | null;

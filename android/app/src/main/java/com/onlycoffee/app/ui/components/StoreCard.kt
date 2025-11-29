@@ -30,7 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.onlycoffee.app.R
-import com.onlycoffee.app.data.model.Store
+import com.onlycoffee.app.data.model.StoreResponse
 import com.onlycoffee.app.ui.theme.BackgroundSecondary
 import com.onlycoffee.app.ui.theme.BrandAccent
 import com.onlycoffee.app.ui.theme.BrandPrimary
@@ -49,8 +49,8 @@ import com.onlycoffee.app.ui.theme.TextTertiary
 
 @Composable
 fun StoreCard(
-    store: Store,
-    onStoreClick: (Store) -> Unit,
+    store: StoreResponse,
+    onStoreClick: (StoreResponse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -69,7 +69,7 @@ fun StoreCard(
                     .height(120.dp)
             ) {
                 AsyncImage(
-                    model = store.imageUrl,
+                    model = store.storeImageUrl?.takeIf { it.isNotBlank() },
                     contentDescription = store.name,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -79,24 +79,26 @@ fun StoreCard(
                     placeholder = painterResource(R.drawable.placeholder_store),
                     error = painterResource(R.drawable.placeholder_store)
                 )
-                
+
                 // Store Type Badge
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(Spacing.sm)
-                        .background(
-                            color = BrandPrimary.copy(alpha = 0.9f),
-                            shape = RoundedCornerShape(Spacing.sm)
+                store.storeType?.let { storeType ->
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(Spacing.sm)
+                            .background(
+                                color = BrandPrimary.copy(alpha = 0.9f),
+                                shape = RoundedCornerShape(Spacing.sm)
+                            )
+                            .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+                    ) {
+                        Text(
+                            text = storeType.displayName,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium
                         )
-                        .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
-                ) {
-                    Text(
-                        text = store.storeType.displayName,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color.White,
-                        fontWeight = FontWeight.Medium
-                    )
+                    }
                 }
                 
                 // Open/Closed Status
@@ -136,21 +138,16 @@ fun StoreCard(
                 
                 // Address
                 Text(
-                    text = store.address.shortAddress,
+                    text = store.address ?: "Address not available",
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                     maxLines = 1
                 )
                 
                 Spacer(modifier = Modifier.height(Spacing.sm))
-                
-                // Distance and Wait Time
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Distance
+
+                // Distance
+                if (store.formattedDistance.isNotEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -160,46 +157,15 @@ fun StoreCard(
                             tint = BrandPrimary,
                             modifier = Modifier.size(IconSize.sm)
                         )
-                        
+
                         Spacer(modifier = Modifier.width(Spacing.xs))
-                        
+
                         Text(
                             text = store.formattedDistance,
                             style = MaterialTheme.typography.labelSmall,
                             color = TextTertiary
                         )
                     }
-                    
-
-                }
-                
-                Spacer(modifier = Modifier.height(Spacing.sm))
-                
-                // Rating
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_star),
-                        contentDescription = null,
-                        tint = BrandAccent,
-                        modifier = Modifier.size(IconSize.sm)
-                    )
-                    
-                    Spacer(modifier = Modifier.width(Spacing.xs))
-                    
-                    Text(
-                        text = store.formattedRating,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextPrimary,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    Text(
-                        text = " (${store.reviewCount})",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextTertiary
-                    )
                 }
             }
         }
@@ -208,8 +174,8 @@ fun StoreCard(
 
 @Composable
 fun StoreListCard(
-    store: Store,
-    onStoreClick: (Store) -> Unit,
+    store: StoreResponse,
+    onStoreClick: (StoreResponse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -225,7 +191,7 @@ fun StoreListCard(
         ) {
             // Store Image
             AsyncImage(
-                model = store.imageUrl,
+                model = store.storeImageUrl?.takeIf { it.isNotBlank() },
                 contentDescription = store.name,
                 modifier = Modifier
                     .size(80.dp)
@@ -234,9 +200,9 @@ fun StoreListCard(
                 placeholder = painterResource(R.drawable.placeholder_store),
                 error = painterResource(R.drawable.placeholder_store)
             )
-            
+
             Spacer(modifier = Modifier.width(Spacing.md))
-            
+
             // Store Details
             Column(
                 modifier = Modifier.weight(1f)
@@ -255,9 +221,9 @@ fun StoreListCard(
                             color = TextPrimary,
                             fontWeight = FontWeight.SemiBold
                         )
-                        
+
                         Text(
-                            text = store.address.formattedAddress,
+                            text = store.address ?: "Address not available",
                             style = MaterialTheme.typography.bodySmall,
                             color = TextSecondary,
                             maxLines = 2
@@ -283,13 +249,9 @@ fun StoreListCard(
                 }
                 
                 Spacer(modifier = Modifier.height(Spacing.sm))
-                
-                // Distance, Wait Time, and Rating
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Distance
+
+                // Distance
+                if (store.formattedDistance.isNotEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -299,36 +261,13 @@ fun StoreListCard(
                             tint = BrandPrimary,
                             modifier = Modifier.size(IconSize.sm)
                         )
-                        
+
                         Spacer(modifier = Modifier.width(Spacing.xs))
-                        
+
                         Text(
                             text = store.formattedDistance,
                             style = MaterialTheme.typography.labelSmall,
                             color = TextTertiary
-                        )
-                    }
-                    
-
-                    
-                    // Rating
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_star),
-                            contentDescription = null,
-                            tint = BrandAccent,
-                            modifier = Modifier.size(IconSize.sm)
-                        )
-                        
-                        Spacer(modifier = Modifier.width(Spacing.xs))
-                        
-                        Text(
-                            text = store.formattedRating,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Medium
                         )
                     }
                 }
@@ -337,25 +276,4 @@ fun StoreListCard(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun StoreCardPreview() {
-    OnlyCoffeeTheme {
-        Column(
-            modifier = Modifier
-                .background(BackgroundSecondary)
-                .padding(Spacing.md),
-            verticalArrangement = Arrangement.spacedBy(Spacing.md)
-        ) {
-            StoreCard(
-                store = Store.sampleStores[0],
-                onStoreClick = {}
-            )
-            
-            StoreListCard(
-                store = Store.sampleStores[0],
-                onStoreClick = {}
-            )
-        }
-    }
-}
+// Preview removed - use real data from backend instead

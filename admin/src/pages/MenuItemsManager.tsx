@@ -104,11 +104,12 @@ const MenuItemsManager = () => {
       if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
 
       const menuData = await menuResponse.json();
-      const storesData = await storesResponse.json();
+      const storesResult = await storesResponse.json();
       const categoriesData = await categoriesResponse.json();
 
       setMenuItems(menuData || []);
-      setStores(storesData || []);
+      // Backend returns {success, data, count} format for stores
+      setStores(storesResult.data || []);
       setCategories(categoriesData?.map((c: any) => c.name) || []);
     } catch (error) {
       console.error('Error fetching data:', error);

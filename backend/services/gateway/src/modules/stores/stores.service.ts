@@ -1,13 +1,20 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Store, StoreType } from '@shared/database/entities';
+import { Store, StoreHours } from '@shared/database/entities';
+import { StoreType as StoreTypeEntity } from '@shared/database/entities/store-type.entity';
+import { isStoreOpen, getFormattedStoreHours } from './store-hours.helper';
+import { CreateStoreDto, UpdateStoreDto } from './dto';
 
 @Injectable()
 export class StoresService {
   constructor(
     @InjectRepository(Store)
     private readonly storeRepository: Repository<Store>,
+    @InjectRepository(StoreTypeEntity)
+    private readonly storeTypeRepository: Repository<StoreTypeEntity>,
+    @InjectRepository(StoreHours)
+    private readonly storeHoursRepository: Repository<StoreHours>,
   ) {}
 
   async findNearby(latitude: number, longitude: number, radiusMiles: number = 10) {
@@ -18,6 +25,8 @@ export class StoresService {
 
     const stores = await this.storeRepository
       .createQueryBuilder('store')
+      .leftJoinAndSelect('store.storeHours', 'storeHours')
+      .leftJoinAndSelect('store.storeType', 'storeType')
       .where('store.isActive = :isActive', { isActive: true })
       .andWhere('store.acceptingOrders = :acceptingOrders', { acceptingOrders: true })
       .andWhere('store.latitude BETWEEN :minLat AND :maxLat', {
@@ -30,63 +39,153 @@ export class StoresService {
       })
       .getMany();
 
-    // Calculate actual distance and filter
+    // Calculate actual distance, add isOpen field, and filter
     return stores
       .map((store) => ({
         ...store,
         distance: this.calculateDistance(latitude, longitude, store.latitude, store.longitude),
+        isOpen: isStoreOpen(store.storeHours || [], store.timezone),
+        formattedHours: getFormattedStoreHours(store.storeHours || []),
       }))
       .filter((store) => store.distance <= radiusMiles)
       .sort((a, b) => a.distance - b.distance);
   }
 
   async findAll() {
-    return this.storeRepository.find({
+    const stores = await this.storeRepository.find({
+      relations: ['storeType', 'storeHours'],
       order: { createdAt: 'DESC' },
+    });
+
+    // Add isOpen field to each store
+    return stores.map(store => ({
+      ...store,
+      isOpen: isStoreOpen(store.storeHours || [], store.timezone),
+      formattedHours: getFormattedStoreHours(store.storeHours || []),
+    }));
+  }
+
+  async getAllStoreTypes() {
+    return this.storeTypeRepository.find({
+      order: { code: 'ASC' as any },
     });
   }
 
   async findById(id: string) {
-    const store = await this.storeRepository.findOne({ where: { storeId: id } });
+    const store = await this.storeRepository.findOne({
+      where: { storeId: id },
+      relations: ['storeType', 'storeHours'],
+    });
     if (!store) {
       throw new NotFoundException(`Store with ID ${id} not found`);
     }
-    return store;
+    return {
+      ...store,
+      isOpen: isStoreOpen(store.storeHours || [], store.timezone),
+      formattedHours: getFormattedStoreHours(store.storeHours || []),
+    };
   }
 
-  async findByType(type: StoreType) {
-    // Note: In new schema, type is a FK to store_types table
-    // This needs to be updated to query by storeTypeId
-    // For now, returning all active stores
-    return this.storeRepository.find({
-      where: { isActive: true },
+  async findByType(typeId: string) {
+    // Query stores by storeTypeId
+    const stores = await this.storeRepository.find({
+      where: { storeTypeId: typeId, isActive: true },
+      relations: ['storeType', 'storeHours'],
+      order: { createdAt: 'DESC' },
     });
+
+    // Add isOpen field to each store
+    return stores.map(store => ({
+      ...store,
+      isOpen: isStoreOpen(store.storeHours || [], store.timezone),
+      formattedHours: getFormattedStoreHours(store.storeHours || []),
+    }));
   }
 
-  async create(createStoreDto: any) {
-    // Validate required fields
-    if (!createStoreDto.name || !createStoreDto.city) {
-      throw new BadRequestException('Name and city are required');
+  async create(createStoreDto: CreateStoreDto) {
+    // Validate storeTypeId if provided
+    if (createStoreDto.storeTypeId) {
+      const storeType = await this.storeTypeRepository.findOne({
+        where: { storeTypeId: createStoreDto.storeTypeId },
+      });
+      if (!storeType) {
+        throw new BadRequestException('Invalid store type ID');
+      }
     }
 
-    // Note: In new schema, type is a FK to store_types table (storeTypeId)
-    // Address validation removed as address structure changed in new schema
+    // Additional validation for USA stores
+    if (createStoreDto.countryCode === 'US' || createStoreDto.country === 'United States') {
+      if (!createStoreDto.state) {
+        throw new BadRequestException('State is required for USA stores');
+      }
+      if (!createStoreDto.zipCode) {
+        throw new BadRequestException('ZIP code is required for USA stores');
+      }
+    }
 
     const store = this.storeRepository.create({
       ...createStoreDto,
-      // storeTypeId should be provided in createStoreDto
-      latitude: createStoreDto.latitude || 0,
-      longitude: createStoreDto.longitude || 0,
+      latitude: createStoreDto.latitude || null,
+      longitude: createStoreDto.longitude || null,
     });
 
-    return this.storeRepository.save(store);
+    const savedStore = await this.storeRepository.save(store) as unknown as Store;
+
+    // Create store hours if provided
+    if (createStoreDto.storeHours && Array.isArray(createStoreDto.storeHours)) {
+      const hours = createStoreDto.storeHours.map((hour) =>
+        this.storeHoursRepository.create({
+          store: savedStore,
+          dayOfWeek: hour.dayOfWeek,
+          openTime: hour.openTime,
+          closeTime: hour.closeTime,
+        }),
+      );
+      await this.storeHoursRepository.save(hours);
+    }
+
+    return this.findById(savedStore.storeId);
   }
 
-  async update(id: string, updateStoreDto: any) {
+  async update(id: string, updateStoreDto: UpdateStoreDto) {
     const store = await this.findById(id);
 
-    Object.assign(store, updateStoreDto);
-    return this.storeRepository.save(store);
+    // Validate storeTypeId if provided
+    if (updateStoreDto.storeTypeId) {
+      const storeType = await this.storeTypeRepository.findOne({
+        where: { storeTypeId: updateStoreDto.storeTypeId },
+      });
+      if (!storeType) {
+        throw new BadRequestException('Invalid store type ID');
+      }
+    }
+
+    // Update store hours if provided
+    if (updateStoreDto.storeHours && Array.isArray(updateStoreDto.storeHours)) {
+      // Delete existing hours
+      await this.storeHoursRepository.delete({ storeId: id });
+
+      // Create new hours
+      const hours = updateStoreDto.storeHours.map((hour) =>
+        this.storeHoursRepository.create({
+          storeId: id,
+          dayOfWeek: hour.dayOfWeek,
+          openTime: hour.openTime,
+          closeTime: hour.closeTime,
+        }),
+      );
+      await this.storeHoursRepository.save(hours);
+
+      // Remove from update DTO to avoid TypeORM error
+      const { storeHours, ...updateData } = updateStoreDto;
+      Object.assign(store, updateData);
+    } else {
+      Object.assign(store, updateStoreDto);
+    }
+
+    await this.storeRepository.save(store);
+
+    return this.findById(id);
   }
 
   async delete(id: string) {

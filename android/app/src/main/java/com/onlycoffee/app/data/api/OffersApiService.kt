@@ -18,10 +18,3 @@ interface OffersApiService {
     @POST("offers/{id}/click")
     suspend fun trackOfferClick(@Path("id") offerId: String): ApiResponse<Unit>
 }
-
-data class ApiResponse<T>(
-    val success: Boolean,
-    val data: T? = null,
-    val message: String? = null
-)
-

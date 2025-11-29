@@ -121,7 +121,7 @@ fun MenuScreen(
                                     color = TextPrimary
                                 )
                                 Text(
-                                    text = store.address.formattedAddress,
+                                    text = store.address ?: "Address not available",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = TextSecondary
                                 )

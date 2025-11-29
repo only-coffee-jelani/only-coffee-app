@@ -23,7 +23,8 @@ data class Store(
     val distance: Double? = null, // miles
     val rating: Double = 4.5,
     val reviewCount: Int = 0,
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val timezone: String = "America/Chicago" // IANA timezone identifier
 ) : Parcelable {
     
     val formattedDistance: String
@@ -37,13 +38,26 @@ data class Store(
     
     val isOpenNow: Boolean
         get() {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            val currentDay = now.dayOfWeek
-            val currentTime = now.time
-            
-            return operatingHours.find { it.dayOfWeek == currentDay }?.let { hours ->
-                currentTime >= hours.openTime && currentTime <= hours.closeTime
-            } ?: false
+            return try {
+                // Use the STORE'S timezone, not the device's timezone
+                val storeTimeZone = TimeZone.of(timezone)
+                val now = Clock.System.now().toLocalDateTime(storeTimeZone)
+                val currentDay = now.dayOfWeek
+                val currentTime = now.time
+
+                operatingHours.find { it.dayOfWeek == currentDay }?.let { hours ->
+                    currentTime >= hours.openTime && currentTime <= hours.closeTime
+                } ?: false
+            } catch (e: Exception) {
+                // If timezone is invalid, fall back to device timezone
+                val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+                val currentDay = now.dayOfWeek
+                val currentTime = now.time
+
+                operatingHours.find { it.dayOfWeek == currentDay }?.let { hours ->
+                    currentTime >= hours.openTime && currentTime <= hours.closeTime
+                } ?: false
+            }
         }
     
     companion object {
@@ -75,7 +89,8 @@ data class Store(
                 distance = 0.3,
                 rating = 4.8,
                 reviewCount = 247,
-                imageUrl = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=300&fit=crop"
+                imageUrl = "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=400&h=300&fit=crop",
+                timezone = "America/Chicago" // New Orleans is in Central Time
             ),
             Store(
                 id = "houston-galleria",
@@ -101,7 +116,8 @@ data class Store(
                 distance = 1.2,
                 rating = 4.6,
                 reviewCount = 189,
-                imageUrl = "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=400&h=300&fit=crop"
+                imageUrl = "https://images.unsplash.com/photo-1559925393-8be0ec4767c8?w=400&h=300&fit=crop",
+                timezone = "America/Chicago" // Houston is in Central Time
             ),
             Store(
                 id = "soho-nyc",
@@ -128,7 +144,8 @@ data class Store(
                 distance = 0.7,
                 rating = 4.9,
                 reviewCount = 342,
-                imageUrl = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=300&fit=crop"
+                imageUrl = "https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=400&h=300&fit=crop",
+                timezone = "America/New_York" // New York is in Eastern Time
             ),
             Store(
                 id = "houston-mobile-bar",
@@ -153,7 +170,8 @@ data class Store(
                 distance = 0.5,
                 rating = 4.7,
                 reviewCount = 92,
-                imageUrl = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop"
+                imageUrl = "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop",
+                timezone = "America/Chicago" // Houston is in Central Time
             )
         )
     }

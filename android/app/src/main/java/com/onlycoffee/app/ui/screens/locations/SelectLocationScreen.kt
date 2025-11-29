@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,6 +42,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -48,7 +51,7 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.android.gms.maps.model.LatLng
 import com.onlycoffee.app.R
-import com.onlycoffee.app.data.model.Store
+import com.onlycoffee.app.data.model.StoreResponse
 import com.onlycoffee.app.ui.components.AppHeader
 import com.onlycoffee.app.ui.components.StoreLocatorMap
 import com.onlycoffee.app.ui.theme.BackgroundPrimary
@@ -163,7 +166,7 @@ fun SelectLocationScreen(
             items(uiState.filteredStores) { store ->
                 SelectLocationCard(
                     store = store,
-                    isSelected = uiState.selectedStore?.id == store.id,
+                    isSelected = uiState.selectedStore?.storeId == store.storeId,
                     onStoreClick = { viewModel.selectStore(it) },
                     onSelectClick = {
                         // Save selected store and navigate back to menu
@@ -174,7 +177,7 @@ fun SelectLocationScreen(
                             launchSingleTop = true
                         }
                     },
-                    isFavorite = viewModel.isFavorite(store.id),
+                    isFavorite = viewModel.isFavorite(store.storeId),
                     onFavoriteClick = { storeId ->
                         viewModel.toggleFavorite(storeId)
                     },
@@ -189,10 +192,10 @@ fun SelectLocationScreen(
 
 @Composable
 fun SelectLocationCard(
-    store: Store,
+    store: StoreResponse,
     isSelected: Boolean,
-    onStoreClick: (Store) -> Unit,
-    onSelectClick: (Store) -> Unit,
+    onStoreClick: (StoreResponse) -> Unit,
+    onSelectClick: (StoreResponse) -> Unit,
     isFavorite: Boolean = false,
     onFavoriteClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -209,75 +212,154 @@ fun SelectLocationCard(
         Column(
             modifier = Modifier.padding(Spacing.md)
         ) {
-            // Top row with heart in top right
-            androidx.compose.foundation.layout.Box(
-                modifier = Modifier.fillMaxWidth()
+            // Title row with heart icon on same line
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                androidx.compose.foundation.layout.Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Top
-                ) {
-                    Column(
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = store.name,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                            color = com.onlycoffee.app.ui.theme.TextPrimary
-                        )
+                Text(
+                    text = store.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = com.onlycoffee.app.ui.theme.TextPrimary,
+                    modifier = Modifier.weight(1f)
+                )
 
-                        Spacer(modifier = Modifier.height(Spacing.xs))
-
-                        Text(
-                            text = store.address.formattedAddress,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary
-                        )
-
-                        Spacer(modifier = Modifier.height(Spacing.xs))
-
-                        androidx.compose.foundation.layout.Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = store.formattedDistance,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = TextSecondary
-                            )
-
-                            if (store.formattedDistance.isNotEmpty()) {
-                                Text(
-                                    text = " • ",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary
-                                )
-                            }
-
-                            Text(
-                                text = if (store.isOpen) "Open until 9:00 PM" else "Closed",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = if (store.isOpen) BrandPrimary else TextSecondary
-                            )
-                        }
-                    }
-                }
-
-                // Favorite heart icon positioned in top right
+                // Favorite heart icon on same line as title
                 androidx.compose.material3.IconButton(
-                    onClick = { onFavoriteClick(store.id) },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(0.dp)
+                    onClick = { onFavoriteClick(store.storeId) },
+                    modifier = Modifier.size(40.dp)
                 ) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                         contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                         tint = if (isFavorite) BrandPrimary else TextSecondary,
-                        modifier = Modifier.padding(0.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.xs))
+
+            // Street address on first line
+            Text(
+                text = store.address ?: "Address not available",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondary
+            )
+
+            // City, state, zip on second line
+            val cityStateZip = buildString {
+                store.city?.let { append(it) }
+
+                if (store.countryCode == "US") {
+                    // USA format: City, State ZIP
+                    if (store.state != null) {
+                        if (isNotEmpty()) append(", ")
+                        append(store.state)
+                    }
+                    if (store.zipCode != null) {
+                        if (isNotEmpty()) append(" ")
+                        append(store.zipCode)
+                    }
+                } else {
+                    // International format: City, Country
+                    if (store.country != null) {
+                        if (isNotEmpty()) append(", ")
+                        append(store.country)
+                    }
+                }
+            }
+
+            if (cityStateZip.isNotEmpty()) {
+                Text(
+                    text = cityStateZip,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondary
+                )
+            }
+
+            Spacer(modifier = Modifier.height(Spacing.sm))
+
+            // Open/Closed status with better styling
+            androidx.compose.foundation.layout.Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
+            ) {
+                // Distance badge (if available)
+                if (store.formattedDistance.isNotEmpty()) {
+                    androidx.compose.foundation.layout.Box(
+                        modifier = Modifier
+                            .background(
+                                color = TextSecondary.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(Spacing.xs)
+                            )
+                            .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+                    ) {
+                        Text(
+                            text = store.formattedDistance,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                // Open/Closed status badge with icon
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier
+                        .background(
+                            color = if (store.isOpenNow)
+                                com.onlycoffee.app.ui.theme.StatusSuccess.copy(alpha = 0.15f)
+                            else
+                                com.onlycoffee.app.ui.theme.StatusError.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(Spacing.xs)
+                        )
+                        .padding(horizontal = Spacing.sm, vertical = Spacing.xs)
+                ) {
+                    androidx.compose.foundation.layout.Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        // Status indicator dot
+                        androidx.compose.foundation.layout.Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(
+                                    color = if (store.isOpenNow)
+                                        com.onlycoffee.app.ui.theme.StatusSuccess
+                                    else
+                                        com.onlycoffee.app.ui.theme.StatusError,
+                                    shape = CircleShape
+                                )
+                        )
+
+                        Text(
+                            text = if (store.isOpenNow) "Open" else "Closed",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (store.isOpenNow)
+                                com.onlycoffee.app.ui.theme.StatusSuccess
+                            else
+                                com.onlycoffee.app.ui.theme.StatusError,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Store hours in user's local timezone
+            if (store.todaysHoursInUserTimezone.isNotEmpty() &&
+                store.todaysHoursInUserTimezone != "Closed" &&
+                store.todaysHoursInUserTimezone != "Hours not available") {
+                Spacer(modifier = Modifier.height(Spacing.xs))
+
+                Text(
+                    text = "Hours: ${store.todaysHoursInUserTimezone}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
             }
 
             Spacer(modifier = Modifier.height(Spacing.md))

@@ -14,10 +14,7 @@ export class StoreType {
   @Column({ type: 'varchar', length: 50, unique: true })
   code: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  name: string;
-
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   description: string | null;
 
   @CreateDateColumn({ type: 'timestamptz', name: 'created_at' })

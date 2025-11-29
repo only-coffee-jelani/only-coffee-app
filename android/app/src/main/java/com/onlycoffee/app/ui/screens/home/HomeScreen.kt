@@ -81,6 +81,29 @@ fun HomeScreen(
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
     val uiState by viewModel.uiState.collectAsState()
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // Share app function
+    val shareApp = {
+        val shareIntent = android.content.Intent().apply {
+            action = android.content.Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(
+                android.content.Intent.EXTRA_SUBJECT,
+                "Join me on Only Coffee!"
+            )
+            putExtra(
+                android.content.Intent.EXTRA_TEXT,
+                "Hey! I've been using Only Coffee for my daily coffee fix and I love it! " +
+                "Download the app and get a free drink when you sign up with my referral code. " +
+                "No lines, no waiting - just great coffee! 🎉☕\n\n" +
+                "Download here: https://onlycoffee.app"
+            )
+        }
+        context.startActivity(
+            android.content.Intent.createChooser(shareIntent, "Share Only Coffee")
+        )
+    }
 
     // Start carousel session when carousel items are loaded
     LaunchedEffect(uiState.carouselItems) {
@@ -165,7 +188,7 @@ fun HomeScreen(
                     title = "Refer Friends",
                     imageUrl = "https://only-coffee-assets.s3.us-east-1.amazonaws.com/promotions/refer-friends-card.webp",
                     modifier = Modifier.weight(1f),
-                    onClick = { /* Handle refer friends */ }
+                    onClick = { shareApp() }
                 )
             }
         }
@@ -197,7 +220,7 @@ fun HomeScreen(
                 buttonText = "Share Now",
                 icon = R.drawable.ic_rewards,
                 backgroundColor = BrandPrimary.copy(alpha = 0.1f),
-                onButtonClick = { /* Handle share */ }
+                onButtonClick = { shareApp() }
             )
         }
 
@@ -209,7 +232,15 @@ fun HomeScreen(
                 buttonText = "Order Now",
                 icon = R.drawable.ic_star,
                 backgroundColor = BrandAccent.copy(alpha = 0.1f),
-                onButtonClick = { navController.navigate("menu") }
+                onButtonClick = {
+                    navController.navigate("menu") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
@@ -221,7 +252,15 @@ fun HomeScreen(
                 buttonText = "Order Now",
                 icon = R.drawable.ic_coffee,
                 backgroundColor = CardBackground,
-                onButtonClick = { navController.navigate("menu") }
+                onButtonClick = {
+                    navController.navigate("menu") {
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
             )
         }
 
@@ -234,7 +273,7 @@ fun HomeScreen(
                 icon = R.drawable.ic_location,
                 backgroundColor = BrandAccent.copy(alpha = 0.15f),
                 onButtonClick = {
-                    navController.navigate("locations") {
+                    navController.navigate("menu") {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }

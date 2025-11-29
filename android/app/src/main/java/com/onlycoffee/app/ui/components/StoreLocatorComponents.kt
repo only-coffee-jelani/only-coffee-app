@@ -41,7 +41,7 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
 import com.onlycoffee.app.R
-import com.onlycoffee.app.data.model.Store
+import com.onlycoffee.app.data.model.StoreResponse
 import com.onlycoffee.app.ui.theme.BackgroundPrimary
 import com.onlycoffee.app.ui.theme.BrandPrimary
 import com.onlycoffee.app.ui.theme.CardBackground
@@ -53,9 +53,9 @@ import com.onlycoffee.app.ui.theme.TextSecondary
 
 @Composable
 fun StoreListCard(
-    store: Store,
-    onStoreClick: (Store) -> Unit,
-    onOrderHereClick: (Store) -> Unit,
+    store: StoreResponse,
+    onStoreClick: (StoreResponse) -> Unit,
+    onOrderHereClick: (StoreResponse) -> Unit,
     isFavorite: Boolean = false,
     onFavoriteClick: (String) -> Unit = {},
     modifier: Modifier = Modifier
@@ -93,7 +93,7 @@ fun StoreListCard(
                         Spacer(modifier = Modifier.height(Spacing.xs))
 
                         Text(
-                            text = store.address.formattedAddress,
+                            text = store.address ?: "Address not available",
                             style = MaterialTheme.typography.bodyMedium,
                             color = TextSecondary
                         )
@@ -118,9 +118,9 @@ fun StoreListCard(
                             }
 
                             Text(
-                                text = if (store.isOpen) "Open until 9:00 PM" else "Closed",
+                                text = if (store.isOpenNow) store.todaysHours else "Closed",
                                 style = MaterialTheme.typography.bodySmall,
-                                color = if (store.isOpen) BrandPrimary else TextSecondary
+                                color = if (store.isOpenNow) BrandPrimary else TextSecondary
                             )
                         }
                     }
@@ -130,7 +130,7 @@ fun StoreListCard(
 
                 // Favorite heart icon positioned in top right
                 IconButton(
-                    onClick = { onFavoriteClick(store.id) },
+                    onClick = { onFavoriteClick(store.storeId) },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .size(32.dp)
@@ -235,10 +235,10 @@ fun OrderTypeToggle(
 
 @Composable
 fun StoreLocatorMap(
-    stores: List<Store>,
+    stores: List<StoreResponse>,
     userLocation: LatLng?,
-    selectedStore: Store?,
-    onStoreSelected: (Store) -> Unit,
+    selectedStore: StoreResponse?,
+    onStoreSelected: (StoreResponse) -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Default to New Orleans (where your stores are located)
@@ -294,16 +294,20 @@ fun StoreLocatorMap(
 
             // Add store markers
             stores.forEach { store ->
-                val storeLocation = LatLng(store.address.latitude, store.address.longitude)
-                Marker(
-                    state = MarkerState(position = storeLocation),
-                    title = store.name,
-                    snippet = "${store.address.street}, ${store.address.city}",
-                    onClick = {
-                        onStoreSelected(store)
-                        true
-                    }
-                )
+                val lat = store.latitudeDouble ?: 0.0
+                val lng = store.longitudeDouble ?: 0.0
+                if (lat != 0.0 && lng != 0.0) {
+                    val storeLocation = LatLng(lat, lng)
+                    Marker(
+                        state = MarkerState(position = storeLocation),
+                        title = store.name,
+                        snippet = store.address ?: "Address not available",
+                        onClick = {
+                            onStoreSelected(store)
+                            true
+                        }
+                    )
+                }
             }
         }
     }

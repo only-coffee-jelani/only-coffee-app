@@ -6,6 +6,8 @@ export interface AddressSuggestion {
   city: string;
   state: string;
   zipCode: string;
+  country: string;
+  countryCode: string;
   latitude: number;
   longitude: number;
   displayName: string;
@@ -40,8 +42,8 @@ export function useAddressAutocomplete() {
     // Debounce the API call
     debounceTimer.current = setTimeout(async () => {
       try {
-        // Use Geoapify - True autocomplete with typeahead
-        const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(input)}&apiKey=${GEOAPIFY_API_KEY}&limit=5&country=us`;
+        // Use Geoapify - True autocomplete with typeahead (worldwide, not just US)
+        const url = `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(input)}&apiKey=${GEOAPIFY_API_KEY}&limit=5`;
 
         const response = await fetch(url, {
           headers: {
@@ -75,8 +77,10 @@ export function useAddressAutocomplete() {
             id: `${props.place_id || index}`,
             address: props.address_line1 || props.address_line2 || props.name || '',
             city: props.city || '',
-            state: props.state || '',
+            state: props.state || props.state_code || '',
             zipCode: props.postcode || '',
+            country: props.country || '',
+            countryCode: props.country_code?.toUpperCase() || '',
             latitude: coords[1],  // GeoJSON is [lon, lat]
             longitude: coords[0],
             displayName: props.formatted || `${props.address_line1 || ''}, ${props.city || ''}, ${props.state || ''}`,
