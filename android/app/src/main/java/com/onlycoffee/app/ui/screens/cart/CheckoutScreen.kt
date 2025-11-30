@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.onlycoffee.app.data.model.Coupon
+import com.onlycoffee.app.ui.screens.auth.AuthViewModel
 import com.onlycoffee.app.ui.screens.auth.PhoneAuthDialog
 import com.onlycoffee.app.ui.theme.*
 import com.onlycoffee.app.utils.StripeHelper
@@ -32,14 +33,18 @@ import com.stripe.android.paymentsheet.rememberPaymentSheet
 fun CheckoutScreen(
     navController: NavController,
     viewModel: CartViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     stripeHelper: StripeHelper = hiltViewModel<CartViewModel>().getStripeHelper()
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val paymentState by viewModel.paymentState.collectAsState()
+    val authUiState by authViewModel.uiState.collectAsState()
     var showCouponSelector by remember { mutableStateOf(false) }
     var showPhoneAuthDialog by remember { mutableStateOf(false) }
     var specialInstructions by remember { mutableStateOf("") }
+    var showSuccessDialog by remember { mutableStateOf(false) }
+    var successOrderId by remember { mutableStateOf<String?>(null) }
 
     // Stripe Payment Sheet - use method reference to avoid recomposition issues
     val paymentSheetCallback: (PaymentSheetResult) -> Unit = remember {
@@ -87,9 +92,17 @@ fun CheckoutScreen(
                 )
             }
             is PaymentState.Success -> {
-                // Navigate to order confirmation
-                navController.navigate("order_confirmation/${state.orderId}") {
-                    popUpTo("cart") { inclusive = true }
+                // Enterprise-level: Handle navigation based on authentication status
+                if (authUiState.isAuthenticated) {
+                    // Authenticated users: Navigate to Orders screen to see their order
+                    navController.navigate("orders") {
+                        popUpTo("cart") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                } else {
+                    // Guest users: Show success dialog, then navigate to home
+                    successOrderId = state.orderId
+                    showSuccessDialog = true
                 }
                 viewModel.resetPaymentState()
             }
@@ -303,6 +316,80 @@ fun CheckoutScreen(
             onDismiss = { showCouponSelector = false },
             getEstimatedDiscount = { coupon ->
                 viewModel.getEstimatedDiscount(coupon)
+            }
+        )
+    }
+
+    // Success dialog for guest users
+    if (showSuccessDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showSuccessDialog = false
+                navController.navigate("home") {
+                    popUpTo("cart") { inclusive = true }
+                    launchSingleTop = true
+                }
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = BrandPrimary,
+                    modifier = Modifier.size(48.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Order Placed Successfully!",
+                    style = OnlyCoffeeTextStyles.H2
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Your order has been confirmed and is being prepared.",
+                        style = OnlyCoffeeTextStyles.Body
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    successOrderId?.let { orderId ->
+                        Text(
+                            text = "Order ID: ${orderId.take(8)}",
+                            style = OnlyCoffeeTextStyles.Caption,
+                            color = TextSecondary
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Sign in to track your orders and earn rewards!",
+                        style = OnlyCoffeeTextStyles.Body.copy(fontWeight = FontWeight.Bold),
+                        color = BrandPrimary
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showSuccessDialog = false
+                        navController.navigate("login") {
+                            popUpTo("cart") { inclusive = true }
+                        }
+                    }
+                ) {
+                    Text("Sign In")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showSuccessDialog = false
+                        navController.navigate("home") {
+                            popUpTo("cart") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                ) {
+                    Text("Continue as Guest")
+                }
             }
         )
     }
