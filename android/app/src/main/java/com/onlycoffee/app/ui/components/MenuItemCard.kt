@@ -217,7 +217,8 @@ fun MenuItemListCard(
     ) {
         Box {
             Row(
-                modifier = Modifier.padding(Spacing.md)
+                modifier = Modifier.padding(Spacing.md),
+                verticalAlignment = Alignment.CenterVertically
             ) {
             // Item Image
             Box {
@@ -231,23 +232,6 @@ fun MenuItemListCard(
                     placeholder = painterResource(R.drawable.coffee_cup),
                     error = painterResource(R.drawable.coffee_cup)
                 )
-
-                // Favorite Heart Button (top right of image)
-                IconButton(
-                    onClick = { onFavoriteClick(menuItem.id) },
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(4.dp)
-                        .size(28.dp)
-                        .background(Color.Black.copy(alpha = 0.3f), CircleShape)
-                ) {
-                    Icon(
-                        painter = painterResource(if (isFavorite) R.drawable.ic_heart_filled else R.drawable.ic_heart),
-                        contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                        tint = if (isFavorite) Color.Red else Color.White,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
 
                 // Unavailable Overlay
                 if (!menuItem.isAvailable) {
@@ -269,7 +253,7 @@ fun MenuItemListCard(
                     }
                 }
             }
-            
+
             Spacer(modifier = Modifier.width(Spacing.md))
             
             // Item Details

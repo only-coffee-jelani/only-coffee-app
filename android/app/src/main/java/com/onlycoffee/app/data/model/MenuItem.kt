@@ -4,6 +4,20 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 
+/**
+ * Enterprise-Level MenuItem Domain Model
+ * Represents a menu item in the application
+ *
+ * Category is now stored as a String (category name from database)
+ * instead of a hardcoded enum for dynamic category support
+ *
+ * Allergens are stored as UUIDs from the database allergens table:
+ * - Gluten: 3d45e53e-982c-4e12-80f0-2dee3fca7848
+ * - Eggs: 75df15ed-d7ed-4469-9398-5d31015e4589
+ * - Soybeans: 6c0b6e50-e3fc-42e0-87d3-377e7ea71c9f
+ * - Milk: 5be67603-8533-431f-a17c-651dbf0aed80
+ * - Nuts: 81dd0ffc-6c16-4ada-afb2-84303bf6ec36
+ */
 @Parcelize
 @Serializable
 data class MenuItem(
@@ -12,11 +26,11 @@ data class MenuItem(
     val description: String,
     val basePrice: Double,
     val imageUrl: String? = null,
-    val category: MenuCategory,
+    val categoryName: String, // Changed from MenuCategory enum to String
     val isAvailable: Boolean = true,
     val modifiers: List<MenuModifier> = emptyList(),
     val nutritionInfo: NutritionInfo? = null,
-    val allergens: List<String> = emptyList(),
+    val allergens: List<String> = emptyList(), // List of allergen UUIDs from database
     val preparationTime: Int = 5, // minutes
     val isCustomizable: Boolean = true,
     val isFeatured: Boolean = false,
@@ -28,8 +42,23 @@ data class MenuItem(
 
     val calories: Int?
         get() = nutritionInfo?.calories
-    
+
+    /**
+     * Legacy support for MenuCategory enum
+     * Converts category name to enum for backward compatibility
+     */
+    @Deprecated("Use categoryName instead", ReplaceWith("categoryName"))
+    val category: MenuCategory
+        get() = MenuCategory.fromString(categoryName)
+
     companion object {
+        // Allergen IDs from database (for sample data only - production uses API)
+        const val ALLERGEN_GLUTEN = "3d45e53e-982c-4e12-80f0-2dee3fca7848"
+        const val ALLERGEN_EGGS = "75df15ed-d7ed-4469-9398-5d31015e4589"
+        const val ALLERGEN_SOYBEANS = "6c0b6e50-e3fc-42e0-87d3-377e7ea71c9f"
+        const val ALLERGEN_MILK = "5be67603-8533-431f-a17c-651dbf0aed80"
+        const val ALLERGEN_NUTS = "81dd0ffc-6c16-4ada-afb2-84303bf6ec36"
+
         val sampleItems = listOf(
             // ESPRESSO CATEGORY
             MenuItem(
@@ -38,11 +67,11 @@ data class MenuItem(
                 description = "Rich, concentrated coffee shot with perfect crema",
                 basePrice = 4.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 3,
                 isPopular = true,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "doppio",
@@ -50,10 +79,10 @@ data class MenuItem(
                 description = "Double shot of our premium espresso",
                 basePrice = 5.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 3,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "americano",
@@ -61,11 +90,11 @@ data class MenuItem(
                 description = "Rich espresso shots with hot water, perfect for coffee purists",
                 basePrice = 5.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 4,
                 isPopular = true,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "cappuccino",
@@ -73,11 +102,11 @@ data class MenuItem(
                 description = "Perfect balance of espresso, steamed milk, and foam",
                 basePrice = 6.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 5,
                 isPopular = true,
-                allergens = listOf("G"),
+                allergens = listOf(ALLERGEN_MILK),
                 modifiers = listOf(
                     MenuModifier(
                         id = "milk",
@@ -100,10 +129,10 @@ data class MenuItem(
                 description = "Smooth espresso with perfectly steamed milk",
                 basePrice = 6.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 5,
-                allergens = listOf("G"),
+                allergens = listOf(ALLERGEN_MILK),
                 modifiers = listOf(
                     MenuModifier(
                         id = "milk",
@@ -126,11 +155,11 @@ data class MenuItem(
                 description = "This is a test coffee to verify our changes are working",
                 basePrice = 9.99,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 5,
                 isPopular = true,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "macchiato",
@@ -138,10 +167,10 @@ data class MenuItem(
                 description = "Espresso 'marked' with a dollop of foamed milk",
                 basePrice = 6.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 4,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "cortado",
@@ -149,21 +178,21 @@ data class MenuItem(
                 description = "Equal parts espresso and warm milk, perfectly balanced",
                 basePrice = 6.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 5,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "einspanner",
                 name = "Einspänner",
-                description = "Double espresso with whipped cream (FG)",
+                description = "Double espresso with whipped cream",
                 basePrice = 7.00,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 6,
-                allergens = listOf("F", "G")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "latte",
@@ -171,11 +200,11 @@ data class MenuItem(
                 description = "With 29g of protein per grande, this handcrafted Iced Latte blends bold, signature espresso with Protein-boosted Milk and sweet vanilla flavor for a smooth, delicious beverage.",
                 basePrice = 6.00,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 5,
                 isPopular = true,
-                allergens = listOf("G"),
+                allergens = listOf(ALLERGEN_MILK),
                 nutritionInfo = NutritionInfo(
                     calories = 270,
                     fat = 4.0,
@@ -233,14 +262,14 @@ data class MenuItem(
             MenuItem(
                 id = "thomas-coffee-latte",
                 name = "Thomas Coffee Latte",
-                description = "Latte with double espresso (FG)",
+                description = "Latte with double espresso",
                 basePrice = 7.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.VIENNA_CLASSICS,
+                categoryName = "Vienna Classics",
                 isAvailable = true,
                 preparationTime = 6,
                 isFeatured = true,
-                allergens = listOf("F", "G")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_MILK)
             ),
 
             // SPECIALTY / ETHIOPIA CATEGORY
@@ -250,11 +279,11 @@ data class MenuItem(
                 description = "Premium Ethiopian coffee beans, double shot",
                 basePrice = 6.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SPECIALTY_ETHIOPIA,
+                categoryName = "Ethiopia / Specialty Coffees",
                 isAvailable = true,
                 preparationTime = 4,
                 isFeatured = true,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "ethiopia-flat-white",
@@ -262,10 +291,10 @@ data class MenuItem(
                 description = "Ethiopian coffee with perfectly steamed milk",
                 basePrice = 7.75,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SPECIALTY_ETHIOPIA,
+                categoryName = "Ethiopia / Specialty Coffees",
                 isAvailable = true,
                 preparationTime = 6,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "brewed-coffee-small",
@@ -273,7 +302,7 @@ data class MenuItem(
                 description = "Freshly brewed Ethiopian coffee, small size",
                 basePrice = 4.75,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SPECIALTY_ETHIOPIA,
+                categoryName = "Ethiopia / Specialty Coffees",
                 isAvailable = true,
                 preparationTime = 2,
                 isPopular = true
@@ -284,7 +313,7 @@ data class MenuItem(
                 description = "Freshly brewed Ethiopian coffee, large size",
                 basePrice = 6.00,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SPECIALTY_ETHIOPIA,
+                categoryName = "Ethiopia / Specialty Coffees",
                 isAvailable = true,
                 preparationTime = 2,
                 isPopular = true
@@ -295,7 +324,7 @@ data class MenuItem(
                 description = "Smooth, strong cold brew coffee",
                 basePrice = 6.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SUMMER_DRINKS,
+                categoryName = "Summer Drinks",
                 isAvailable = true,
                 preparationTime = 3,
                 isFeatured = true
@@ -305,14 +334,14 @@ data class MenuItem(
             MenuItem(
                 id = "salted-caramel-macchiato",
                 name = "Salted Caramel Espresso Macchiato",
-                description = "Double espresso, a bit of milk, real salted caramel (FG)",
+                description = "Double espresso, a bit of milk, real salted caramel",
                 basePrice = 7.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 7,
                 isFeatured = true,
-                allergens = listOf("F", "G")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "cappuccino-marshmallow",
@@ -320,21 +349,21 @@ data class MenuItem(
                 description = "Cappuccino topped with fluffy marshmallow",
                 basePrice = 7.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 6,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "honey-latte-macchiato",
                 name = "Honey Latte Macchiato",
-                description = "Single shot, lots of milk, honey syrup (FG)",
+                description = "Single shot, lots of milk, honey syrup",
                 basePrice = 7.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 6,
-                allergens = listOf("F", "G")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "orangeccino",
@@ -342,7 +371,7 @@ data class MenuItem(
                 description = "Double espresso with fresh-pressed orange juice",
                 basePrice = 8.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 8,
                 isFeatured = true
@@ -350,40 +379,40 @@ data class MenuItem(
             MenuItem(
                 id = "kaffee-latte-oreo",
                 name = "Kaffee Latte with Oreo",
-                description = "Single shot, lots of milk, Oreo cookies (FGCA)",
+                description = "Single shot, lots of milk, Oreo cookies",
                 basePrice = 8.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 7,
-                allergens = listOf("F", "G", "C", "A")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_MILK, ALLERGEN_EGGS, ALLERGEN_GLUTEN)
             ),
 
             // SIGNATURE WAFFOLINO ITEMS
             MenuItem(
                 id = "waffolino",
                 name = "Waffolino",
-                description = "Single espresso & foamed milk in a waffle cone (FCGA)",
+                description = "Single espresso & foamed milk in a waffle cone",
                 basePrice = 11.25,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 10,
                 isFeatured = true,
                 isPopular = true,
-                allergens = listOf("F", "C", "G", "A")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_EGGS, ALLERGEN_MILK, ALLERGEN_GLUTEN)
             ),
             MenuItem(
                 id = "waffolino-pistacchio",
                 name = "Waffolino con Pistacchio",
-                description = "Single espresso & foamed milk in a pistachio waffle cone (FCGA)",
+                description = "Single espresso & foamed milk in a pistachio waffle cone",
                 basePrice = 14.75,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.COFFEE_COCKTAILS,
+                categoryName = "Coffee Cocktails",
                 isAvailable = true,
                 preparationTime = 12,
                 isFeatured = true,
-                allergens = listOf("F", "C", "G", "A")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_EGGS, ALLERGEN_MILK, ALLERGEN_GLUTEN)
             ),
 
             // SUMMER DRINKS
@@ -393,7 +422,7 @@ data class MenuItem(
                 description = "Double espresso + bottle of Fever-Tree tonic (no alcohol)",
                 basePrice = 10.00,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SUMMER_DRINKS,
+                categoryName = "Summer Drinks",
                 isAvailable = true,
                 preparationTime = 5,
                 isFeatured = true
@@ -404,11 +433,11 @@ data class MenuItem(
                 description = "One scoop creamy ice cream + double espresso",
                 basePrice = 7.75,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SUMMER_DRINKS,
+                categoryName = "Summer Drinks",
                 isAvailable = true,
                 preparationTime = 5,
                 isPopular = true,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "waffolino-affogato",
@@ -416,11 +445,11 @@ data class MenuItem(
                 description = "Double espresso, a scoop of ice cream in a waffle cone",
                 basePrice = 13.50,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SUMMER_DRINKS,
+                categoryName = "Summer Drinks",
                 isAvailable = true,
                 preparationTime = 10,
                 isFeatured = true,
-                allergens = listOf("F", "C", "G", "A")
+                allergens = listOf(ALLERGEN_SOYBEANS, ALLERGEN_EGGS, ALLERGEN_MILK, ALLERGEN_GLUTEN)
             ),
 
             // SOFT SERVE
@@ -430,11 +459,11 @@ data class MenuItem(
                 description = "ONLY VANILLA, the best Vanilla ice cream you can find in Town!",
                 basePrice = 6.00,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.SOFT_SERVE,
+                categoryName = "Soft-Ice / Ice Cream",
                 isAvailable = true,
                 preparationTime = 3,
                 isPopular = true,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
 
             // OTHER ITEMS
@@ -444,7 +473,7 @@ data class MenuItem(
                 description = "(to each coffee drink)",
                 basePrice = 1.75,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.OTHER,
+                categoryName = "Other",
                 isAvailable = true,
                 preparationTime = 1,
                 isCustomizable = false
@@ -455,10 +484,10 @@ data class MenuItem(
                 description = "Rich, creamy hot chocolate",
                 basePrice = 4.68,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.OTHER,
+                categoryName = "Hot Chocolate",
                 isAvailable = true,
                 preparationTime = 4,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             ),
             MenuItem(
                 id = "hot-chocolate-large",
@@ -466,10 +495,10 @@ data class MenuItem(
                 description = "Rich, creamy hot chocolate, large size",
                 basePrice = 6.00,
                 imageUrl = null, // Use coffee_cup drawable as fallback
-                category = MenuCategory.OTHER,
+                categoryName = "Hot Chocolate",
                 isAvailable = true,
                 preparationTime = 4,
-                allergens = listOf("G")
+                allergens = listOf(ALLERGEN_MILK)
             )
         )
     }

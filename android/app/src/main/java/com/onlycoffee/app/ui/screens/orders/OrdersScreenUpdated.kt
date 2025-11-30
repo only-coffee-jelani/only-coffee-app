@@ -32,15 +32,15 @@ fun OrdersScreenUpdated(
 ) {
     val authUiState by authViewModel.uiState.collectAsState()
     val uiState by viewModel.uiState.collectAsState()
-    
+
     LaunchedEffect(authUiState.isAuthenticated) {
         if (authUiState.isAuthenticated) {
             viewModel.loadOrders()
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
-        if (authUiState.isAuthenticated) {
+    if (authUiState.isAuthenticated) {
+        Column(modifier = Modifier.fillMaxSize().padding(24.dp)) {
             when {
                 uiState.isLoading -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -54,9 +54,9 @@ fun OrdersScreenUpdated(
                     OrdersListContent(uiState.orders, navController, viewModel)
                 }
             }
-        } else {
-            UnauthenticatedOrdersContent(navController)
         }
+    } else {
+        UnauthenticatedOrdersContent(navController)
     }
 }
 
@@ -171,36 +171,40 @@ private fun EmptyOrdersContent() {
 
 @Composable
 private fun UnauthenticatedOrdersContent(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.ShoppingBag,
-            contentDescription = null,
-            tint = BrandPrimary,
-            modifier = Modifier.size(80.dp)
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = "Sign In to View Orders",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Track your orders and reorder your favorites",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = { navController.navigate("login") },
-            modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("Sign In", style = MaterialTheme.typography.titleMedium)
+            Icon(
+                imageVector = Icons.Default.ShoppingBag,
+                contentDescription = null,
+                tint = BrandPrimary,
+                modifier = Modifier.size(80.dp)
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Sign In to View Orders",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Track your orders and reorder your favorites",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = { navController.navigate("login") },
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(56.dp)
+            ) {
+                Text("Sign In", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }

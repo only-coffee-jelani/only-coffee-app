@@ -36,7 +36,7 @@ class HomeViewModel @Inject constructor(
 
             // Fetch featured items with fallback
             val featuredItems = try {
-                menuApiService.getFeaturedItems().data
+                menuApiService.getFeaturedItems().map { it.toMenuItem() }
             } catch (e: Exception) {
                 MenuItem.sampleItems.filter { it.isFeatured }
             }

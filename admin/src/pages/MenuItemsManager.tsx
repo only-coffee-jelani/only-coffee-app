@@ -11,7 +11,9 @@ const MenuItemsManager = () => {
   const allergensDropdownRef = useRef<HTMLDivElement>(null);
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
+  const [allergens, setAllergens] = useState<any[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [categoriesMap, setCategoriesMap] = useState<Map<string, string>>(new Map()); // categoryName -> categoryId
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -37,19 +39,9 @@ const MenuItemsManager = () => {
     imageUrl: '',
     selectedStores: [] as string[],
     allergens: [] as string[],
-    sizes: [
-      { name: 'Small', price: '0.00' },
-      { name: 'Large', price: '1.50' }
-    ] as Array<{ name: string; price: string }>,
   });
 
-  const allergensList = [
-    'Cereals containing gluten',
-    'Eggs',
-    'Soybeans',
-    'Milk',
-    'Peanuts and nuts',
-  ];
+
 
   const [showAllergensDropdown, setShowAllergensDropdown] = useState(false);
 
@@ -78,7 +70,7 @@ const MenuItemsManager = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [menuResponse, storesResponse, categoriesResponse] = await Promise.all([
+      const [menuResponse, storesResponse, categoriesResponse, allergensResponse] = await Promise.all([
         fetch(`${API_BASE}/menu-items`, {
           method: 'GET',
           headers: {
@@ -97,23 +89,62 @@ const MenuItemsManager = () => {
             'Content-Type': 'application/json',
           },
         }),
+        fetch(`${API_BASE}/allergens`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }),
       ]);
 
-      if (!menuResponse.ok) throw new Error('Failed to fetch menu items');
+      if (!menuResponse.ok) {
+        throw new Error(`Failed to fetch menu items: ${menuResponse.status}`);
+      }
       if (!storesResponse.ok) throw new Error('Failed to fetch stores');
       if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
+      if (!allergensResponse.ok) throw new Error('Failed to fetch allergens');
 
       const menuData = await menuResponse.json();
       const storesResult = await storesResponse.json();
       const categoriesData = await categoriesResponse.json();
+      const allergensData = await allergensResponse.json();
 
-      setMenuItems(menuData || []);
+      // Handle menu items - backend returns array directly
+      const items = Array.isArray(menuData) ? menuData : (menuData.data || []);
+      setMenuItems(items);
+
       // Backend returns {success, data, count} format for stores
-      setStores(storesResult.data || []);
-      setCategories(categoriesData?.map((c: any) => c.name) || []);
+      // Transform stores to have consistent id and type fields
+      const transformedStores = (storesResult.data || []).map((store: any) => ({
+        ...store,
+        id: store.storeId || store.id,
+        type: store.storeType?.code || store.type || 'coffee_shop',
+      }));
+      setStores(transformedStores);
+
+      // Allergens - handle both array and object with value property
+      const allergensList = Array.isArray(allergensData)
+        ? allergensData
+        : (allergensData.value || allergensData.data || []);
+      setAllergens(allergensList);
+
+      // Categories - handle both array and object with data property
+      const cats = Array.isArray(categoriesData)
+        ? categoriesData
+        : (categoriesData.data || []);
+      setCategories(cats.map((c: any) => c.name || c));
+
+      // Create a map of categoryName -> categoryId for easy lookup
+      const catMap = new Map<string, string>();
+      cats.forEach((cat: any) => {
+        if (cat.name && cat.categoryId) {
+          catMap.set(cat.name, cat.categoryId);
+        }
+      });
+      setCategoriesMap(catMap);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Failed to load menu items');
+      toast.error(`Failed to load menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -129,10 +160,6 @@ const MenuItemsManager = () => {
       imageUrl: '',
       selectedStores: [],
       allergens: [],
-      sizes: [
-        { name: 'Small', price: '0.00' },
-        { name: 'Large', price: '1.50' }
-      ]
     });
     setEditingId(null);
     setShowForm(true);
@@ -141,39 +168,22 @@ const MenuItemsManager = () => {
   const handleEdit = (item: any) => {
     // Use the storeIds array directly from the item
     const storesWithItem = item.storeIds || [];
-    const itemAllergens = item.allergens || [];
 
-    // Extract sizes from availableModifiers
-    let extractedSizes = [
-      { name: 'Small', price: '0.00' },
-      { name: 'Large', price: '1.50' }
-    ];
+    // Use the allergenIds array directly from the item
+    const allergensWithItem = item.allergenIds || [];
 
-    if (item.availableModifiers && Array.isArray(item.availableModifiers)) {
-      const sizeModifier = item.availableModifiers.find((mod: any) => mod.type === 'size');
-      if (sizeModifier && sizeModifier.options && Array.isArray(sizeModifier.options)) {
-        extractedSizes = sizeModifier.options.map((opt: any) => ({
-          name: opt.value || opt.name,
-          price: (opt.price || 0).toFixed(2)
-        }));
-      }
-    }
-
-    // Use categories array if available, otherwise fall back to single category
-    const itemCategories = item.categories && item.categories.length > 0
-      ? item.categories
-      : [item.category];
+    // Get the category name from the item
+    const categoryName = item.categoryName || '';
 
     setFormData({
-      name: item.name,
-      category: item.category,
-      categories: itemCategories,
+      name: item.name || '',
+      category: categoryName,
+      categories: categoryName ? [categoryName] : [],
       description: item.description || '',
-      basePrice: item.basePrice.toString(),
+      basePrice: item.basePrice ? item.basePrice.toString() : '',
       imageUrl: item.imageUrl || '',
       selectedStores: storesWithItem,
-      allergens: itemAllergens,
-      sizes: extractedSizes,
+      allergens: allergensWithItem,
     });
     setEditingId(item.id);
     setShowForm(true);
@@ -204,29 +214,30 @@ const MenuItemsManager = () => {
         return;
       }
 
-      // Construct availableModifiers from sizes
-      const availableModifiers = [{
-        id: 'size',
-        name: 'Size',
-        type: 'size',
-        options: formData.sizes.map(size => ({
-          value: size.name,
-          price: parseFloat(size.price)
-        })),
-        required: true
-      }];
+      // Get the categoryId from the category name
+      const categoryName = formData.categories[0] || formData.category;
+      const categoryId = categoriesMap.get(categoryName);
 
-      const payload = {
+      if (!categoryId) {
+        toast.error('Invalid category selected');
+        setSaving(false);
+        return;
+      }
+
+      // Build the payload according to the backend schema
+      const payload: any = {
         name: formData.name,
-        category: formData.categories[0] || formData.category, // Use first category for backward compatibility
-        categories: formData.categories, // Send categories array
-        description: formData.description,
+        description: formData.description || null,
         basePrice: parseFloat(formData.basePrice),
-        imageUrl: formData.imageUrl,
-        storeIds: formData.selectedStores,
-        allergens: formData.allergens,
-        availableModifiers: availableModifiers,
+        categoryId: categoryId,
+        storeIds: formData.selectedStores, // Include store associations
+        allergenIds: formData.allergens, // Include allergen associations
       };
+
+      // Only include optional fields if they have values
+      if (formData.imageUrl) {
+        payload.imageUrl = formData.imageUrl;
+      }
 
       if (editingId) {
         // Update existing menu item with new storeIds
@@ -338,8 +349,8 @@ const MenuItemsManager = () => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      // Category filter
-      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      // Category filter - use categoryName from backend
+      const matchesCategory = selectedCategory === 'all' || item.categoryName === selectedCategory;
 
       // Price range filter
       const price = Number(item.basePrice);
@@ -360,7 +371,7 @@ const MenuItemsManager = () => {
           compareValue = Number(a.basePrice) - Number(b.basePrice);
           break;
         case 'category':
-          compareValue = a.category.localeCompare(b.category);
+          compareValue = (a.categoryName || '').localeCompare(b.categoryName || '');
           break;
         case 'newest':
           compareValue = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -378,91 +389,82 @@ const MenuItemsManager = () => {
     const grouped: Record<string, any[]> = {};
 
     filteredAndSortedItems.forEach(item => {
-      if (!grouped[item.category]) {
-        grouped[item.category] = [];
+      const categoryKey = item.categoryName || 'Uncategorized';
+      if (!grouped[categoryKey]) {
+        grouped[categoryKey] = [];
       }
-      grouped[item.category].push(item);
+      grouped[categoryKey].push(item);
     });
 
     return grouped;
   }, [filteredAndSortedItems]);
 
-  // Get all categories in order
-  const allCategories = [
-    'best_sellers',
-    'seasonal_specials',
-    'signature',
-    'hot_coffee',
-    'iced_coffee',
-    'cold_brew',
-    'other_drinks',
-    'ice_cream',
-    'add_ons',
-  ];
+  // Get all categories from the grouped items (dynamically)
+  const allCategories = useMemo(() => {
+    return Object.keys(itemsByCategory).sort();
+  }, [itemsByCategory]);
 
-  // Group stores by type
+  // Group stores by type (dynamically)
   const storesByType = useMemo(() => {
-    return {
-      coffee_shop: stores.filter(s => s.type === 'coffee_shop'),
-      mobile_coffee_bar: stores.filter(s => s.type === 'mobile_coffee_bar'),
-    };
+    const grouped: Record<string, any[]> = {};
+    stores.forEach(store => {
+      const type = store.type || 'other';
+      if (!grouped[type]) {
+        grouped[type] = [];
+      }
+      grouped[type].push(store);
+    });
+    return grouped;
   }, [stores]);
 
+  // Get all store types
+  const storeTypes = useMemo(() => {
+    return Object.keys(storesByType);
+  }, [storesByType]);
+
   // Handle check all stores
-  const handleCheckAllStores = (type: 'all' | 'coffee_shop' | 'mobile_coffee_bar') => {
+  const handleCheckAllStores = (type: string) => {
     if (type === 'all') {
       setFormData({
         ...formData,
         selectedStores: stores.map(s => s.id),
       });
-    } else if (type === 'coffee_shop') {
-      const coffeeShopIds = storesByType.coffee_shop.map(s => s.id);
-      const mobileIds = formData.selectedStores.filter(id =>
-        storesByType.mobile_coffee_bar.some(s => s.id === id)
+    } else {
+      // Get IDs of stores of this type
+      const typeIds = (storesByType[type] || []).map(s => s.id);
+      // Keep IDs of stores of other types
+      const otherIds = formData.selectedStores.filter(id =>
+        !typeIds.includes(id)
       );
       setFormData({
         ...formData,
-        selectedStores: [...coffeeShopIds, ...mobileIds],
-      });
-    } else if (type === 'mobile_coffee_bar') {
-      const mobileIds = storesByType.mobile_coffee_bar.map(s => s.id);
-      const coffeeShopIds = formData.selectedStores.filter(id =>
-        storesByType.coffee_shop.some(s => s.id === id)
-      );
-      setFormData({
-        ...formData,
-        selectedStores: [...coffeeShopIds, ...mobileIds],
+        selectedStores: [...typeIds, ...otherIds],
       });
     }
   };
 
   // Handle uncheck all stores
-  const handleUncheckAllStores = (type: 'all' | 'coffee_shop' | 'mobile_coffee_bar') => {
+  const handleUncheckAllStores = (type: string) => {
     if (type === 'all') {
       setFormData({
         ...formData,
         selectedStores: [],
       });
-    } else if (type === 'coffee_shop') {
+    } else {
+      // Remove IDs of stores of this type
+      const typeIds = (storesByType[type] || []).map(s => s.id);
       setFormData({
         ...formData,
         selectedStores: formData.selectedStores.filter(id =>
-          storesByType.mobile_coffee_bar.some(s => s.id === id)
-        ),
-      });
-    } else if (type === 'mobile_coffee_bar') {
-      setFormData({
-        ...formData,
-        selectedStores: formData.selectedStores.filter(id =>
-          storesByType.coffee_shop.some(s => s.id === id)
+          !typeIds.includes(id)
         ),
       });
     }
   };
 
   // Check if all stores of a type are selected
-  const areAllStoresSelected = (type: 'coffee_shop' | 'mobile_coffee_bar') => {
-    const storesOfType = storesByType[type];
+  const areAllStoresSelected = (type: string) => {
+    const storesOfType = storesByType[type] || [];
     return storesOfType.length > 0 && storesOfType.every(s => formData.selectedStores.includes(s.id));
   };
 
@@ -673,41 +675,6 @@ const MenuItemsManager = () => {
                 />
               </div>
 
-              {/* Sizes */}
-              <div>
-                <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Cup Sizes & Pricing</label>
-                <div className="space-y-3">
-                  {formData.sizes.map((size, index) => (
-                    <div key={index} className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
-                      <div className="flex-1">
-                        <label className="block text-xs font-semibold text-gray-700 mb-2">{size.name}</label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-3 text-gray-500 font-bold">$</span>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={size.price}
-                            onChange={(e) => {
-                              const newSizes = [...formData.sizes];
-                              newSizes[index].price = e.target.value;
-                              setFormData({ ...formData, sizes: newSizes });
-                            }}
-                            className="w-full pl-8 pr-4 py-3 border-2 border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white font-semibold"
-                            placeholder="0.00"
-                          />
-                        </div>
-                        <p className="text-xs text-gray-600 mt-2">
-                          {index === 0 ? 'Base price (typically $0.00)' : 'Additional charge over base price'}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-gray-500 mt-3 italic">
-                  💡 Tip: Small is typically the base price ($0.00), Large adds an upcharge (e.g., $1.50)
-                </p>
-              </div>
-
               {/* Allergens */}
               <div>
                 <label className="block text-sm font-bold text-gray-900 mb-4 uppercase tracking-wide">Allergens</label>
@@ -722,7 +689,7 @@ const MenuItemsManager = () => {
                     <span>
                       {formData.allergens.length === 0
                         ? 'Select allergens...'
-                        : formData.allergens.length === allergensList.length
+                        : formData.allergens.length === allergens.length
                         ? 'All allergens selected'
                         : `${formData.allergens.length} allergen${formData.allergens.length !== 1 ? 's' : ''} selected`}
                     </span>
@@ -744,12 +711,12 @@ const MenuItemsManager = () => {
                         <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
                           <input
                             type="checkbox"
-                            checked={formData.allergens.length === allergensList.length}
+                            checked={formData.allergens.length === allergens.length}
                             onChange={(e) => {
                               if (e.target.checked) {
                                 setFormData({
                                   ...formData,
-                                  allergens: [...allergensList],
+                                  allergens: allergens.map(a => a.id),
                                 });
                               } else {
                                 setFormData({
@@ -766,27 +733,27 @@ const MenuItemsManager = () => {
 
                       {/* Allergens List */}
                       <div className="p-4 space-y-2">
-                        {allergensList.map(allergen => (
-                          <label key={allergen} className="flex items-center gap-3 cursor-pointer hover:bg-orange-50 p-2 rounded-lg transition-colors">
+                        {allergens.map(allergen => (
+                          <label key={allergen.id} className="flex items-center gap-3 cursor-pointer hover:bg-orange-50 p-2 rounded-lg transition-colors">
                             <input
                               type="checkbox"
-                              checked={formData.allergens.includes(allergen)}
+                              checked={formData.allergens.includes(allergen.id)}
                               onChange={(e) => {
                                 if (e.target.checked) {
                                   setFormData({
                                     ...formData,
-                                    allergens: [...formData.allergens, allergen],
+                                    allergens: [...formData.allergens, allergen.id],
                                   });
                                 } else {
                                   setFormData({
                                     ...formData,
-                                    allergens: formData.allergens.filter(a => a !== allergen),
+                                    allergens: formData.allergens.filter(a => a !== allergen.id),
                                   });
                                 }
                               }}
                               className="w-4 h-4 rounded border-2 border-orange-300 cursor-pointer accent-orange-500"
                             />
-                            <span className="text-sm text-gray-900">{allergen}</span>
+                            <span className="text-sm text-gray-900">{allergen.icon} {allergen.name}</span>
                           </label>
                         ))}
                       </div>
@@ -846,54 +813,38 @@ const MenuItemsManager = () => {
                             <span className="font-bold text-gray-900">Check All</span>
                           </label>
 
-                          {/* Check All Coffee Shops */}
-                          {storesByType.coffee_shop.length > 0 && (
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
+                          {/* Check All by Store Type */}
+                          {storeTypes.map(type => (
+                            <label key={type} className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
                               <input
                                 type="checkbox"
-                                checked={areAllStoresSelected('coffee_shop')}
+                                checked={areAllStoresSelected(type)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    handleCheckAllStores('coffee_shop');
+                                    handleCheckAllStores(type);
                                   } else {
-                                    handleUncheckAllStores('coffee_shop');
+                                    handleUncheckAllStores(type);
                                   }
                                 }}
                                 className="w-5 h-5 rounded border-2 border-pink-300 cursor-pointer accent-pink-500"
                               />
-                              <span className="font-bold text-gray-900">All Stores ({storesByType.coffee_shop.length})</span>
+                              <span className="font-bold text-gray-900 capitalize">
+                                All {type.replace(/_/g, ' ')}s ({storesByType[type].length})
+                              </span>
                             </label>
-                          )}
-
-                          {/* Check All Mobile Coffee Bars */}
-                          {storesByType.mobile_coffee_bar.length > 0 && (
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition-colors">
-                              <input
-                                type="checkbox"
-                                checked={areAllStoresSelected('mobile_coffee_bar')}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    handleCheckAllStores('mobile_coffee_bar');
-                                  } else {
-                                    handleUncheckAllStores('mobile_coffee_bar');
-                                  }
-                                }}
-                                className="w-5 h-5 rounded border-2 border-pink-300 cursor-pointer accent-pink-500"
-                              />
-                              <span className="font-bold text-gray-900">All Mobile Coffee Bars ({storesByType.mobile_coffee_bar.length})</span>
-                            </label>
-                          )}
+                          ))}
                         </div>
                       </div>
 
                       {/* Stores List */}
                       <div className="p-4 space-y-4">
-                        {/* Coffee Shops */}
-                        {storesByType.coffee_shop.length > 0 && (
-                          <div>
-                            <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Stores</h4>
+                        {storeTypes.map(type => (
+                          <div key={type}>
+                            <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">
+                              {type.replace(/_/g, ' ')}s
+                            </h4>
                             <div className="space-y-2 pl-4 border-l-4 border-pink-300">
-                              {storesByType.coffee_shop.map(store => (
+                              {storesByType[type].map(store => (
                                 <label key={store.id} className="flex items-center gap-3 cursor-pointer hover:bg-pink-50 p-2 rounded-lg transition-colors">
                                   <input
                                     type="checkbox"
@@ -918,39 +869,7 @@ const MenuItemsManager = () => {
                               ))}
                             </div>
                           </div>
-                        )}
-
-                        {/* Mobile Coffee Bars */}
-                        {storesByType.mobile_coffee_bar.length > 0 && (
-                          <div>
-                            <h4 className="text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Mobile Coffee Bars</h4>
-                            <div className="space-y-2 pl-4 border-l-4 border-orange-300">
-                              {storesByType.mobile_coffee_bar.map(store => (
-                                <label key={store.id} className="flex items-center gap-3 cursor-pointer hover:bg-orange-50 p-2 rounded-lg transition-colors">
-                                  <input
-                                    type="checkbox"
-                                    checked={formData.selectedStores.includes(store.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setFormData({
-                                          ...formData,
-                                          selectedStores: [...formData.selectedStores, store.id],
-                                        });
-                                      } else {
-                                        setFormData({
-                                          ...formData,
-                                          selectedStores: formData.selectedStores.filter(id => id !== store.id),
-                                        });
-                                      }
-                                    }}
-                                    className="w-4 h-4 rounded border-2 border-orange-300 cursor-pointer accent-orange-500"
-                                  />
-                                  <span className="text-sm text-gray-900">{store.name}</span>
-                                </label>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                        ))}
                       </div>
                     </div>
                   )}
@@ -1030,15 +949,9 @@ const MenuItemsManager = () => {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white transition-all"
                 >
                   <option value="all">All Categories</option>
-                  <option value="best_sellers">Best Sellers</option>
-                  <option value="seasonal_specials">Seasonal Specials</option>
-                  <option value="signature">Signature</option>
-                  <option value="hot_coffee">Hot Coffee</option>
-                  <option value="iced_coffee">Iced Coffee</option>
-                  <option value="cold_brew">Cold Brew</option>
-                  <option value="other_drinks">Other Drinks</option>
-                  <option value="ice_cream">Ice Cream</option>
-                  <option value="add_ons">Add Ons</option>
+                  {categories.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
                 </select>
               </div>
 
@@ -1157,11 +1070,10 @@ const MenuItemsManager = () => {
                           <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-40">Categories</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Sizes</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Base Price</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-40">Category</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Price</th>
+                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Calories</th>
                             <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-64">Description</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Allergens</th>
                             <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
                           </tr>
                         </thead>
@@ -1195,48 +1107,29 @@ const MenuItemsManager = () => {
                                 <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{item.name}</p>
                               </td>
 
-                              {/* Categories */}
+                              {/* Category */}
                               <td className="px-6 py-5">
-                                <div className="flex flex-wrap gap-1.5">
-                                  {(item.categories && item.categories.length > 0 ? item.categories : [item.category]).map((cat, idx) => (
-                                    <span
-                                      key={idx}
-                                      className="inline-block px-2.5 py-1 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 rounded-full text-xs font-bold shadow-sm group-hover:shadow-md transition-shadow"
-                                    >
-                                      {getCategoryLabel(cat)}
-                                    </span>
-                                  ))}
-                                </div>
+                                <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 rounded-full text-sm font-bold shadow-sm group-hover:shadow-md transition-shadow">
+                                  {item.categoryName || 'Uncategorized'}
+                                </span>
                               </td>
 
-                              {/* Sizes */}
+                              {/* Price */}
                               <td className="px-6 py-5">
-                                {item.availableModifiers && Array.isArray(item.availableModifiers) ? (
-                                  (() => {
-                                    const sizeModifier = item.availableModifiers.find((mod: any) => mod.type === 'size');
-                                    if (sizeModifier && sizeModifier.options) {
-                                      return (
-                                        <div className="flex flex-col gap-1">
-                                          {sizeModifier.options.map((opt: any, idx: number) => (
-                                            <span key={idx} className="text-xs text-gray-700 font-medium">
-                                              {opt.value}: <span className="text-blue-600 font-bold">+${Number(opt.price).toFixed(2)}</span>
-                                            </span>
-                                          ))}
-                                        </div>
-                                      );
-                                    }
-                                    return <span className="text-xs text-gray-500 italic">No sizes</span>;
-                                  })()
-                                ) : (
-                                  <span className="text-xs text-gray-500 italic">No sizes</span>
-                                )}
-                              </td>
-
-                              {/* Base Price */}
-                              <td className="px-6 py-5">
-                                <span className="inline-block px-4 py-2 bg-gradient-to-r from-pink-100 to-orange-100 text-pink-700 rounded-full text-sm font-bold shadow-sm group-hover:shadow-md transition-shadow">
+                                <span className="inline-block px-4 py-2 bg-gradient-to-r from-pink-100 to-orange-100 text-pink-700 rounded-full text-base font-bold shadow-sm group-hover:shadow-md transition-shadow">
                                   ${Number(item.basePrice).toFixed(2)}
                                 </span>
+                              </td>
+
+                              {/* Calories */}
+                              <td className="px-6 py-5">
+                                {item.calories ? (
+                                  <span className="text-sm text-gray-700 font-semibold">
+                                    {item.calories} cal
+                                  </span>
+                                ) : (
+                                  <span className="text-sm text-gray-400 italic">N/A</span>
+                                )}
                               </td>
 
                               {/* Description */}
@@ -1244,24 +1137,6 @@ const MenuItemsManager = () => {
                                 <p className="text-sm text-gray-700 line-clamp-2 group-hover:text-gray-900 transition-colors font-medium">
                                   {item.description || <span className="text-gray-400 italic">No description</span>}
                                 </p>
-                              </td>
-
-                              {/* Allergens */}
-                              <td className="px-6 py-5">
-                                {item.allergens && item.allergens.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {item.allergens.map((allergen, idx) => (
-                                      <span
-                                        key={idx}
-                                        className="inline-block px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-semibold shadow-sm group-hover:shadow-md transition-shadow"
-                                      >
-                                        {allergen}
-                                      </span>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-gray-500 font-medium">No allergens</span>
-                                )}
                               </td>
 
                               {/* Actions */}

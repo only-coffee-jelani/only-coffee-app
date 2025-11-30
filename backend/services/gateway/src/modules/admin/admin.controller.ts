@@ -29,4 +29,11 @@ export class AdminController {
   async createPromotionsTable() {
     return this.adminService.createPromotionsTable();
   }
+
+  @Post('create-allergen-tables')
+  @Public()
+  @ApiOperation({ summary: 'Create allergen tables and seed data' })
+  async createAllergenTables() {
+    return this.adminService.createAllergenTables();
+  }
 }

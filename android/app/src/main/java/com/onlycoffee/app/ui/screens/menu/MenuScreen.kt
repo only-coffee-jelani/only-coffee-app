@@ -25,15 +25,21 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -63,14 +69,29 @@ import com.onlycoffee.app.ui.theme.TextSecondary
 fun MenuScreen(
     navController: NavController,
     viewModel: MenuViewModel = hiltViewModel(),
-    storeViewModel: com.onlycoffee.app.ui.screens.stores.StoreViewModel = hiltViewModel()
+    storeViewModel: com.onlycoffee.app.ui.screens.stores.StoreViewModel,
+    cartViewModel: com.onlycoffee.app.ui.screens.cart.CartViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val storeUiState by storeViewModel.uiState.collectAsState()
-    var searchText by remember { mutableStateOf("") }
+
+    // Enterprise-Level State Management:
+    // Sync local search text state with ViewModel's searchQuery to maintain state across navigation
+    // This ensures the search bar displays the correct text when returning from product detail
+    var searchText by remember { mutableStateOf(uiState.searchQuery) }
+
+    // Update local searchText when ViewModel's searchQuery changes (e.g., when navigating back)
+    LaunchedEffect(uiState.searchQuery) {
+        if (searchText != uiState.searchQuery) {
+            searchText = uiState.searchQuery
+        }
+    }
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     // Check if location is selected, if not navigate to select location screen
-    androidx.compose.runtime.LaunchedEffect(storeUiState.selectedStore) {
+    LaunchedEffect(storeUiState.selectedStore) {
         if (storeUiState.selectedStore == null) {
             navController.navigate("select_location") {
                 launchSingleTop = true
@@ -78,11 +99,17 @@ fun MenuScreen(
         }
     }
 
-    // Content
-    LazyColumn(
+    // Wrap content in Scaffold for Snackbar support
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        containerColor = BackgroundPrimary
+    ) { paddingValues ->
+        // Content
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BackgroundPrimary),
+                .background(BackgroundPrimary)
+                .padding(paddingValues),
             contentPadding = PaddingValues(bottom = Spacing.lg)
         ) {
             item {
@@ -191,12 +218,14 @@ fun MenuScreen(
             }
             
             item {
-                // Category Filter
+                // Category Filter - Dynamic categories from database
+                // Categories are loaded from the backend and filtered (no Add-Ons)
+                // "All" category is always first
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = Spacing.screenPadding),
                     horizontalArrangement = Arrangement.spacedBy(Spacing.sm)
                 ) {
-                    items(MenuCategory.values()) { category ->
+                    items(uiState.categories) { category ->
                         FilterChip(
                             onClick = { viewModel.selectCategory(category) },
                             label = {
@@ -205,7 +234,7 @@ fun MenuScreen(
                                     style = MaterialTheme.typography.labelMedium
                                 )
                             },
-                            selected = uiState.selectedCategory == category,
+                            selected = uiState.selectedCategory.id == category.id,
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = BrandPrimary,
                                 selectedLabelColor = androidx.compose.ui.graphics.Color.White,
@@ -226,7 +255,39 @@ fun MenuScreen(
                 MenuItemListCard(
                     menuItem = item,
                     onItemClick = { menuItem ->
-                        navController.navigate("product_detail/${menuItem.id}")
+                        val storeId = storeUiState.selectedStore?.storeId ?: ""
+                        navController.navigate("product_detail/${menuItem.id}/$storeId")
+                    },
+                    onAddToCart = { menuItem ->
+                        // Add item to cart with default settings (no customizations)
+                        cartViewModel.addItem(
+                            menuItem = menuItem,
+                            quantity = 1,
+                            espressoShotCount = 0,
+                            selectedMilkOption = null,
+                            extraMilkShot = false,
+                            customizations = null
+                        )
+
+                        // Show success snackbar with action to view cart
+                        scope.launch {
+                            val result = snackbarHostState.showSnackbar(
+                                message = "✓ Added to cart",
+                                actionLabel = "View Cart",
+                                duration = androidx.compose.material3.SnackbarDuration.Short
+                            )
+                            when (result) {
+                                SnackbarResult.ActionPerformed -> {
+                                    // Navigate to cart
+                                    navController.navigate("cart") {
+                                        launchSingleTop = true
+                                    }
+                                }
+                                SnackbarResult.Dismissed -> {
+                                    // Do nothing
+                                }
+                            }
+                        }
                     },
                     modifier = Modifier.padding(
                         horizontal = Spacing.screenPadding,
@@ -276,12 +337,7 @@ fun MenuScreen(
                 }
             }
         }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun MenuScreenPreview() {
-    OnlyCoffeeTheme {
-        MenuScreen(navController = rememberNavController())
     }
 }
+
+// Preview removed - requires StoreViewModel which needs Hilt

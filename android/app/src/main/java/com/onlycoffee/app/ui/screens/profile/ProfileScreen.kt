@@ -171,7 +171,9 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
                     onClick = { navController.navigate("login") },
-                    modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(56.dp)
                 ) {
                     Text("Sign In", style = MaterialTheme.typography.titleMedium)
                 }

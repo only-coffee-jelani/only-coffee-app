@@ -39,10 +39,79 @@ data class OrderItem(
     val name: String,
     val price: Double,
     val quantity: Int,
-    val customizations: List<String>? = null
+    val customizations: List<String>? = null,
+    // Add-ons for drinks
+    @SerializedName("espresso_shot_count")
+    val espressoShotCount: Int = 0,
+    @SerializedName("selected_milk_option")
+    val selectedMilkOption: String? = null, // "Whole Milk", "Oat Milk", etc.
+    @SerializedName("extra_milk_shot")
+    val extraMilkShot: Boolean = false
 ) : Parcelable {
+
+    companion object {
+        const val ESPRESSO_SHOT_PRICE = 1.50
+        const val MILK_UPGRADE_PRICE = 0.50
+        const val EXTRA_MILK_SHOT_PRICE = 0.50
+        const val DEFAULT_MILK = "Whole Milk"
+    }
+
+    /**
+     * Calculate add-ons price
+     */
+    val addOnsPrice: Double
+        get() {
+            var addOns = 0.0
+
+            // Espresso shots
+            addOns += espressoShotCount * ESPRESSO_SHOT_PRICE
+
+            // Milk upgrade (alternative milks cost extra)
+            if (selectedMilkOption != null && selectedMilkOption != DEFAULT_MILK) {
+                addOns += MILK_UPGRADE_PRICE
+            }
+
+            // Extra milk shot
+            if (extraMilkShot) {
+                addOns += EXTRA_MILK_SHOT_PRICE
+            }
+
+            return addOns
+        }
+
+    /**
+     * Calculate total price including base price, add-ons, and quantity
+     */
     val totalPrice: Double
-        get() = price * quantity
+        get() = (price + addOnsPrice) * quantity
+
+    /**
+     * Get formatted customizations including add-ons
+     */
+    val formattedCustomizations: List<String>
+        get() {
+            val allCustomizations = mutableListOf<String>()
+
+            // Add original customizations
+            customizations?.let { allCustomizations.addAll(it) }
+
+            // Add espresso shots
+            if (espressoShotCount > 0) {
+                allCustomizations.add("$espressoShotCount Extra Espresso Shot${if (espressoShotCount > 1) "s" else ""}")
+            }
+
+            // Add milk option
+            if (selectedMilkOption != null && selectedMilkOption != DEFAULT_MILK) {
+                allCustomizations.add(selectedMilkOption)
+            }
+
+            // Add extra milk shot
+            if (extraMilkShot) {
+                allCustomizations.add("Extra Milk Shot")
+            }
+
+            return allCustomizations
+        }
 }
 
 enum class OrderStatus {

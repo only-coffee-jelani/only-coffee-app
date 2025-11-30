@@ -29,13 +29,45 @@ export class MenuService {
   async findById(id: string) {
     const item = await this.menuItemRepository.findOne({
       where: { menuItemId: id, isActive: true },
+      relations: ['category'],
     });
 
     if (!item) {
       throw new NotFoundException('Menu item not found');
     }
 
-    return item;
+    // Get store associations for this item
+    const storeAssociations = await this.menuItemRepository.query(`
+      SELECT array_agg(store_id) as store_ids
+      FROM store_menu_items
+      WHERE menu_item_id = $1
+    `, [id]);
+
+    // Get allergen associations for this item
+    const allergenAssociations = await this.menuItemRepository.query(`
+      SELECT array_agg(allergen_id) as allergen_ids
+      FROM menu_item_allergens
+      WHERE menu_item_id = $1
+    `, [id]);
+
+    // Transform to match frontend expectations
+    return {
+      id: item.menuItemId,
+      menuItemId: item.menuItemId,
+      name: item.name,
+      description: item.description,
+      basePrice: parseFloat(item.basePrice.toString()),
+      calories: item.calories,
+      imageUrl: item.imageAssetId ? `/api/media/${item.imageAssetId}` : null,
+      categoryId: item.categoryId,
+      categoryName: item.category?.name || 'Uncategorized',
+      isActive: item.isActive,
+      toastItemId: item.toastItemId,
+      storeIds: storeAssociations[0]?.store_ids || [],
+      allergenIds: allergenAssociations[0]?.allergen_ids || [],
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    };
   }
 
   async calculatePrice(
@@ -129,52 +161,211 @@ export class MenuService {
 
   // Admin methods
   async findAll() {
-    // Get all menu items and deduplicate by name
+    // Get all menu items with their category relations
     const allItems = await this.menuItemRepository.find({
+      relations: ['category'],
       order: {
         createdAt: 'DESC',
       },
     });
 
-    // Create a map to store unique items by name (keeping the first occurrence)
-    const uniqueItemsMap = new Map<string, any>();
+    // Get store associations for all items
+    const storeAssociations = await this.menuItemRepository.query(`
+      SELECT menu_item_id, array_agg(store_id) as store_ids
+      FROM store_menu_items
+      GROUP BY menu_item_id
+    `);
 
-    for (const item of allItems) {
-      if (!uniqueItemsMap.has(item.name)) {
-        uniqueItemsMap.set(item.name, item);
-      }
-    }
+    // Get allergen associations for all items
+    const allergenAssociations = await this.menuItemRepository.query(`
+      SELECT menu_item_id, array_agg(allergen_id) as allergen_ids
+      FROM menu_item_allergens
+      GROUP BY menu_item_id
+    `);
 
-    // Convert map back to array and sort by creation date
-    return Array.from(uniqueItemsMap.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    // Create a map of menu_item_id -> store_ids
+    const storeMap = new Map<string, string[]>();
+    storeAssociations.forEach((assoc: any) => {
+      storeMap.set(assoc.menu_item_id, assoc.store_ids || []);
+    });
+
+    // Create a map of menu_item_id -> allergen_ids
+    const allergenMap = new Map<string, string[]>();
+    allergenAssociations.forEach((assoc: any) => {
+      allergenMap.set(assoc.menu_item_id, assoc.allergen_ids || []);
+    });
+
+    // Transform to match frontend expectations
+    return allItems.map(item => ({
+      id: item.menuItemId,
+      menuItemId: item.menuItemId,
+      name: item.name,
+      description: item.description,
+      basePrice: parseFloat(item.basePrice.toString()),
+      calories: item.calories,
+      imageUrl: item.imageAssetId ? `/api/media/${item.imageAssetId}` : null,
+      categoryId: item.categoryId,
+      categoryName: item.category?.name || 'Uncategorized',
+      isActive: item.isActive,
+      toastItemId: item.toastItemId,
+      storeIds: storeMap.get(item.menuItemId) || [],
+      allergenIds: allergenMap.get(item.menuItemId) || [],
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    }));
   }
 
   async create(createMenuItemDto: any) {
-    // Ensure categories array is provided - use categories if available, otherwise fallback to category
-    const dto = {
-      ...createMenuItemDto,
-      categories: createMenuItemDto.categories && createMenuItemDto.categories.length > 0
-        ? createMenuItemDto.categories
-        : [createMenuItemDto.category],
-    };
+    // Extract storeIds and allergenIds if provided
+    const { storeIds, allergenIds, ...createData } = createMenuItemDto;
 
-    const menuItem = this.menuItemRepository.create(dto);
-    return this.menuItemRepository.save(menuItem);
+    // Create the menu item
+    const menuItem = this.menuItemRepository.create(createData);
+    const savedItem = await this.menuItemRepository.save(menuItem) as unknown as MenuItem;
+
+    // Create store associations if storeIds provided
+    if (storeIds && Array.isArray(storeIds) && storeIds.length > 0) {
+      for (const storeId of storeIds) {
+        await this.menuItemRepository.query(
+          `INSERT INTO store_menu_items (store_id, menu_item_id, is_available, created_at, updated_at)
+           VALUES ($1, $2, true, NOW(), NOW())
+           ON CONFLICT (store_id, menu_item_id) DO NOTHING`,
+          [storeId, savedItem.menuItemId]
+        );
+      }
+    }
+
+    // Create allergen associations if allergenIds provided
+    if (allergenIds && Array.isArray(allergenIds) && allergenIds.length > 0) {
+      for (const allergenId of allergenIds) {
+        await this.menuItemRepository.query(
+          `INSERT INTO menu_item_allergens (menu_item_id, allergen_id, created_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (menu_item_id, allergen_id) DO NOTHING`,
+          [savedItem.menuItemId, allergenId]
+        );
+      }
+    }
+
+    // Return the created item with store associations and allergens
+    const storeAssociations = await this.menuItemRepository.query(
+      `SELECT array_agg(store_id) as store_ids FROM store_menu_items WHERE menu_item_id = $1`,
+      [savedItem.menuItemId]
+    );
+
+    const allergenAssociations = await this.menuItemRepository.query(
+      `SELECT array_agg(allergen_id) as allergen_ids FROM menu_item_allergens WHERE menu_item_id = $1`,
+      [savedItem.menuItemId]
+    );
+
+    // Load category relation
+    const itemWithCategory = await this.menuItemRepository.findOne({
+      where: { menuItemId: savedItem.menuItemId },
+      relations: ['category'],
+    });
+
+    return {
+      id: savedItem.menuItemId,
+      menuItemId: savedItem.menuItemId,
+      name: savedItem.name,
+      description: savedItem.description,
+      basePrice: parseFloat(savedItem.basePrice.toString()),
+      calories: savedItem.calories,
+      imageUrl: savedItem.imageAssetId ? `/api/media/${savedItem.imageAssetId}` : null,
+      categoryId: savedItem.categoryId,
+      categoryName: itemWithCategory?.category?.name || 'Uncategorized',
+      isActive: savedItem.isActive,
+      toastItemId: savedItem.toastItemId,
+      storeIds: storeAssociations[0]?.store_ids || [],
+      allergenIds: allergenAssociations[0]?.allergen_ids || [],
+      createdAt: savedItem.createdAt,
+      updatedAt: savedItem.updatedAt,
+    };
   }
 
   async update(id: string, updateMenuItemDto: any) {
     const menuItem = await this.menuItemRepository.findOne({
       where: { menuItemId: id },
+      relations: ['category'],
     });
 
     if (!menuItem) {
       throw new NotFoundException('Menu item not found');
     }
 
-    Object.assign(menuItem, updateMenuItemDto);
-    return this.menuItemRepository.save(menuItem);
+    // Extract storeIds and allergenIds if provided
+    const { storeIds, allergenIds, ...updateData } = updateMenuItemDto;
+
+    // Update menu item fields
+    Object.assign(menuItem, updateData);
+    const savedItem = await this.menuItemRepository.save(menuItem) as unknown as MenuItem;
+
+    // Update store associations if storeIds provided
+    if (storeIds && Array.isArray(storeIds)) {
+      // Delete existing associations
+      await this.menuItemRepository.query(
+        `DELETE FROM store_menu_items WHERE menu_item_id = $1`,
+        [id]
+      );
+
+      // Insert new associations
+      for (const storeId of storeIds) {
+        await this.menuItemRepository.query(
+          `INSERT INTO store_menu_items (store_id, menu_item_id, is_available, created_at, updated_at)
+           VALUES ($1, $2, true, NOW(), NOW())
+           ON CONFLICT (store_id, menu_item_id) DO NOTHING`,
+          [storeId, id]
+        );
+      }
+    }
+
+    // Update allergen associations if allergenIds provided
+    if (allergenIds !== undefined && Array.isArray(allergenIds)) {
+      // Delete existing allergen associations
+      await this.menuItemRepository.query(
+        `DELETE FROM menu_item_allergens WHERE menu_item_id = $1`,
+        [id]
+      );
+
+      // Insert new allergen associations
+      for (const allergenId of allergenIds) {
+        await this.menuItemRepository.query(
+          `INSERT INTO menu_item_allergens (menu_item_id, allergen_id, created_at)
+           VALUES ($1, $2, NOW())
+           ON CONFLICT (menu_item_id, allergen_id) DO NOTHING`,
+          [id, allergenId]
+        );
+      }
+    }
+
+    // Return the updated item with store associations and allergens
+    const storeAssociations = await this.menuItemRepository.query(
+      `SELECT array_agg(store_id) as store_ids FROM store_menu_items WHERE menu_item_id = $1`,
+      [id]
+    );
+
+    const allergenAssociations = await this.menuItemRepository.query(
+      `SELECT array_agg(allergen_id) as allergen_ids FROM menu_item_allergens WHERE menu_item_id = $1`,
+      [id]
+    );
+
+    return {
+      id: savedItem.menuItemId,
+      menuItemId: savedItem.menuItemId,
+      name: savedItem.name,
+      description: savedItem.description,
+      basePrice: parseFloat(savedItem.basePrice.toString()),
+      calories: savedItem.calories,
+      imageUrl: savedItem.imageAssetId ? `/api/media/${savedItem.imageAssetId}` : null,
+      categoryId: savedItem.categoryId,
+      categoryName: savedItem.category?.name || 'Uncategorized',
+      isActive: savedItem.isActive,
+      toastItemId: savedItem.toastItemId,
+      storeIds: storeAssociations[0]?.store_ids || [],
+      allergenIds: allergenAssociations[0]?.allergen_ids || [],
+      createdAt: savedItem.createdAt,
+      updatedAt: savedItem.updatedAt,
+    };
   }
 
   async delete(id: string) {

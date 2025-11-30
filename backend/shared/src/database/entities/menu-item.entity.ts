@@ -8,12 +8,15 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
 import { MenuCategory } from './menu-category.entity';
 import { MediaAsset } from './media-asset.entity';
 import { OrderItem } from './order-item.entity';
 import { MenuItemModifierGroup } from './menu-item-modifier-group.entity';
 import { AIRecommendation } from './ai-recommendation.entity';
+import { Allergen } from './allergen.entity';
 
 /**
  * MenuItem Entity
@@ -72,4 +75,12 @@ export class MenuItem {
 
   @OneToMany(() => AIRecommendation, (recommendation) => recommendation.menuItem)
   aiRecommendations: AIRecommendation[];
+
+  @ManyToMany(() => Allergen, (allergen) => allergen.menuItems)
+  @JoinTable({
+    name: 'menu_item_allergens',
+    joinColumn: { name: 'menu_item_id', referencedColumnName: 'menuItemId' },
+    inverseJoinColumn: { name: 'allergen_id', referencedColumnName: 'allergenId' },
+  })
+  allergens: Allergen[];
 }

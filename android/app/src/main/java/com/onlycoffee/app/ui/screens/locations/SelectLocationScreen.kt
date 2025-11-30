@@ -67,7 +67,8 @@ import com.onlycoffee.app.utils.LocationUtils
 @Composable
 fun SelectLocationScreen(
     navController: NavController,
-    viewModel: LocationViewModel = hiltViewModel()
+    viewModel: LocationViewModel = hiltViewModel(),
+    storeViewModel: com.onlycoffee.app.ui.screens.stores.StoreViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -169,8 +170,9 @@ fun SelectLocationScreen(
                     isSelected = uiState.selectedStore?.storeId == store.storeId,
                     onStoreClick = { viewModel.selectStore(it) },
                     onSelectClick = {
-                        // Save selected store and navigate back to menu
+                        // Save selected store to both ViewModels
                         viewModel.saveSelectedStore(it)
+                        storeViewModel.selectStore(it)
                         // Navigate to menu and clear the select_location from back stack
                         navController.navigate("menu") {
                             popUpTo("menu") { inclusive = true }
@@ -385,10 +387,4 @@ fun SelectLocationCard(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun SelectLocationScreenPreview() {
-    OnlyCoffeeTheme {
-        SelectLocationScreen(navController = rememberNavController())
-    }
-}
+// Preview removed - requires StoreViewModel which needs Hilt

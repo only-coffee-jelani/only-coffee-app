@@ -44,6 +44,7 @@ export * from './menu-item.entity';
 export * from './modifier-group.entity';
 export * from './modifier.entity';
 export * from './menu-item-modifier-group.entity';
+export * from './allergen.entity';
 
 // Splash & Carousel
 export * from './splash-screen.entity';

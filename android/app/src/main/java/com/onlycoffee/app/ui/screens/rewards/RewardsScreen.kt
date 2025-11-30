@@ -38,10 +38,7 @@ fun RewardsScreen(
             AuthenticatedRewardsContent(uiState.currentUser!!)
         }
     } else {
-        // No scroll or padding for unauthenticated state to allow proper centering
-        Box(modifier = Modifier.fillMaxSize()) {
-            UnauthenticatedRewardsContent(navController)
-        }
+        UnauthenticatedRewardsContent(navController)
     }
 }
 
@@ -117,36 +114,40 @@ private fun AuthenticatedRewardsContent(user: com.onlycoffee.app.data.model.User
 
 @Composable
 private fun UnauthenticatedRewardsContent(navController: NavController) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.Star,
-            contentDescription = null,
-            tint = BrandPrimary,
-            modifier = Modifier.size(80.dp)
-        )
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = "Sign In to View Rewards",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = "Access your loyalty points, tier benefits, and exclusive rewards",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(
-            onClick = { navController.navigate("login") },
-            modifier = Modifier.fillMaxWidth(0.7f).height(56.dp)
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text("Sign In", style = MaterialTheme.typography.titleMedium)
+            Icon(
+                imageVector = Icons.Default.Star,
+                contentDescription = null,
+                tint = BrandPrimary,
+                modifier = Modifier.size(80.dp)
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "Sign In to View Rewards",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = "Access your loyalty points, tier benefits, and exclusive rewards",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 32.dp, vertical = 8.dp)
+            )
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(
+                onClick = { navController.navigate("login") },
+                modifier = Modifier
+                    .fillMaxWidth(0.7f)
+                    .height(56.dp)
+            ) {
+                Text("Sign In", style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }

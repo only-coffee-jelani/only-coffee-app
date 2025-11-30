@@ -34,12 +34,13 @@ class MenuRepository @Inject constructor(
         }
 
         return safeApiCallWithRetry(errorHandler) {
-            val response = menuApiService.getAllMenuItems(storeId)
+            val dtoList = menuApiService.getAllMenuItems(storeId)
+            val menuItems = dtoList.map { it.toMenuItem() }
             if (storeId == null) {
-                cachedMenuItems = response.data
+                cachedMenuItems = menuItems
                 cacheTimestamp = System.currentTimeMillis()
             }
-            response.data
+            menuItems
         }
     }
 
@@ -53,8 +54,8 @@ class MenuRepository @Inject constructor(
         }
 
         return safeApiCallWithRetry(errorHandler) {
-            val response = menuApiService.getMenuItemById(itemId)
-            response.data
+            val dto = menuApiService.getMenuItemById(itemId)
+            dto.toMenuItem()
         }
     }
 
@@ -63,8 +64,8 @@ class MenuRepository @Inject constructor(
      */
     suspend fun getMenuItemsByCategory(category: String, storeId: String? = null): NetworkResult<List<MenuItem>> {
         return safeApiCallWithRetry(errorHandler) {
-            val response = menuApiService.getMenuItemsByCategory(category, storeId)
-            response.data
+            val dtoList = menuApiService.getMenuItemsByCategory(category, storeId)
+            dtoList.map { it.toMenuItem() }
         }
     }
 
@@ -73,8 +74,8 @@ class MenuRepository @Inject constructor(
      */
     suspend fun getFeaturedItems(): NetworkResult<List<MenuItem>> {
         return safeApiCallWithRetry(errorHandler) {
-            val response = menuApiService.getFeaturedItems()
-            response.data
+            val dtoList = menuApiService.getFeaturedItems()
+            dtoList.map { it.toMenuItem() }
         }
     }
 
@@ -83,8 +84,8 @@ class MenuRepository @Inject constructor(
      */
     suspend fun getPopularItems(): NetworkResult<List<MenuItem>> {
         return safeApiCallWithRetry(errorHandler) {
-            val response = menuApiService.getPopularItems()
-            response.data
+            val dtoList = menuApiService.getPopularItems()
+            dtoList.map { it.toMenuItem() }
         }
     }
 

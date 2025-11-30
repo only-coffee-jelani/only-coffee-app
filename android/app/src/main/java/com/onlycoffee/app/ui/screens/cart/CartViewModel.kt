@@ -4,83 +4,99 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.onlycoffee.app.data.model.*
 import com.onlycoffee.app.data.repository.CouponsRepository
+import com.onlycoffee.app.data.service.CartService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class CartViewModel @Inject constructor(
+    private val cartService: CartService,
     private val couponsRepository: CouponsRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CartUiState())
     val uiState: StateFlow<CartUiState> = _uiState.asStateFlow()
 
-    // Tax rate (8.75% for Texas)
-    private val TAX_RATE = 0.0875
+    // Tax rate (8% for simplicity)
+    private val TAX_RATE = 0.08
+
+    init {
+        // Observe cart changes from service
+        viewModelScope.launch {
+            combine(
+                cartService.cartItems,
+                cartService.currentStoreId
+            ) { items, storeId ->
+                Pair(items, storeId)
+            }.collect { (items, storeId) ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        items = items,
+                        currentStoreId = storeId
+                    ).let { recalculateTotals(it) }
+                }
+            }
+        }
+    }
 
     /**
-     * Add item to cart
+     * Add item to cart with full customization support
      */
-    fun addItem(menuItem: MenuItem, quantity: Int = 1, customizations: List<String>? = null) {
-        _uiState.update { currentState ->
-            val existingItem = currentState.items.find {
-                it.menuItemId == menuItem.id && it.customizations == customizations
-            }
-
-            val updatedItems = if (existingItem != null) {
-                currentState.items.map { item ->
-                    if (item.menuItemId == menuItem.id && item.customizations == customizations) {
-                        item.copy(quantity = item.quantity + quantity)
-                    } else {
-                        item
-                    }
-                }
-            } else {
-                currentState.items + OrderItem(
-                    menuItemId = menuItem.id,
-                    name = menuItem.name,
-                    price = menuItem.basePrice,
-                    quantity = quantity,
-                    customizations = customizations
-                )
-            }
-
-            currentState.copy(items = updatedItems).also { recalculateTotals(it) }
-        }
+    fun addItem(
+        menuItem: MenuItem,
+        quantity: Int = 1,
+        espressoShotCount: Int = 0,
+        selectedMilkOption: String? = null,
+        extraMilkShot: Boolean = false,
+        customizations: List<String>? = null
+    ) {
+        cartService.addItem(
+            menuItem = menuItem,
+            quantity = quantity,
+            espressoShotCount = espressoShotCount,
+            selectedMilkOption = selectedMilkOption,
+            extraMilkShot = extraMilkShot,
+            customizations = customizations
+        )
     }
 
     /**
      * Remove item from cart
      */
     fun removeItem(item: OrderItem) {
-        _uiState.update { currentState ->
-            currentState.copy(
-                items = currentState.items.filter { it != item }
-            ).also { recalculateTotals(it) }
-        }
+        cartService.removeItem(item)
     }
 
     /**
      * Update item quantity
      */
     fun updateItemQuantity(item: OrderItem, quantity: Int) {
-        if (quantity <= 0) {
-            removeItem(item)
-            return
-        }
+        cartService.updateItemQuantity(item, quantity)
+    }
 
-        _uiState.update { currentState ->
-            currentState.copy(
-                items = currentState.items.map {
-                    if (it == item) it.copy(quantity = quantity) else it
-                }
-            ).also { recalculateTotals(it) }
-        }
+    /**
+     * Update item customizations
+     */
+    fun updateItem(
+        oldItem: OrderItem,
+        espressoShotCount: Int,
+        selectedMilkOption: String?,
+        extraMilkShot: Boolean,
+        quantity: Int
+    ) {
+        cartService.updateItem(
+            oldItem = oldItem,
+            espressoShotCount = espressoShotCount,
+            selectedMilkOption = selectedMilkOption,
+            extraMilkShot = extraMilkShot,
+            quantity = quantity
+        )
     }
 
     /**
@@ -110,7 +126,22 @@ class CartViewModel @Inject constructor(
      * Clear the entire cart
      */
     fun clearCart() {
-        _uiState.value = CartUiState()
+        cartService.clearCart()
+    }
+
+    /**
+     * Set store ID with validation
+     * Returns false if confirmation is needed
+     */
+    fun setStoreId(storeId: String): Boolean {
+        return cartService.setStoreId(storeId)
+    }
+
+    /**
+     * Confirm store change and clear cart
+     */
+    fun confirmStoreChangeAndClearCart(newStoreId: String) {
+        cartService.confirmStoreChangeAndClearCart(newStoreId)
     }
 
     /**
@@ -255,7 +286,8 @@ data class CartUiState(
     val selectedCoupon: Coupon? = null,
     val availableCoupons: List<Coupon> = emptyList(),
     val isLoadingCoupons: Boolean = false,
-    val couponsError: String? = null
+    val couponsError: String? = null,
+    val currentStoreId: String? = null
 ) {
     val itemCount: Int
         get() = items.sumOf { it.quantity }

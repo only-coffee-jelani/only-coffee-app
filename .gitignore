@@ -1,22 +1,71 @@
-# Dependencies
+# ==============================================================================
+# ONLY COFFEE - ENTERPRISE-LEVEL .GITIGNORE
+# ==============================================================================
+# This file ensures sensitive data, credentials, build artifacts, and
+# environment-specific files are never committed to version control
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# DEPENDENCIES
+# ------------------------------------------------------------------------------
 node_modules/
 .pnp
 .pnp.js
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 
-# Testing
+# ------------------------------------------------------------------------------
+# TESTING
+# ------------------------------------------------------------------------------
 coverage/
 *.lcov
+.nyc_output/
+test-results/
+junit.xml
 
-# Production
+# ------------------------------------------------------------------------------
+# PRODUCTION BUILDS
+# ------------------------------------------------------------------------------
 build/
 dist/
+out/
+.next/
+.nuxt/
 
-# Environment variables
+# ------------------------------------------------------------------------------
+# ENVIRONMENT VARIABLES & SECRETS (CRITICAL - NEVER COMMIT)
+# ------------------------------------------------------------------------------
 .env
-.env*.local
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 *.env
+MASTER.env
+.envrc
 
-# Logs
+# Backend environment files
+backend/.env
+backend/.env.*
+backend/services/**/.env
+backend/services/**/.env.*
+backend/services/gateway/.env
+backend/services/gateway/.env.*
+backend/shared/.env
+
+# Admin environment files
+admin/.env
+admin/.env.*
+
+# Mobile environment files
+mobile/.env
+mobile/.env.*
+
+# ------------------------------------------------------------------------------
+# LOGS
+# ------------------------------------------------------------------------------
 logs/
 *.log
 npm-debug.log*
@@ -24,41 +73,73 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+backend-startup.log
+error.log
+combined.log
 
-# IDEs
+# ------------------------------------------------------------------------------
+# IDEs & EDITORS
+# ------------------------------------------------------------------------------
 .DS_Store
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
 
-# Backend
+# ------------------------------------------------------------------------------
+# BACKEND (Node.js/NestJS)
+# ------------------------------------------------------------------------------
 backend/node_modules/
 backend/dist/
+backend/build/
 backend/.env
-backend/services/**/.env
-backend/services/gateway/.env
+backend/services/**/node_modules/
+backend/services/**/dist/
+backend/shared/node_modules/
+backend/shared/dist/
+backend/shared/tsconfig.tsbuildinfo
 
-# Admin
+# Backend database scripts (temporary/generated - keep migrations)
+# Keep: SQL files, TypeScript files, migration scripts
+# Ignore: Compiled JavaScript from TypeScript, temporary test scripts
+backend/database/scripts/add-milk-to-drinks.js
+backend/database/scripts/add-milk-to-hot-chocolate.js
+backend/database/scripts/check-hot-chocolate.js
+backend/database/scripts/list-menu-items.js
+backend/database/scripts/remove-allergen-icons.js
+backend/database/scripts/run-allergen-migration.js
+backend/database/scripts/setup-and-seed-menu.js
+backend/database/scripts/show-allergens.js
+backend/database/scripts/show-menu-items-schema.js
+backend/database/scripts/test-api-response.js
+backend/database/scripts/update-allergens-via-api.js
+backend/database/scripts/update-menu-allergens.js
+backend/database/scripts/verify-menu-data.js
+
+# Backend backups
+backend/database/backups/*.sql
+backend/database/backups/*.backup
+!backend/database/backups/.gitkeep
+!backend/database/backups/README.md
+
+# ------------------------------------------------------------------------------
+# ADMIN DASHBOARD (React/Vite)
+# ------------------------------------------------------------------------------
 admin/node_modules/
 admin/dist/
 admin/build/
 admin/.env
+admin/.vite/
 
-# iOS
-mobile/ios/*.xcworkspace
-mobile/ios/Pods/
-mobile/ios/.build/
-mobile/ios/DerivedData/
-mobile/ios/*.xcuserstate
-mobile/ios/*.moved-aside
-mobile/ios/*.pbxuser
-mobile/ios/*.mode1v3
-mobile/ios/*.mode2v3
-mobile/ios/*.perspectivev3
-
-# Android
+# ------------------------------------------------------------------------------
+# ANDROID
+# ------------------------------------------------------------------------------
 android/.gradle/
 android/build/
 android/app/build/
@@ -75,8 +156,38 @@ android/captures/
 android/.externalNativeBuild/
 android/.navigation/
 android/output.json
+android/app/release/
+android/app/debug/
+android/.gradle/
+android/gradle/wrapper/gradle-wrapper.jar
 
-# Legacy mobile paths (if they exist)
+# Android signing keys (CRITICAL - NEVER COMMIT)
+android/app/*.jks
+android/app/*.keystore
+android/keystore.properties
+
+# ------------------------------------------------------------------------------
+# iOS
+# ------------------------------------------------------------------------------
+mobile/ios/*.xcworkspace
+mobile/ios/Pods/
+mobile/ios/.build/
+mobile/ios/DerivedData/
+mobile/ios/*.xcuserstate
+mobile/ios/*.moved-aside
+mobile/ios/*.pbxuser
+mobile/ios/*.mode1v3
+mobile/ios/*.mode2v3
+mobile/ios/*.perspectivev3
+mobile/ios/xcuserdata/
+mobile/ios/*.hmap
+mobile/ios/*.ipa
+mobile/ios/*.dSYM.zip
+mobile/ios/*.dSYM
+
+# ------------------------------------------------------------------------------
+# LEGACY MOBILE PATHS (if they exist)
+# ------------------------------------------------------------------------------
 mobile/android/.gradle/
 mobile/android/build/
 mobile/android/local.properties
@@ -86,32 +197,101 @@ mobile/android/.cxx/
 mobile/android/*.apk
 mobile/android/*.aab
 
-# Infrastructure
+# ------------------------------------------------------------------------------
+# INFRASTRUCTURE (Terraform/AWS)
+# ------------------------------------------------------------------------------
 infrastructure/.terraform/
 infrastructure/*.tfstate
 infrastructure/*.tfstate.*
 infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfvars
+infrastructure/*.tfvars
 
-# Secrets
+# ------------------------------------------------------------------------------
+# SECRETS & CERTIFICATES (CRITICAL - NEVER COMMIT)
+# ------------------------------------------------------------------------------
 secrets/
 *.pem
 *.key
 *.crt
+*.p12
+*.pfx
+*.cer
+*.der
+*.csr
+*.jks
+*.keystore
 
-# AWS
+# AWS credentials
 .aws/
+aws-credentials.json
 
-# Database
+# Google Cloud credentials
+gcloud-credentials.json
+service-account.json
+
+# ------------------------------------------------------------------------------
+# DATABASE
+# ------------------------------------------------------------------------------
 *.sql.backup
+*.backup
 pgdata/
+*.db
+*.sqlite
+*.sqlite3
 
-# Cache
+# ------------------------------------------------------------------------------
+# CACHE & TEMPORARY FILES
+# ------------------------------------------------------------------------------
 .cache/
 *.tmp
+*.temp
+.temp/
+tmp/
+.DS_Store
+Thumbs.db
 
-# Documentation (generated/temporary)
-MASTER.env
+# ------------------------------------------------------------------------------
+# DOCUMENTATION (generated/temporary)
+# ------------------------------------------------------------------------------
 S3_SETUP_COMPLETED.md
+DEPLOYMENT_NOTES.md
 
-# Screenshots
+# ------------------------------------------------------------------------------
+# MEDIA & ASSETS (large files)
+# ------------------------------------------------------------------------------
+# Screenshots (for testing only)
 screenshot*.png
+screenshot*.jpg
+
+# Large media files (should be in S3/CDN)
+*.mp4
+*.mov
+*.avi
+*.mkv
+
+# ------------------------------------------------------------------------------
+# MISCELLANEOUS
+# ------------------------------------------------------------------------------
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor backup files
+*~
+*.bak
+*.orig
+
+# Compressed files
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# Package manager lock files (optional - team decision)
+# Uncomment if you want to ignore lock files
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
