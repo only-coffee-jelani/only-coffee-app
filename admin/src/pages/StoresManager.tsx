@@ -3,6 +3,8 @@ import { FiPlus, FiEdit2, FiTrash2, FiMapPin, FiPhone, FiMail, FiX, FiSave, FiLo
 import toast from 'react-hot-toast';
 import ImageUploader from '../components/ImageUploader';
 import AddressAutocomplete from '../components/AddressAutocomplete';
+import ResizableTableHeader from '../components/ResizableTableHeader';
+import { useResizableColumns, ColumnConfig } from '../hooks/useResizableColumns';
 import { useAuthStore } from '../store/authStore';
 import { AddressSuggestion } from '../hooks/useAddressAutocomplete';
 import { WORLD_TIMEZONES, getTimezonesByRegion, POPULAR_TIMEZONES, getTimezoneDisplayName } from '../data/timezones';
@@ -104,6 +106,21 @@ const StoresManager = () => {
     longitude: null as number | null,
     storeHours: [] as StoreHours[],
   });
+
+  // Resizable columns configuration
+  const tableColumns: ColumnConfig[] = useMemo(() => [
+    { key: 'name', label: 'Name', minWidth: 150, defaultWidth: 200, maxWidth: 400 },
+    { key: 'type', label: 'Type', minWidth: 100, defaultWidth: 150, maxWidth: 250 },
+    { key: 'address', label: 'Address', minWidth: 200, defaultWidth: 300, maxWidth: 600 },
+    { key: 'contact', label: 'Contact', minWidth: 150, defaultWidth: 200, maxWidth: 400 },
+    { key: 'status', label: 'Status', minWidth: 120, defaultWidth: 150, maxWidth: 250 },
+    { key: 'actions', label: 'Actions', minWidth: 120, defaultWidth: 150, maxWidth: 200 }
+  ], []);
+
+  const { columnWidths, handleMouseDown, resizingColumn } = useResizableColumns(
+    tableColumns,
+    'stores-manager'
+  );
 
   // Fetch stores and store types from backend
   useEffect(() => {
@@ -666,19 +683,19 @@ const StoresManager = () => {
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full" style={{ tableLayout: 'fixed' }}>
                   <thead>
-                    <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Type</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Address</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Contact</th>
-                      <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider">Actions</th>
-                    </tr>
+                    <ResizableTableHeader
+                      columns={tableColumns}
+                      columnWidths={columnWidths}
+                      onMouseDown={handleMouseDown}
+                      resizingColumn={resizingColumn}
+                    />
                   </thead>
                   <tbody>
-                    {filteredAndSortedStores.map((store, index) => (
+                    {filteredAndSortedStores.map((store, index) => {
+                      let colIndex = 0;
+                      return (
                       <tr
                         key={store.storeId}
                         className={`border-b border-gray-100 transition-all duration-200 group ${
@@ -686,7 +703,7 @@ const StoresManager = () => {
                         }`}
                       >
                         {/* Name */}
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                           <div className="flex items-center gap-3">
                             {store.storeImageUrl && (
                               <img
@@ -704,13 +721,13 @@ const StoresManager = () => {
                           </div>
                         </td>
                         {/* Type */}
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                           <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
                             {store.storeType?.name || 'N/A'}
                           </span>
                         </td>
                         {/* Address */}
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                           <div className="space-y-1">
                             <p className="text-sm font-semibold text-gray-900 line-clamp-1">
                               {store.address || 'No address'}
@@ -734,7 +751,7 @@ const StoresManager = () => {
                           </div>
                         </td>
                         {/* Contact */}
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                           <div className="space-y-1">
                             {store.phone && (
                               <p className="text-xs text-gray-600 flex items-center gap-2">
@@ -751,7 +768,7 @@ const StoresManager = () => {
                           </div>
                         </td>
                         {/* Status */}
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                           <div className="space-y-2">
                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                               store.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
@@ -767,7 +784,7 @@ const StoresManager = () => {
                           </div>
                         </td>
                         {/* Actions */}
-                        <td className="px-6 py-5 text-center">
+                        <td className="px-6 py-5 text-center" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                           <div className="flex gap-2 justify-center">
                             <button
                               onClick={() => handleEdit(store)}
@@ -786,7 +803,8 @@ const StoresManager = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

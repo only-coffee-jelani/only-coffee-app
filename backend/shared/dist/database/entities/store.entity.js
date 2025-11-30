@@ -40,6 +40,30 @@ __decorate([
     __metadata("design:type", String)
 ], Store.prototype, "address", void 0);
 __decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, nullable: true }),
+    __metadata("design:type", String)
+], Store.prototype, "city", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, nullable: true }),
+    __metadata("design:type", String)
+], Store.prototype, "state", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 20, name: 'zip_code', nullable: true }),
+    __metadata("design:type", String)
+], Store.prototype, "zipCode", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 100, nullable: true }),
+    __metadata("design:type", String)
+], Store.prototype, "country", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 2, name: 'country_code', nullable: true }),
+    __metadata("design:type", String)
+], Store.prototype, "countryCode", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 50, nullable: true }),
+    __metadata("design:type", String)
+], Store.prototype, "continent", void 0);
+__decorate([
     (0, typeorm_1.Column)({ type: 'numeric', precision: 10, scale: 7, nullable: true }),
     __metadata("design:type", Number)
 ], Store.prototype, "latitude", void 0);
@@ -75,6 +99,10 @@ __decorate([
     (0, typeorm_1.Column)({ type: 'text', nullable: true }),
     __metadata("design:type", String)
 ], Store.prototype, "description", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'varchar', length: 50, default: 'America/Chicago' }),
+    __metadata("design:type", String)
+], Store.prototype, "timezone", void 0);
 __decorate([
     (0, typeorm_1.Column)({ type: 'timestamptz', name: 'opened_at', nullable: true }),
     __metadata("design:type", Date)

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiLoader, FiImage, FiSearch, FiArrowUp, FiArrowDown, FiCopy, FiEye, FiDownload, FiUpload, FiClock, FiActivity, FiCheckSquare, FiSquare, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ImageUploader from '../components/ImageUploader';
+import ResizableTableHeader from '../components/ResizableTableHeader';
+import { useResizableColumns, ColumnConfig } from '../hooks/useResizableColumns';
 import { useAuthStore } from '../store/authStore';
 import { API_BASE } from '../config';
 
@@ -63,6 +65,28 @@ const SplashScreenManager = () => {
     endDate: '',
     isActive: false,
   });
+
+  // Resizable columns configuration
+  const tableColumns: ColumnConfig[] = useMemo(() => {
+    const cols: ColumnConfig[] = [];
+    if (showBulkActions) {
+      cols.push({ key: 'select', label: '', minWidth: 60, defaultWidth: 60, maxWidth: 60 });
+    }
+    cols.push(
+      { key: 'image', label: 'Image', minWidth: 80, defaultWidth: 100, maxWidth: 150 },
+      { key: 'title', label: 'Title', minWidth: 150, defaultWidth: 250, maxWidth: 500 },
+      { key: 'duration', label: 'Duration', minWidth: 100, defaultWidth: 120, maxWidth: 200 },
+      { key: 'dateRange', label: 'Date Range', minWidth: 150, defaultWidth: 200, maxWidth: 400 },
+      { key: 'status', label: 'Status', minWidth: 100, defaultWidth: 150, maxWidth: 250 },
+      { key: 'actions', label: 'Actions', minWidth: 120, defaultWidth: 150, maxWidth: 200 }
+    );
+    return cols;
+  }, [showBulkActions]);
+
+  const { columnWidths, handleMouseDown, resizingColumn } = useResizableColumns(
+    tableColumns,
+    'splash-screen-manager'
+  );
 
   useEffect(() => {
     fetchSplashScreens();
@@ -1007,33 +1031,36 @@ const SplashScreenManager = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full" style={{ tableLayout: 'fixed' }}>
                     <thead>
-                      <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                        {showBulkActions && (
-                          <th className="px-6 py-4 text-center w-16">
-                            <button
-                              onClick={toggleSelectAll}
-                              className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            >
-                              {selectedIds.size === filteredAndSortedSplashes.length ? (
-                                <FiCheckSquare className="text-pink-600" size={20} />
-                              ) : (
-                                <FiSquare className="text-gray-400" size={20} />
-                              )}
-                            </button>
-                          </th>
-                        )}
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Title</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Duration</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Date Range</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Actions</th>
-                      </tr>
+                      <ResizableTableHeader
+                        columns={tableColumns}
+                        columnWidths={columnWidths}
+                        onMouseDown={handleMouseDown}
+                        resizingColumn={resizingColumn}
+                        renderHeaderContent={(column) => {
+                          if (column.key === 'select') {
+                            return (
+                              <button
+                                onClick={toggleSelectAll}
+                                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                              >
+                                {selectedIds.size === filteredAndSortedSplashes.length ? (
+                                  <FiCheckSquare className="text-pink-600" size={20} />
+                                ) : (
+                                  <FiSquare className="text-gray-400" size={20} />
+                                )}
+                              </button>
+                            );
+                          }
+                          return <span>{column.label}</span>;
+                        }}
+                      />
                     </thead>
                   <tbody>
-                    {filteredAndSortedSplashes.map((splash, index) => (
+                    {filteredAndSortedSplashes.map((splash, index) => {
+                      let colIndex = 0;
+                      return (
                       <tr
                         key={splash.id}
                         className={`border-b border-gray-100 transition-all duration-200 group ${
@@ -1041,7 +1068,7 @@ const SplashScreenManager = () => {
                         } ${selectedIds.has(splash.id) ? 'bg-pink-50/50' : ''}`}
                       >
                         {showBulkActions && (
-                          <td className="px-6 py-5 text-center">
+                          <td className="px-6 py-5 text-center" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             <button
                               onClick={() => toggleSelect(splash.id)}
                               className="p-1 hover:bg-gray-200 rounded transition-colors"
@@ -1054,7 +1081,7 @@ const SplashScreenManager = () => {
                             </button>
                           </td>
                         )}
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[showBulkActions ? colIndex++ : colIndex++].key] }}>
                           {splash.imageUrl ? (
                             <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all cursor-pointer" onClick={() => setShowFullImage(splash.imageUrl)}>
                               <img
@@ -1069,15 +1096,15 @@ const SplashScreenManager = () => {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[showBulkActions ? colIndex++ : colIndex++].key] }}>
                           <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{splash.title}</p>
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[showBulkActions ? colIndex++ : colIndex++].key] }}>
                           <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-full text-sm font-bold">
                             {splash.displayDuration}s
                           </span>
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[showBulkActions ? colIndex++ : colIndex++].key] }}>
                           <div className="flex flex-col gap-2">
                             {splash.startDate && splash.endDate ? (
                               <>
@@ -1106,7 +1133,7 @@ const SplashScreenManager = () => {
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[showBulkActions ? colIndex++ : colIndex++].key] }}>
                           {splash.isActive ? (
                             <span className="inline-block px-4 py-2 bg-gradient-to-r from-green-100 to-green-50 text-green-800 rounded-full text-sm font-bold border border-green-200 flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse"></span>
@@ -1118,7 +1145,7 @@ const SplashScreenManager = () => {
                             </span>
                           )}
                         </td>
-                        <td className="px-6 py-5">
+                        <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[showBulkActions ? colIndex++ : colIndex++].key] }}>
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => setShowPreview(splash)}
@@ -1151,7 +1178,8 @@ const SplashScreenManager = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
                 </div>

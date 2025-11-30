@@ -10,6 +10,13 @@ export class ConfirmPaymentDto {
   paymentIntentId: string;
 
   @ApiProperty({
+    description: 'Order ID associated with this payment',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
+  @IsString()
+  orderId: string;
+
+  @ApiProperty({
     description: 'Payment method ID (if not already attached)',
     required: false,
   })

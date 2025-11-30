@@ -43,6 +43,7 @@ class CartService @Inject constructor(
     
     /**
      * Add item to cart with full customization support
+     * Enterprise-level: Automatically sets store ID when adding first item
      */
     fun addItem(
         menuItem: MenuItem,
@@ -50,15 +51,23 @@ class CartService @Inject constructor(
         espressoShotCount: Int = 0,
         selectedMilkOption: String? = null,
         extraMilkShot: Boolean = false,
-        customizations: List<String>? = null
+        customizations: List<String>? = null,
+        storeId: String? = null
     ): Result<Unit> {
         // Validate item availability
         if (!menuItem.isAvailable) {
             return Result.failure(Exception("This item is currently unavailable"))
         }
-        
+
+        // Enterprise-level: Set store ID if provided and cart is empty or no store set
+        if (storeId != null && _currentStoreId.value == null) {
+            android.util.Log.d("CartService", "Auto-setting store ID: $storeId")
+            _currentStoreId.value = storeId
+            prefs.edit().putString(KEY_STORE_ID, storeId).apply()
+        }
+
         val currentItems = _cartItems.value.toMutableList()
-        
+
         // Check if identical item already exists
         val existingItemIndex = currentItems.indexOfFirst { item ->
             item.menuItemId == menuItem.id &&
@@ -67,7 +76,7 @@ class CartService @Inject constructor(
             item.extraMilkShot == extraMilkShot &&
             item.customizations == customizations
         }
-        
+
         if (existingItemIndex != -1) {
             // Update quantity of existing item
             val existingItem = currentItems[existingItemIndex]
@@ -88,10 +97,12 @@ class CartService @Inject constructor(
             )
             currentItems.add(newItem)
         }
-        
+
         _cartItems.value = currentItems
         saveCartToStorage()
-        
+
+        android.util.Log.d("CartService", "Item added. Cart size: ${_cartItems.value.size}, Store ID: ${_currentStoreId.value}")
+
         return Result.success(Unit)
     }
     

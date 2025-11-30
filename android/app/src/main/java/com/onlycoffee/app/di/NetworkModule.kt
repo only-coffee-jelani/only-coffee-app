@@ -11,6 +11,7 @@ import com.onlycoffee.app.data.api.LoyaltyApiService
 import com.onlycoffee.app.data.api.MenuApiService
 import com.onlycoffee.app.data.api.OffersApiService
 import com.onlycoffee.app.data.api.OrderApiService
+import com.onlycoffee.app.data.api.PaymentApiService
 import com.onlycoffee.app.data.api.SplashScreenApi
 import com.onlycoffee.app.data.api.StoreApiService
 import com.onlycoffee.app.managers.SecureStorageManager
@@ -149,5 +150,11 @@ object NetworkModule {
     @Singleton
     fun provideCarouselAnalyticsApiService(retrofit: Retrofit): CarouselAnalyticsApiService {
         return retrofit.create(CarouselAnalyticsApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun providePaymentApiService(retrofit: Retrofit): PaymentApiService {
+        return retrofit.create(PaymentApiService::class.java)
     }
 }

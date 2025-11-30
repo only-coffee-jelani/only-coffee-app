@@ -20,7 +20,20 @@ const config_2 = require("../config");
 let SlotManagementService = class SlotManagementService {
     constructor(configService) {
         this.configService = configService;
+        this.redisAvailable = false;
         this.redis = new ioredis_1.default((0, config_2.getRedisConfig)());
+        this.redis.on('connect', () => {
+            console.log('[SlotManagementService] Redis connected');
+            this.redisAvailable = true;
+        });
+        this.redis.on('error', (err) => {
+            console.warn('[SlotManagementService] Redis connection error:', err.message);
+            this.redisAvailable = false;
+        });
+        this.redis.on('close', () => {
+            console.warn('[SlotManagementService] Redis connection closed');
+            this.redisAvailable = false;
+        });
     }
     async getAvailableSlots(storeId, date, storeCapacity) {
         const dateStr = date.toISOString().split('T')[0];
@@ -44,20 +57,31 @@ let SlotManagementService = class SlotManagementService {
         return slots;
     }
     async reserveSlot(orderId, storeId, pickupTime, storeCapacity) {
-        const slotKey = config_2.REDIS_KEYS.SLOT_CAPACITY(storeId, pickupTime.toISOString());
-        const reservationKey = config_2.REDIS_KEYS.SLOT_RESERVATION(orderId);
-        const reserved = (await this.redis.get(slotKey)) || '0';
-        if (parseInt(reserved, 10) >= storeCapacity) {
-            return false;
+        if (!this.redisAvailable) {
+            console.warn('[SlotManagementService] Redis unavailable, allowing slot reservation');
+            return true;
         }
-        await this.redis
-            .multi()
-            .incr(slotKey)
-            .expire(slotKey, config_2.REDIS_TTL.SLOT_CACHE)
-            .set(reservationKey, pickupTime.toISOString())
-            .expire(reservationKey, config_2.REDIS_TTL.SLOT_RESERVATION)
-            .exec();
-        return true;
+        try {
+            const slotKey = config_2.REDIS_KEYS.SLOT_CAPACITY(storeId, pickupTime.toISOString());
+            const reservationKey = config_2.REDIS_KEYS.SLOT_RESERVATION(orderId);
+            const reserved = (await this.redis.get(slotKey)) || '0';
+            if (parseInt(reserved, 10) >= storeCapacity) {
+                return false;
+            }
+            await this.redis
+                .multi()
+                .incr(slotKey)
+                .expire(slotKey, config_2.REDIS_TTL.SLOT_CACHE)
+                .set(reservationKey, pickupTime.toISOString())
+                .expire(reservationKey, config_2.REDIS_TTL.SLOT_RESERVATION)
+                .exec();
+            return true;
+        }
+        catch (error) {
+            console.warn('[SlotManagementService] Redis error, allowing slot reservation:', error.message);
+            this.redisAvailable = false;
+            return true;
+        }
     }
     async confirmSlot(orderId) {
         const reservationKey = config_2.REDIS_KEYS.SLOT_RESERVATION(orderId);
@@ -79,15 +103,26 @@ let SlotManagementService = class SlotManagementService {
         const minutes = checkTime.getMinutes();
         const roundedMinutes = Math.ceil(minutes / 5) * 5;
         checkTime.setMinutes(roundedMinutes, 0, 0);
-        for (let i = 0; i < 12; i++) {
-            const slotTime = new Date(checkTime.getTime() + i * 5 * 60000);
-            const slotKey = config_2.REDIS_KEYS.SLOT_CAPACITY(storeId, slotTime.toISOString());
-            const reserved = (await this.redis.get(slotKey)) || '0';
-            if (parseInt(reserved, 10) < storeCapacity) {
-                return slotTime;
-            }
+        if (!this.redisAvailable) {
+            console.warn('[SlotManagementService] Redis unavailable, using default ASAP time');
+            return checkTime;
         }
-        return null;
+        try {
+            for (let i = 0; i < 12; i++) {
+                const slotTime = new Date(checkTime.getTime() + i * 5 * 60000);
+                const slotKey = config_2.REDIS_KEYS.SLOT_CAPACITY(storeId, slotTime.toISOString());
+                const reserved = (await this.redis.get(slotKey)) || '0';
+                if (parseInt(reserved, 10) < storeCapacity) {
+                    return slotTime;
+                }
+            }
+            return null;
+        }
+        catch (error) {
+            console.warn('[SlotManagementService] Redis error, using default ASAP time:', error.message);
+            this.redisAvailable = false;
+            return checkTime;
+        }
     }
     async cleanupExpiredReservations() {
         const pattern = config_2.REDIS_KEYS.SLOT_RESERVATION('*');

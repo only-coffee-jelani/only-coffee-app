@@ -11,7 +11,7 @@ interface OrderApiService {
     suspend fun getOrderById(@Path("id") orderId: String): OrderResponse
     
     @POST("orders")
-    suspend fun createOrder(@Body request: CreateOrderRequest): OrderResponse
+    suspend fun createOrder(@Body request: CreateOrderRequest): CreateOrderResponse
     
     @PATCH("orders/{id}/cancel")
     suspend fun cancelOrder(@Path("id") orderId: String): OrderResponse

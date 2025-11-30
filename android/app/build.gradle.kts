@@ -146,6 +146,9 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
 
+    // Stripe Payment Processing
+    implementation("com.stripe:stripe-android:20.49.0")
+
     // Firebase Cloud Messaging - Commented out until google-services.json is added
     // implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
     // implementation("com.google.firebase:firebase-messaging-ktx")

@@ -42,21 +42,41 @@ export class OrdersService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(userId: string, createOrderDto: CreateOrderDto) {
-    const { storeId, items, orderType, pickupTime, specialInstructions, couponId } = createOrderDto;
+  /**
+   * Create order - supports both authenticated users and guests
+   * @param userId - User ID if authenticated, null for guest orders
+   * @param createOrderDto - Order details
+   */
+  async create(userId: string | null, createOrderDto: CreateOrderDto) {
+    try {
+      const { storeId, items, orderType, pickupTime, specialInstructions, couponId } = createOrderDto;
+
+      // Log whether this is a guest or authenticated order
+      if (userId) {
+        this.logger.log(`Creating order for authenticated user: ${userId}`);
+      } else {
+        this.logger.log(`Creating guest order (no user authentication)`);
+      }
+
+      this.logger.log(`Order request: storeId=${storeId}, items=${items.length}, pickupTime=${pickupTime}`);
 
     // Validate store
     const store = await this.storeRepository.findOne({ where: { storeId } });
     if (!store) {
+      this.logger.error(`Store not found: ${storeId}`);
       throw new NotFoundException('Store not found');
     }
 
     if (!store.isActive) {
+      this.logger.error(`Store is not active: ${storeId}`);
       throw new BadRequestException('Store is not accepting orders');
     }
 
-    // Calculate subtotal
-    const subtotal = items.reduce((sum, item) => sum + item.totalPrice * item.quantity, 0);
+    this.logger.log(`Store validated: ${store.name}`);
+
+    // Calculate subtotal (totalPrice is already per-item total, not per-unit)
+    const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+    this.logger.log(`Calculated subtotal: ${subtotal}`);
 
     // Apply coupon if provided
     let discountAmount = 0;
@@ -88,8 +108,11 @@ export class OrdersService {
     }
 
     // Get order status IDs
+    this.logger.log(`Getting order status IDs...`);
     const pendingStatusId = await this.getOrderStatusId(OrderStatusEnum.PENDING);
+    this.logger.log(`Pending status ID: ${pendingStatusId}`);
     const confirmedStatusId = await this.getOrderStatusId(OrderStatusEnum.CONFIRMED);
+    this.logger.log(`Confirmed status ID: ${confirmedStatusId}`);
 
     // Start transaction
     return await this.dataSource.transaction(async (manager) => {
@@ -141,6 +164,10 @@ export class OrdersService {
         orderItems,
       };
     });
+    } catch (error) {
+      this.logger.error(`Error creating order: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   async findByUser(userId: string, limit: number = 20) {
@@ -152,9 +179,20 @@ export class OrdersService {
     });
   }
 
-  async findById(orderId: string, userId: string) {
+  /**
+   * Find order by ID
+   * If userId is provided, verifies ownership
+   * If userId is null (guest), returns order without ownership check
+   */
+  async findById(orderId: string, userId: string | null) {
+    // Build where clause - if userId is provided, verify ownership
+    const whereClause: any = { orderId };
+    if (userId) {
+      whereClause.userId = userId;
+    }
+
     const order = await this.orderRepository.findOne({
-      where: { orderId, userId },
+      where: whereClause,
       relations: ['orderItems', 'store', 'orderStatus'],
     });
 
@@ -225,13 +263,20 @@ export class OrdersService {
   /**
    * Confirm order after successful payment
    * This should be called after payment is successful
+   * Supports both authenticated users and guests
    */
-  async confirmOrder(userId: string, orderId: string, confirmOrderDto: ConfirmOrderDto) {
+  async confirmOrder(userId: string | null, orderId: string, confirmOrderDto: ConfirmOrderDto) {
     const { paymentIntentId } = confirmOrderDto;
 
-    // Verify order belongs to user
+    // Build where clause - if userId is provided, verify ownership
+    const whereClause: any = { orderId };
+    if (userId) {
+      whereClause.userId = userId;
+    }
+
+    // Verify order exists (and belongs to user if authenticated)
     const order = await this.orderRepository.findOne({
-      where: { orderId, userId },
+      where: whereClause,
       relations: ['orderItems', 'store', 'orderStatus'],
     });
 
@@ -422,10 +467,16 @@ export class OrdersService {
    * Helper method to get order status ID by code
    */
   private async getOrderStatusId(code: string): Promise<string> {
+    this.logger.log(`Looking for order status with code: ${code}`);
     const status = await this.orderStatusRepository.findOne({ where: { code } });
     if (!status) {
+      this.logger.error(`Order status not found: ${code}`);
+      // List all available statuses for debugging
+      const allStatuses = await this.orderStatusRepository.find();
+      this.logger.error(`Available statuses: ${JSON.stringify(allStatuses.map(s => s.code))}`);
       throw new Error(`Order status not found: ${code}`);
     }
+    this.logger.log(`Found order status: ${status.orderStatusId}`);
     return status.orderStatusId;
   }
 
@@ -438,5 +489,33 @@ export class OrdersService {
       throw new Error(`Payment method not found: ${code}`);
     }
     return paymentMethod.paymentMethodId;
+  }
+
+  /**
+   * Debug method to test database connectivity and data
+   */
+  async debugTest() {
+    try {
+      // Test 1: Check order statuses
+      const statuses = await this.orderStatusRepository.find();
+      console.log(`Found ${statuses.length} order statuses:`, statuses.map(s => s.code));
+
+      // Test 2: Check stores
+      const stores = await this.storeRepository.find({ take: 1 });
+      console.log(`Found ${stores.length} stores`);
+
+      // Test 3: Check payment methods
+      const paymentMethods = await this.paymentMethodRepository.find();
+      console.log(`Found ${paymentMethods.length} payment methods:`, paymentMethods.map(p => p.code));
+
+      return {
+        orderStatuses: statuses.map(s => ({ id: s.orderStatusId, code: s.code, name: s.name })),
+        storesCount: stores.length,
+        paymentMethods: paymentMethods.map(p => ({ id: p.paymentMethodId, code: p.code, name: p.name })),
+      };
+    } catch (error) {
+      console.error(`Debug test error:`, error);
+      throw error;
+    }
   }
 }

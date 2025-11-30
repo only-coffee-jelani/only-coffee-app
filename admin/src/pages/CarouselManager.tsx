@@ -3,6 +3,8 @@ import { FiPlus, FiTrash2, FiSave, FiLoader, FiEdit2, FiX, FiImage, FiSearch, Fi
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../store/authStore';
 import ImageUploader from '../components/ImageUploader';
+import ResizableTableHeader from '../components/ResizableTableHeader';
+import { useResizableColumns, ColumnConfig } from '../hooks/useResizableColumns';
 import { API_BASE } from '../config';
 
 interface CarouselImage {
@@ -59,6 +61,21 @@ const CarouselManager = () => {
     startAt: '',
     endAt: '',
   });
+
+  // Resizable columns configuration
+  const tableColumns: ColumnConfig[] = useMemo(() => [
+    { key: 'position', label: 'Position', minWidth: 80, defaultWidth: 120, maxWidth: 200 },
+    { key: 'image', label: 'Image', minWidth: 80, defaultWidth: 100, maxWidth: 150 },
+    { key: 'title', label: 'Title', minWidth: 150, defaultWidth: 250, maxWidth: 500 },
+    { key: 'duration', label: 'Duration', minWidth: 100, defaultWidth: 120, maxWidth: 200 },
+    { key: 'status', label: 'Status', minWidth: 150, defaultWidth: 200, maxWidth: 300 },
+    { key: 'actions', label: 'Actions', minWidth: 120, defaultWidth: 150, maxWidth: 200 }
+  ], []);
+
+  const { columnWidths, handleMouseDown, resizingColumn } = useResizableColumns(
+    tableColumns,
+    'carousel-manager'
+  );
 
   useEffect(() => {
     fetchCarouselImages();
@@ -502,31 +519,31 @@ const CarouselManager = () => {
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full" style={{ tableLayout: 'fixed' }}>
                     <thead>
-                      <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-32">Position</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Title</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Duration</th>
-                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
-                      </tr>
+                      <ResizableTableHeader
+                        columns={tableColumns}
+                        columnWidths={columnWidths}
+                        onMouseDown={handleMouseDown}
+                        resizingColumn={resizingColumn}
+                      />
                     </thead>
                     <tbody>
-                      {filteredAndSortedImages.map((image, index) => (
+                      {filteredAndSortedImages.map((image, index) => {
+                        let colIndex = 0;
+                        return (
                         <tr
                           key={image.carouselItemId}
                           className={`border-b border-gray-100 transition-all duration-200 group ${
                             index % 2 === 0 ? 'bg-white hover:bg-blue-50/30' : 'bg-gray-50/50 hover:bg-blue-50/50'
                           }`}
                         >
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             <span className="inline-block px-4 py-2 bg-purple-100 text-purple-700 rounded-lg text-lg font-bold">
                               #{image.sortOrder + 1}
                             </span>
                           </td>
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             {image.imageAsset?.url ? (
                               <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all cursor-pointer" onClick={() => setShowFullImage(image.imageAsset?.url || '')}>
                                 <img
@@ -541,16 +558,16 @@ const CarouselManager = () => {
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{image.title || 'Untitled'}</p>
                             {image.subtitle && <p className="text-sm text-gray-500 mt-1">{image.subtitle}</p>}
                           </td>
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-50 text-blue-700 rounded-full text-sm font-bold">
                               Auto
                             </span>
                           </td>
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             <div className="flex flex-col gap-1">
                               {/* Item-level status */}
                               {image.isActive ? (
@@ -575,7 +592,7 @@ const CarouselManager = () => {
                               )}
                             </div>
                           </td>
-                          <td className="px-6 py-5">
+                          <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 onClick={() => handleToggleActive(image)}
@@ -605,7 +622,8 @@ const CarouselManager = () => {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      );
+                      })}
                     </tbody>
                   </table>
                 </div>

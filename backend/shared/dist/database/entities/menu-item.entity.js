@@ -16,6 +16,7 @@ const media_asset_entity_1 = require("./media-asset.entity");
 const order_item_entity_1 = require("./order-item.entity");
 const menu_item_modifier_group_entity_1 = require("./menu-item-modifier-group.entity");
 const ai_recommendation_entity_1 = require("./ai-recommendation.entity");
+const allergen_entity_1 = require("./allergen.entity");
 let MenuItem = class MenuItem {
 };
 exports.MenuItem = MenuItem;
@@ -85,6 +86,15 @@ __decorate([
     (0, typeorm_1.OneToMany)(() => ai_recommendation_entity_1.AIRecommendation, (recommendation) => recommendation.menuItem),
     __metadata("design:type", Array)
 ], MenuItem.prototype, "aiRecommendations", void 0);
+__decorate([
+    (0, typeorm_1.ManyToMany)(() => allergen_entity_1.Allergen, (allergen) => allergen.menuItems),
+    (0, typeorm_1.JoinTable)({
+        name: 'menu_item_allergens',
+        joinColumn: { name: 'menu_item_id', referencedColumnName: 'menuItemId' },
+        inverseJoinColumn: { name: 'allergen_id', referencedColumnName: 'allergenId' },
+    }),
+    __metadata("design:type", Array)
+], MenuItem.prototype, "allergens", void 0);
 exports.MenuItem = MenuItem = __decorate([
     (0, typeorm_1.Entity)('menu_items'),
     (0, typeorm_1.Index)(['categoryId'])

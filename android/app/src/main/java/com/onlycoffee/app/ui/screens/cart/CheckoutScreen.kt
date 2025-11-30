@@ -15,24 +15,91 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.onlycoffee.app.data.model.Coupon
+import com.onlycoffee.app.ui.screens.auth.PhoneAuthDialog
 import com.onlycoffee.app.ui.theme.*
+import com.onlycoffee.app.utils.StripeHelper
+import com.stripe.android.paymentsheet.PaymentSheet
+import com.stripe.android.paymentsheet.PaymentSheetResult
+import com.stripe.android.paymentsheet.rememberPaymentSheet
 
 @Composable
 fun CheckoutScreen(
     navController: NavController,
-    viewModel: CartViewModel = hiltViewModel()
+    viewModel: CartViewModel = hiltViewModel(),
+    stripeHelper: StripeHelper = hiltViewModel<CartViewModel>().getStripeHelper()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+    val paymentState by viewModel.paymentState.collectAsState()
     var showCouponSelector by remember { mutableStateOf(false) }
+    var showPhoneAuthDialog by remember { mutableStateOf(false) }
     var specialInstructions by remember { mutableStateOf("") }
+
+    // Stripe Payment Sheet - use method reference to avoid recomposition issues
+    val paymentSheetCallback: (PaymentSheetResult) -> Unit = remember {
+        { result ->
+            when (result) {
+                is PaymentSheetResult.Completed -> {
+                    // Payment successful, confirm with backend
+                    val readyState = paymentState as? PaymentState.PaymentSheetReady
+                    readyState?.let {
+                        viewModel.confirmPayment(it.paymentIntentId, it.orderId)
+                    }
+                }
+                is PaymentSheetResult.Canceled -> {
+                    viewModel.onPaymentCanceled()
+                }
+                is PaymentSheetResult.Failed -> {
+                    viewModel.resetPaymentState()
+                }
+            }
+        }
+    }
+    val paymentSheet = rememberPaymentSheet(paymentSheetCallback)
 
     LaunchedEffect(Unit) {
         viewModel.loadAvailableCoupons()
+    }
+
+    // Handle payment state changes
+    LaunchedEffect(paymentState) {
+        when (val state = paymentState) {
+            is PaymentState.AuthenticationRequired -> {
+                // Show phone authentication dialog
+                showPhoneAuthDialog = true
+            }
+            is PaymentState.PaymentSheetReady -> {
+                // Present payment sheet with Google Pay enabled
+                // Enterprise-level: Use StripeHelper to get production-ready configuration
+                val configuration = stripeHelper.createPaymentSheetConfiguration(
+                    merchantDisplayName = "Only Coffee",
+                    merchantCountryCode = "US"
+                )
+                paymentSheet.presentWithPaymentIntent(
+                    paymentIntentClientSecret = state.clientSecret,
+                    configuration = configuration
+                )
+            }
+            is PaymentState.Success -> {
+                // Navigate to order confirmation
+                navController.navigate("order_confirmation/${state.orderId}") {
+                    popUpTo("cart") { inclusive = true }
+                }
+                viewModel.resetPaymentState()
+            }
+            is PaymentState.Error -> {
+                // Show error message (handled in UI)
+            }
+            else -> {
+                // Other states handled in UI
+            }
+        }
     }
 
     Scaffold(
@@ -118,28 +185,109 @@ fun CheckoutScreen(
 
             // Place order button
             item {
+                val isProcessing = paymentState is PaymentState.CreatingOrder ||
+                        paymentState is PaymentState.CreatingPaymentIntent ||
+                        paymentState is PaymentState.ConfirmingPayment
+
                 Button(
                     onClick = {
-                        // TODO: Implement order placement
-                        // val request = viewModel.createOrderRequest(
-                        //     storeId = selectedStoreId,
-                        //     specialInstructions = specialInstructions.ifBlank { null }
-                        // )
+                        // Get store ID from cart state
+                        val storeId = uiState.currentStoreId
+                        if (storeId != null) {
+                            viewModel.placeOrder(
+                                storeId = storeId,
+                                specialInstructions = specialInstructions.ifBlank { null }
+                            )
+                        }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
+                    enabled = !isProcessing && uiState.currentStoreId != null,
                     colors = ButtonDefaults.buttonColors(containerColor = BrandPrimary),
                     shape = RoundedCornerShape(28.dp)
                 ) {
+                    if (isProcessing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            when (paymentState) {
+                                is PaymentState.CreatingOrder -> "Creating Order..."
+                                is PaymentState.CreatingPaymentIntent -> "Preparing Payment..."
+                                is PaymentState.ConfirmingPayment -> "Confirming..."
+                                else -> "Processing..."
+                            },
+                            style = OnlyCoffeeTextStyles.Body.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                    } else {
+                        Text(
+                            "Place Order",
+                            style = OnlyCoffeeTextStyles.Body.copy(fontWeight = FontWeight.Bold),
+                            color = Color.White
+                        )
+                    }
+                }
+
+                // Show error message if payment failed
+                if (paymentState is PaymentState.Error) {
+                    val errorMessage = (paymentState as PaymentState.Error).message
+                    Column(
+                        modifier = Modifier.padding(top = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = OnlyCoffeeTextStyles.Caption
+                        )
+                        TextButton(
+                            onClick = { viewModel.retryPayment() },
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            Text(
+                                "Retry Payment",
+                                color = BrandPrimary,
+                                style = OnlyCoffeeTextStyles.Caption.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
+                }
+
+                // Show canceled message
+                if (paymentState is PaymentState.Canceled) {
                     Text(
-                        "Place Order",
-                        style = OnlyCoffeeTextStyles.Body.copy(fontWeight = FontWeight.Bold),
-                        color = Color.White
+                        text = "Payment canceled. Please try again.",
+                        color = TextSecondary,
+                        style = OnlyCoffeeTextStyles.Caption,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
             }
         }
+    }
+
+    // Phone authentication dialog
+    if (showPhoneAuthDialog) {
+        PhoneAuthDialog(
+            authenticationManager = viewModel.getAuthenticationManager(),
+            onDismiss = {
+                showPhoneAuthDialog = false
+                viewModel.resetPaymentState()
+            },
+            onAuthSuccess = {
+                showPhoneAuthDialog = false
+                // Retry placing order after successful authentication
+                val storeId = uiState.currentStoreId
+                if (storeId != null) {
+                    viewModel.placeOrder(storeId, specialInstructions.ifBlank { null })
+                }
+            }
+        )
     }
 
     // Coupon selector bottom sheet

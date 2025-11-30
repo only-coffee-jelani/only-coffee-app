@@ -1,0 +1,15 @@
+{
+  "items": [
+    {
+      "basePrice": 4.5,
+      "itemName": "Vienna Melange / Cappuccino",
+      "menuItemId": "8acdd3aa-6dc2-4f56-8ee8-c9f0e7d4d90a",
+      "quantity": 1,
+      "totalPrice": 4.5
+    }
+  ],
+  "orderType": "PICKUP",
+  "pickupTime": "ASAP",
+  "storeId": "13c860a4-833f-4b9a-bfff-e54ad348133d"
+}
+

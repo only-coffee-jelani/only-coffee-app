@@ -59,11 +59,13 @@ class OrderRepository @Inject constructor(
 
     /**
      * Create a new order
+     * Enterprise-level: Converts backend CreateOrderResponse to internal Order model
      */
     suspend fun createOrder(request: CreateOrderRequest): NetworkResult<Order> {
         val result = safeApiCallWithRetry(errorHandler) {
             val response = orderApiService.createOrder(request)
-            response.data
+            // Convert CreateOrderResponse to Order
+            response.toOrder()
         }
 
         // Invalidate cache on successful order creation

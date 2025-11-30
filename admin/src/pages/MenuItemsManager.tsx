@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiSave, FiX, FiLoader, FiImage, FiSearch, FiFilter, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ImageUploader from '../components/ImageUploader';
+import ResizableTableHeader from '../components/ResizableTableHeader';
+import { useResizableColumns, ColumnConfig } from '../hooks/useResizableColumns';
 import { useAuthStore } from '../store/authStore';
 import { API_BASE } from '../config';
 
@@ -41,9 +43,23 @@ const MenuItemsManager = () => {
     allergens: [] as string[],
   });
 
-
-
   const [showAllergensDropdown, setShowAllergensDropdown] = useState(false);
+
+  // Resizable columns configuration
+  const tableColumns: ColumnConfig[] = useMemo(() => [
+    { key: 'image', label: 'Image', minWidth: 80, defaultWidth: 100, maxWidth: 150 },
+    { key: 'name', label: 'Name', minWidth: 150, defaultWidth: 250, maxWidth: 500 },
+    { key: 'category', label: 'Category', minWidth: 120, defaultWidth: 180, maxWidth: 300 },
+    { key: 'price', label: 'Price', minWidth: 80, defaultWidth: 100, maxWidth: 150 },
+    { key: 'calories', label: 'Calories', minWidth: 80, defaultWidth: 100, maxWidth: 150 },
+    { key: 'description', label: 'Description', minWidth: 200, defaultWidth: 300, maxWidth: 600 },
+    { key: 'actions', label: 'Actions', minWidth: 120, defaultWidth: 150, maxWidth: 200 }
+  ], []);
+
+  const { columnWidths, handleMouseDown, resizingColumn } = useResizableColumns(
+    tableColumns,
+    'menu-items-manager'
+  );
 
   // Fetch menu items and stores from backend
   useEffect(() => {
@@ -1065,20 +1081,19 @@ const MenuItemsManager = () => {
 
                     {/* Category Table */}
                     <div className="overflow-x-auto">
-                      <table className="w-full">
+                      <table className="w-full" style={{ tableLayout: 'fixed' }}>
                         <thead>
-                          <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Image</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-48">Name</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-40">Category</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Price</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-20">Calories</th>
-                            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider min-w-64">Description</th>
-                            <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase tracking-wider w-24">Actions</th>
-                          </tr>
+                          <ResizableTableHeader
+                            columns={tableColumns}
+                            columnWidths={columnWidths}
+                            onMouseDown={handleMouseDown}
+                            resizingColumn={resizingColumn}
+                          />
                         </thead>
                         <tbody>
-                          {items.map((item, index) => (
+                          {items.map((item, index) => {
+                            let colIndex = 0;
+                            return (
                             <tr
                               key={item.id}
                               className={`border-b border-gray-100 transition-all duration-200 group ${
@@ -1086,7 +1101,7 @@ const MenuItemsManager = () => {
                               }`}
                             >
                               {/* Image */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 {item.imageUrl ? (
                                   <div className="h-16 w-16 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0 shadow-md group-hover:shadow-lg transition-all">
                                     <img
@@ -1103,26 +1118,26 @@ const MenuItemsManager = () => {
                               </td>
 
                               {/* Name */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 <p className="text-lg font-bold text-gray-900 group-hover:text-pink-600 transition-colors line-clamp-1">{item.name}</p>
                               </td>
 
                               {/* Category */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 <span className="inline-block px-3 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 rounded-full text-sm font-bold shadow-sm group-hover:shadow-md transition-shadow">
                                   {item.categoryName || 'Uncategorized'}
                                 </span>
                               </td>
 
                               {/* Price */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 <span className="inline-block px-4 py-2 bg-gradient-to-r from-pink-100 to-orange-100 text-pink-700 rounded-full text-base font-bold shadow-sm group-hover:shadow-md transition-shadow">
                                   ${Number(item.basePrice).toFixed(2)}
                                 </span>
                               </td>
 
                               {/* Calories */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 {item.calories ? (
                                   <span className="text-sm text-gray-700 font-semibold">
                                     {item.calories} cal
@@ -1133,14 +1148,14 @@ const MenuItemsManager = () => {
                               </td>
 
                               {/* Description */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 <p className="text-sm text-gray-700 line-clamp-2 group-hover:text-gray-900 transition-colors font-medium">
                                   {item.description || <span className="text-gray-400 italic">No description</span>}
                                 </p>
                               </td>
 
                               {/* Actions */}
-                              <td className="px-6 py-5">
+                              <td className="px-6 py-5" style={{ width: columnWidths[tableColumns[colIndex++].key] }}>
                                 <div className="flex items-center justify-center gap-2">
                                   <button
                                     onClick={() => handleEdit(item)}
@@ -1159,7 +1174,8 @@ const MenuItemsManager = () => {
                                 </div>
                               </td>
                             </tr>
-                          ))}
+                          );
+                          })}
                         </tbody>
                       </table>
                     </div>

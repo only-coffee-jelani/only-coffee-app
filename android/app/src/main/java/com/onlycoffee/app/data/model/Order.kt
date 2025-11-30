@@ -146,25 +146,108 @@ enum class OrderChannel {
 }
 
 // Request/Response models
+/**
+ * Create Order Request - matches backend CreateOrderDto exactly
+ * Enterprise-level: All field names must match backend DTO (camelCase)
+ */
 data class CreateOrderRequest(
-    @SerializedName("store_id")
-    val storeId: String,
+    val storeId: String,  // camelCase to match backend
     val items: List<CreateOrderItem>,
-    val channel: String = "app_only",
-    @SerializedName("special_instructions")
+    val orderType: String? = "PICKUP",  // Optional: pickup, delivery, etc.
+    val pickupTime: String,  // Required: Either "ASAP" or ISO date string
     val specialInstructions: String? = null,
-    @SerializedName("pickup_time")
-    val pickupTime: String? = null,
-    @SerializedName("coupon_id")
     val couponId: String? = null
 )
 
+/**
+ * Create Order Item - matches backend OrderItemDto exactly
+ * Enterprise-level: All required fields must be provided
+ */
 data class CreateOrderItem(
-    @SerializedName("menu_item_id")
+    val menuItemId: String,  // camelCase to match backend
+    val itemName: String,  // Required: Item name
+    val quantity: Int,  // Required: Quantity
+    val basePrice: Double,  // Required: Base price per item
+    val modifiersPrice: Double? = null,  // Optional: Additional modifiers cost
+    val totalPrice: Double,  // Required: Total price (basePrice + modifiersPrice) * quantity
+    val modifiers: List<OrderModifier>? = null,  // Optional: List of modifiers
+    val specialInstructions: String? = null  // Optional: Item-specific instructions
+)
+
+/**
+ * Order Modifier - for customizations
+ */
+data class OrderModifier(
+    val name: String,
+    val value: String,
+    val price: Double
+)
+
+/**
+ * Response from creating an order (matches backend response exactly)
+ * Enterprise-level: Backend returns camelCase fields with numeric values as strings
+ */
+data class CreateOrderResponse(
+    val orderId: String,
+    val userId: String?,
+    val storeId: String,
+    val orderStatusId: String,
+    val subtotal: String, // Backend returns numeric values as strings
+    val tax: String,
+    val discountTotal: String,
+    val total: String,
+    val pickupTime: String?,
+    val paymentMethodId: String?,
+    val placedAt: String,
+    val createdAt: String,
+    val updatedAt: String,
+    val orderItems: List<CreateOrderItemResponse>
+) {
+    /**
+     * Convert backend response to internal Order model
+     */
+    fun toOrder(): Order {
+        return Order(
+            id = orderId,
+            userId = userId ?: "",
+            storeId = storeId,
+            items = orderItems.map { it.toOrderItem() },
+            subtotal = subtotal.toDoubleOrNull() ?: 0.0,
+            tax = tax.toDoubleOrNull() ?: 0.0,
+            discountAmount = discountTotal.toDoubleOrNull() ?: 0.0,
+            appliedCouponId = null,
+            total = total.toDoubleOrNull() ?: 0.0,
+            status = OrderStatus.PENDING,
+            channel = OrderChannel.APP_ONLY,
+            specialInstructions = null,
+            pickupTime = null,
+            createdAt = Date(),
+            updatedAt = Date()
+        )
+    }
+}
+
+/**
+ * Order item in create order response
+ */
+data class CreateOrderItemResponse(
+    val orderItemId: String,
+    val orderId: String,
     val menuItemId: String,
     val quantity: Int,
-    val customizations: List<String>? = null
-)
+    val unitPrice: Double,
+    val createdAt: String
+) {
+    fun toOrderItem(): OrderItem {
+        return OrderItem(
+            menuItemId = menuItemId,
+            name = "",
+            price = unitPrice,
+            quantity = quantity,
+            customizations = null
+        )
+    }
+}
 
 data class OrderResponse(
     val success: Boolean,

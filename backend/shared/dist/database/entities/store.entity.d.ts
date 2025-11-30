@@ -12,6 +12,12 @@ export declare class Store {
     name: string;
     storeTypeId: string | null;
     address: string | null;
+    city: string | null;
+    state: string | null;
+    zipCode: string | null;
+    country: string | null;
+    countryCode: string | null;
+    continent: string | null;
     latitude: number | null;
     longitude: number | null;
     phone: string | null;
@@ -21,6 +27,7 @@ export declare class Store {
     acceptingOrders: boolean;
     storeImageUrl: string | null;
     description: string | null;
+    timezone: string;
     openedAt: Date | null;
     createdAt: Date;
     updatedAt: Date;

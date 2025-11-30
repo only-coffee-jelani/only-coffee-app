@@ -18,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '@shared/database/entities';
@@ -29,8 +30,6 @@ import { AttachPaymentMethodDto } from './dto/attach-payment-method.dto';
 
 @ApiTags('payments')
 @Controller('payments')
-@UseGuards(JwtAuthGuard)
-@ApiBearerAuth()
 export class PaymentsController {
   constructor(
     private readonly paymentsService: PaymentsService,
@@ -38,56 +37,69 @@ export class PaymentsController {
   ) {}
 
   @Post('create-intent')
-  @ApiOperation({ summary: 'Create payment intent for an order' })
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({
+    summary: 'Create payment intent for an order (guest or authenticated)',
+    description: 'Create a Stripe payment intent for an order. Supports both guest and authenticated users.'
+  })
   @ApiResponse({
     status: 201,
     description: 'Payment intent created successfully',
   })
   async createPaymentIntent(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User | null,
     @Body() createPaymentIntentDto: CreatePaymentIntentDto,
   ) {
+    const userId = user?.userId || null;
     return this.paymentsService.createPaymentIntent(
-      user.userId,
+      userId,
       createPaymentIntentDto,
     );
   }
 
   @Post('confirm')
-  @ApiOperation({ summary: 'Confirm payment intent' })
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'Confirm payment intent (guest or authenticated)' })
   @ApiResponse({ status: 200, description: 'Payment confirmed successfully' })
   async confirmPayment(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User | null,
     @Body() confirmPaymentDto: ConfirmPaymentDto,
   ) {
-    return this.paymentsService.confirmPayment(user.userId, confirmPaymentDto);
+    const userId = user?.userId || null;
+    return this.paymentsService.confirmPayment(userId, confirmPaymentDto);
   }
 
   @Get('intent/:paymentIntentId')
-  @ApiOperation({ summary: 'Get payment intent details' })
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'Get payment intent details (guest or authenticated)' })
   @ApiResponse({
     status: 200,
     description: 'Payment intent details retrieved',
   })
   async getPaymentIntent(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User | null,
     @Param('paymentIntentId') paymentIntentId: string,
   ) {
-    return this.paymentsService.getPaymentIntent(user.userId, paymentIntentId);
+    const userId = user?.userId || null;
+    return this.paymentsService.getPaymentIntent(userId, paymentIntentId);
   }
 
   @Delete('intent/:paymentIntentId')
-  @ApiOperation({ summary: 'Cancel payment intent' })
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'Cancel payment intent (guest or authenticated)' })
   @ApiResponse({ status: 200, description: 'Payment intent canceled' })
   async cancelPaymentIntent(
-    @CurrentUser() user: User,
+    @CurrentUser() user: User | null,
     @Param('paymentIntentId') paymentIntentId: string,
   ) {
-    return this.paymentsService.cancelPaymentIntent(user.userId, paymentIntentId);
+    const userId = user?.userId || null;
+    return this.paymentsService.cancelPaymentIntent(userId, paymentIntentId);
   }
 
   @Post('payment-methods/attach')
-  @ApiOperation({ summary: 'Attach payment method to customer' })
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Attach payment method to customer (requires authentication)' })
   @ApiResponse({ status: 200, description: 'Payment method attached' })
   async attachPaymentMethod(
     @CurrentUser() user: User,

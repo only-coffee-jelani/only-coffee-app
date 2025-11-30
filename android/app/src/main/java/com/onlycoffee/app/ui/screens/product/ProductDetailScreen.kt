@@ -188,32 +188,48 @@ fun ProductDetailScreen(
                     cartItemCount = cartUiState.itemCount,
                     cartTotal = cartUiState.total,
                     onAddToOrder = {
-                        // Add item to cart with all customizations
-                        cartViewModel.addItem(
-                            menuItem = menuItem,
-                            quantity = quantity,
-                            espressoShotCount = espressoShotCount,
-                            selectedMilkOption = selectedMilkOption,
-                            extraMilkShot = extraMilkShot,
-                            customizations = null // TODO: Map selectedModifiers to string list
-                        )
-
-                        // Show success snackbar with action to view cart
-                        scope.launch {
-                            val result = snackbarHostState.showSnackbar(
-                                message = "✓ Added to cart",
-                                actionLabel = "View Cart",
-                                duration = androidx.compose.material3.SnackbarDuration.Short
+                        // Enterprise-level store ID management:
+                        // Pass store ID when adding item to ensure checkout works
+                        val currentStoreId = uiState.selectedStoreId
+                        if (currentStoreId != null) {
+                            // Add item to cart with all customizations AND store ID
+                            cartViewModel.addItem(
+                                menuItem = menuItem,
+                                quantity = quantity,
+                                espressoShotCount = espressoShotCount,
+                                selectedMilkOption = selectedMilkOption,
+                                extraMilkShot = extraMilkShot,
+                                customizations = null, // TODO: Map selectedModifiers to string list
+                                storeId = currentStoreId // CRITICAL: Pass store ID for checkout
                             )
-                            when (result) {
-                                SnackbarResult.ActionPerformed -> {
-                                    // Navigate to cart
-                                    navController.navigate("cart")
+
+                            // Show success snackbar with action to view cart
+                            scope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "✓ Added to cart",
+                                    actionLabel = "View Cart",
+                                    duration = androidx.compose.material3.SnackbarDuration.Short
+                                )
+                                when (result) {
+                                    SnackbarResult.ActionPerformed -> {
+                                        // Navigate to cart
+                                        navController.navigate("cart")
+                                    }
+                                    SnackbarResult.Dismissed -> {
+                                        // Navigate back to previous screen
+                                        navController.popBackStack()
+                                    }
                                 }
-                                SnackbarResult.Dismissed -> {
-                                    // Navigate back to previous screen
-                                    navController.popBackStack()
-                                }
+                            }
+                        } else {
+                            // Store ID is missing - this should not happen in production
+                            // Log error and show user feedback
+                            android.util.Log.e("ProductDetailScreen", "Store ID is null when adding item")
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = "Error: Store not selected. Please select a store first.",
+                                    duration = androidx.compose.material3.SnackbarDuration.Long
+                                )
                             }
                         }
                     },

@@ -5,17 +5,20 @@ const getRedisConfig = () => {
     return {
         host: process.env.REDIS_HOST || 'localhost',
         port: parseInt(process.env.REDIS_PORT || '6379', 10),
-        password: process.env.REDIS_PASSWORD || 'redis_password',
+        password: process.env.REDIS_PASSWORD || undefined,
         db: parseInt(process.env.REDIS_DB || '0', 10),
         keyPrefix: process.env.REDIS_KEY_PREFIX || 'only-coffee:',
         retryStrategy: (times) => {
+            if (times > 3) {
+                return null;
+            }
             const delay = Math.min(times * 50, 2000);
             return delay;
         },
         maxRetriesPerRequest: 3,
-        enableReadyCheck: true,
-        enableOfflineQueue: true,
-        lazyConnect: false,
+        enableReadyCheck: false,
+        enableOfflineQueue: false,
+        lazyConnect: true,
     };
 };
 exports.getRedisConfig = getRedisConfig;

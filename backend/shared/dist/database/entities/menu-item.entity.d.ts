@@ -3,6 +3,7 @@ import { MediaAsset } from './media-asset.entity';
 import { OrderItem } from './order-item.entity';
 import { MenuItemModifierGroup } from './menu-item-modifier-group.entity';
 import { AIRecommendation } from './ai-recommendation.entity';
+import { Allergen } from './allergen.entity';
 export declare class MenuItem {
     menuItemId: string;
     categoryId: string | null;
@@ -20,4 +21,5 @@ export declare class MenuItem {
     orderItems: OrderItem[];
     menuItemModifierGroups: MenuItemModifierGroup[];
     aiRecommendations: AIRecommendation[];
+    allergens: Allergen[];
 }

@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { AppModule } from './app.module';
 import * as express from 'express';
 import { AppDataSource } from '@shared/database/data-source';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 async function bootstrap() {
   // TEMPORARILY DISABLED: Run migrations before starting the app
@@ -42,6 +43,9 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization'],
     optionsSuccessStatus: 200,
   });
+
+  // Global exception filter - Enterprise-level error handling with detailed logging
+  app.useGlobalFilters(new AllExceptionsFilter());
 
   // Global validation pipe
   app.useGlobalPipes(

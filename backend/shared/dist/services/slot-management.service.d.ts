@@ -8,6 +8,7 @@ export interface TimeSlot {
 export declare class SlotManagementService {
     private readonly configService;
     private readonly redis;
+    private redisAvailable;
     constructor(configService: ConfigService);
     getAvailableSlots(storeId: string, date: Date, storeCapacity: number): Promise<TimeSlot[]>;
     reserveSlot(orderId: string, storeId: string, pickupTime: Date, storeCapacity: number): Promise<boolean>;

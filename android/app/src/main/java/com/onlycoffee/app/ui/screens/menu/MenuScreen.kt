@@ -260,13 +260,16 @@ fun MenuScreen(
                     },
                     onAddToCart = { menuItem ->
                         // Add item to cart with default settings (no customizations)
+                        // Enterprise-level: Pass store ID to ensure checkout works
+                        val storeId = storeUiState.selectedStore?.storeId
                         cartViewModel.addItem(
                             menuItem = menuItem,
                             quantity = 1,
                             espressoShotCount = 0,
                             selectedMilkOption = null,
                             extraMilkShot = false,
-                            customizations = null
+                            customizations = null,
+                            storeId = storeId // CRITICAL: Pass store ID for checkout
                         )
 
                         // Show success snackbar with action to view cart
