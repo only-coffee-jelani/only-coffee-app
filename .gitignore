@@ -74,6 +74,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 backend-startup.log
+backend-console.log
 error.log
 combined.log
 
@@ -101,9 +102,11 @@ backend/build/
 backend/.env
 backend/services/**/node_modules/
 backend/services/**/dist/
+backend/services/**/tsconfig.tsbuildinfo
 backend/shared/node_modules/
 backend/shared/dist/
 backend/shared/tsconfig.tsbuildinfo
+*.tsbuildinfo
 
 # Backend database scripts (temporary/generated - keep migrations)
 # Keep: SQL files, TypeScript files, migration scripts
@@ -160,6 +163,13 @@ android/app/release/
 android/app/debug/
 android/.gradle/
 android/gradle/wrapper/gradle-wrapper.jar
+
+# Android build artifacts
+android/**/*.class
+android/**/*.dex
+android/**/*.hprof
+android/**/*.ap_
+android/**/*.so
 
 # Android signing keys (CRITICAL - NEVER COMMIT)
 android/app/*.jks
@@ -250,6 +260,11 @@ pgdata/
 tmp/
 .DS_Store
 Thumbs.db
+.npm/
+.yarn/
+.pnpm-store/
+.eslintcache
+.stylelintcache
 
 # ------------------------------------------------------------------------------
 # DOCUMENTATION (generated/temporary)
