@@ -508,7 +508,7 @@ const StoresManager = () => {
       {/* Header */}
       <div className="bg-gradient-to-r from-pink-50 via-white to-pink-50 border-b border-gray-200 p-8 shadow-sm">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-gray-900">Store Locations</h1>
               <p className="text-gray-600 mt-2 text-lg">Manage all Only Coffee store locations and details</p>
@@ -531,62 +531,62 @@ const StoresManager = () => {
               </button>
             </div>
           </div>
-
-          {/* Statistics Dashboard */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Total Stores</p>
-                  <p className="text-3xl font-bold text-gray-900 mt-2">{statistics.totalStores}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center">
-                  <FiMapPin size={28} className="text-blue-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Active Stores</p>
-                  <p className="text-3xl font-bold text-green-600 mt-2">{statistics.activeStores}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center">
-                  <FiCheckCircle size={28} className="text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Accepting Orders</p>
-                  <p className="text-3xl font-bold text-purple-600 mt-2">{statistics.acceptingOrders}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center">
-                  <FiClock size={28} className="text-purple-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Inactive Stores</p>
-                  <p className="text-3xl font-bold text-red-600 mt-2">{statistics.inactiveStores}</p>
-                </div>
-                <div className="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center">
-                  <FiXCircle size={28} className="text-red-600" />
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-8">
+        {/* Statistics Dashboard */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Total Stores</p>
+                <p className="text-3xl font-bold text-gray-900 mt-2">{statistics.totalStores}</p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center">
+                <FiMapPin size={28} className="text-blue-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Active Stores</p>
+                <p className="text-3xl font-bold text-green-600 mt-2">{statistics.activeStores}</p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-green-100 to-green-200 rounded-2xl flex items-center justify-center">
+                <FiCheckCircle size={28} className="text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Accepting Orders</p>
+                <p className="text-3xl font-bold text-purple-600 mt-2">{statistics.acceptingOrders}</p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center">
+                <FiClock size={28} className="text-purple-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 border-2 border-gray-100 shadow-sm hover:shadow-md transition-all">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">Inactive Stores</p>
+                <p className="text-3xl font-bold text-red-600 mt-2">{statistics.inactiveStores}</p>
+              </div>
+              <div className="w-14 h-14 bg-gradient-to-br from-red-100 to-red-200 rounded-2xl flex items-center justify-center">
+                <FiXCircle size={28} className="text-red-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           {/* Search Bar */}

@@ -8,6 +8,8 @@ export class MenuService {
   constructor(
     @InjectRepository(MenuItem)
     private readonly menuItemRepository: Repository<MenuItem>,
+    @InjectRepository(MenuCategory)
+    private readonly menuCategoryRepository: Repository<MenuCategory>,
   ) {}
 
   async findByStore(storeId: string, category?: MenuCategory) {
@@ -284,21 +286,76 @@ export class MenuService {
   }
 
   async update(id: string, updateMenuItemDto: any) {
+    // Enterprise-level: Input validation and logging
+    if (!id) {
+      throw new NotFoundException('Menu item ID is required');
+    }
+
+    // Enterprise-level: Validate categoryId if provided
+    if (updateMenuItemDto.categoryId) {
+      const categoryExists = await this.menuCategoryRepository.findOne({
+        where: { categoryId: updateMenuItemDto.categoryId },
+      });
+
+      if (!categoryExists) {
+        throw new NotFoundException(`Category with ID ${updateMenuItemDto.categoryId} not found`);
+      }
+    }
+
     const menuItem = await this.menuItemRepository.findOne({
       where: { menuItemId: id },
       relations: ['category'],
     });
 
     if (!menuItem) {
-      throw new NotFoundException('Menu item not found');
+      throw new NotFoundException(`Menu item with ID ${id} not found`);
     }
+
+    // Enterprise-level: Store the original values for audit logging
+    const originalCategoryId = menuItem.categoryId;
+    const originalName = menuItem.name;
 
     // Extract storeIds and allergenIds if provided
     const { storeIds, allergenIds, ...updateData } = updateMenuItemDto;
 
-    // Update menu item fields
-    Object.assign(menuItem, updateData);
+    // Enterprise-level: Direct field assignment for critical fields
+    // This ensures TypeORM properly tracks the changes
+    if (updateData.name !== undefined) menuItem.name = updateData.name;
+    if (updateData.description !== undefined) menuItem.description = updateData.description;
+    if (updateData.basePrice !== undefined) menuItem.basePrice = updateData.basePrice;
+    if (updateData.categoryId !== undefined) {
+      menuItem.categoryId = updateData.categoryId;
+      // Clear the category relation so TypeORM reloads it
+      menuItem.category = null as any;
+    }
+    if (updateData.calories !== undefined) menuItem.calories = updateData.calories;
+    if (updateData.imageAssetId !== undefined) menuItem.imageAssetId = updateData.imageAssetId;
+    if (updateData.toastItemId !== undefined) menuItem.toastItemId = updateData.toastItemId;
+    if (updateData.isActive !== undefined) menuItem.isActive = updateData.isActive;
+
+    // Save the updated item
     const savedItem = await this.menuItemRepository.save(menuItem) as unknown as MenuItem;
+
+    // Enterprise-level: Verify the save was successful
+    if (!savedItem) {
+      throw new Error('Failed to save menu item');
+    }
+
+    // Enterprise-level: ALWAYS reload the item with fresh relations after save
+    // This ensures we have the correct category relation loaded from the database
+    const reloadedItem = await this.menuItemRepository.findOne({
+      where: { menuItemId: id },
+      relations: ['category'],
+    }) as unknown as MenuItem;
+
+    if (!reloadedItem) {
+      throw new NotFoundException('Menu item not found after save');
+    }
+
+    // Enterprise-level: Verify the category was actually updated in the database
+    if (updateData.categoryId && reloadedItem.categoryId !== updateData.categoryId) {
+      throw new Error(`Category update failed: Expected ${updateData.categoryId}, got ${reloadedItem.categoryId}`);
+    }
 
     // Update store associations if storeIds provided
     if (storeIds && Array.isArray(storeIds)) {
@@ -349,23 +406,31 @@ export class MenuService {
       [id]
     );
 
-    return {
-      id: savedItem.menuItemId,
-      menuItemId: savedItem.menuItemId,
-      name: savedItem.name,
-      description: savedItem.description,
-      basePrice: parseFloat(savedItem.basePrice.toString()),
-      calories: savedItem.calories,
-      imageUrl: savedItem.imageAssetId ? `/api/media/${savedItem.imageAssetId}` : null,
-      categoryId: savedItem.categoryId,
-      categoryName: savedItem.category?.name || 'Uncategorized',
-      isActive: savedItem.isActive,
-      toastItemId: savedItem.toastItemId,
+    // Enterprise-level: Use the reloaded item for the response to ensure fresh data
+    const response = {
+      id: reloadedItem.menuItemId,
+      menuItemId: reloadedItem.menuItemId,
+      name: reloadedItem.name,
+      description: reloadedItem.description,
+      basePrice: parseFloat(reloadedItem.basePrice.toString()),
+      calories: reloadedItem.calories,
+      imageUrl: reloadedItem.imageAssetId ? `/api/media/${reloadedItem.imageAssetId}` : null,
+      categoryId: reloadedItem.categoryId,
+      categoryName: reloadedItem.category?.name || 'Uncategorized',
+      isActive: reloadedItem.isActive,
+      toastItemId: reloadedItem.toastItemId,
       storeIds: storeAssociations[0]?.store_ids || [],
       allergenIds: allergenAssociations[0]?.allergen_ids || [],
-      createdAt: savedItem.createdAt,
-      updatedAt: savedItem.updatedAt,
+      createdAt: reloadedItem.createdAt,
+      updatedAt: reloadedItem.updatedAt,
     };
+
+    // Enterprise-level: Final validation before returning
+    if (updateData.categoryId && response.categoryId !== updateData.categoryId) {
+      throw new Error(`Response validation failed: categoryId mismatch. Expected ${updateData.categoryId}, got ${response.categoryId}`);
+    }
+
+    return response;
   }
 
   async delete(id: string) {

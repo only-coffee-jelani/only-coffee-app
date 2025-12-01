@@ -6,6 +6,8 @@ import ResizableTableHeader from '../components/ResizableTableHeader';
 import { useResizableColumns, ColumnConfig } from '../hooks/useResizableColumns';
 import { useAuthStore } from '../store/authStore';
 import { API_BASE } from '../config';
+import { Category, CategoryHelper } from '../types/category';
+import { CategoryService, ApiError } from '../services/categoryService';
 
 const MenuItemsManager = () => {
   const { user } = useAuthStore();
@@ -14,7 +16,7 @@ const MenuItemsManager = () => {
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
   const [allergens, setAllergens] = useState<any[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesMap, setCategoriesMap] = useState<Map<string, string>>(new Map()); // categoryName -> categoryId
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,8 +36,8 @@ const MenuItemsManager = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'best_sellers', // Keep for backward compatibility
-    categories: ['best_sellers'] as string[], // New multi-category field
+    category: '', // Enterprise-level: No hardcoded default
+    categories: [] as string[], // Enterprise-level: Start with empty array
     description: '',
     basePrice: '',
     imageUrl: '',
@@ -86,7 +88,9 @@ const MenuItemsManager = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [menuResponse, storesResponse, categoriesResponse, allergensResponse] = await Promise.all([
+
+      // Enterprise-level: Use Promise.all for parallel requests with proper error handling
+      const [menuResponse, storesResponse, categoriesData, allergensResponse] = await Promise.all([
         fetch(`${API_BASE}/menu-items`, {
           method: 'GET',
           headers: {
@@ -99,12 +103,8 @@ const MenuItemsManager = () => {
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`${API_BASE}/categories`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }),
+        // Enterprise-level: Use dedicated CategoryService for type safety
+        CategoryService.getAll(),
         fetch(`${API_BASE}/allergens`, {
           method: 'GET',
           headers: {
@@ -117,12 +117,10 @@ const MenuItemsManager = () => {
         throw new Error(`Failed to fetch menu items: ${menuResponse.status}`);
       }
       if (!storesResponse.ok) throw new Error('Failed to fetch stores');
-      if (!categoriesResponse.ok) throw new Error('Failed to fetch categories');
       if (!allergensResponse.ok) throw new Error('Failed to fetch allergens');
 
       const menuData = await menuResponse.json();
       const storesResult = await storesResponse.json();
-      const categoriesData = await categoriesResponse.json();
       const allergensData = await allergensResponse.json();
 
       // Handle menu items - backend returns array directly
@@ -144,33 +142,32 @@ const MenuItemsManager = () => {
         : (allergensData.value || allergensData.data || []);
       setAllergens(allergensList);
 
-      // Categories - handle both array and object with data property
-      const cats = Array.isArray(categoriesData)
-        ? categoriesData
-        : (categoriesData.data || []);
-      setCategories(cats.map((c: any) => c.name || c));
+      // Enterprise-level: Categories are already properly typed and sorted from CategoryService
+      setCategories(categoriesData);
 
       // Create a map of categoryName -> categoryId for easy lookup
-      const catMap = new Map<string, string>();
-      cats.forEach((cat: any) => {
-        if (cat.name && cat.categoryId) {
-          catMap.set(cat.name, cat.categoryId);
-        }
-      });
+      const catMap = CategoryHelper.createNameToIdMap(categoriesData);
       setCategoriesMap(catMap);
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error(`Failed to load menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);
+
+      // Enterprise-level: Better error messages for different error types
+      if (error instanceof ApiError) {
+        toast.error(`Failed to load data: ${error.message}`);
+      } else {
+        toast.error(`Failed to load menu items: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddNew = () => {
+  // Enterprise-level: Centralized form reset function for consistency
+  const resetForm = () => {
     setFormData({
       name: '',
-      category: 'best_sellers',
-      categories: ['best_sellers'],
+      category: '',
+      categories: [],
       description: '',
       basePrice: '',
       imageUrl: '',
@@ -178,6 +175,18 @@ const MenuItemsManager = () => {
       allergens: [],
     });
     setEditingId(null);
+  };
+
+  // Enterprise-level: Reset form when modal closes to prevent stale data
+  useEffect(() => {
+    if (!showForm) {
+      resetForm();
+    }
+  }, [showForm]);
+
+  const handleAddNew = () => {
+    // Enterprise-level: Reset form with empty values, no hardcoded defaults
+    resetForm();
     setShowForm(true);
   };
 
@@ -206,16 +215,19 @@ const MenuItemsManager = () => {
   };
 
   const handleSave = async () => {
+    // Enterprise-level: Comprehensive input validation
     if (!formData.name || !formData.basePrice) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please fill in all required fields (Name and Price)');
       return;
     }
 
-    if (formData.categories.length === 0) {
-      toast.error('Please select at least one category');
+    // Enterprise-level: Validate category selection (single category required)
+    if (!formData.category) {
+      toast.error('Please select a category');
       return;
     }
 
+    // Enterprise-level: Validate store selection
     if (formData.selectedStores.length === 0) {
       toast.error('Please select at least one store');
       return;
@@ -230,12 +242,14 @@ const MenuItemsManager = () => {
         return;
       }
 
-      // Get the categoryId from the category name
-      const categoryName = formData.categories[0] || formData.category;
+      // Enterprise-level: Get the categoryId from the category name
+      const categoryName = formData.category;
+
+      // Enterprise-level: Validate category exists in the categories map
       const categoryId = categoriesMap.get(categoryName);
 
       if (!categoryId) {
-        toast.error('Invalid category selected');
+        toast.error(`Invalid category selected. Please select a valid category from the list.`);
         setSaving(false);
         return;
       }
@@ -246,8 +260,8 @@ const MenuItemsManager = () => {
         description: formData.description || null,
         basePrice: parseFloat(formData.basePrice),
         categoryId: categoryId,
-        storeIds: formData.selectedStores, // Include store associations
-        allergenIds: formData.allergens, // Include allergen associations
+        storeIds: formData.selectedStores,
+        allergenIds: formData.allergens,
       };
 
       // Only include optional fields if they have values
@@ -256,7 +270,7 @@ const MenuItemsManager = () => {
       }
 
       if (editingId) {
-        // Update existing menu item with new storeIds
+        // Update existing menu item
         const response = await fetch(`${API_BASE}/menu-items/${editingId}`, {
           method: 'PUT',
           headers: {
@@ -278,7 +292,15 @@ const MenuItemsManager = () => {
         }
 
         const updatedItem = await response.json();
-        setMenuItems(menuItems.map(item => item.id === editingId ? updatedItem : item));
+
+        const newMenuItems = menuItems.map(item => {
+          if (item.id === editingId) {
+            return updatedItem;
+          }
+          return item;
+        });
+
+        setMenuItems(newMenuItems);
         toast.success('Menu item updated successfully!');
       } else {
         // Create new menu item with selected stores
@@ -342,20 +364,18 @@ const MenuItemsManager = () => {
     }
   };
 
-  const getCategoryLabel = (category: string) => {
-    const labels: Record<string, string> = {
-      'best_sellers': 'Best Sellers',
-      'seasonal_specials': 'Seasonal Specials',
-      'signature': 'Signature',
-      'hot_coffee': 'Hot Coffee',
-      'iced_coffee': 'Iced Coffee',
-      'cold_brew': 'Cold Brew',
-      'other_drinks': 'Other Drinks',
-      'chocolate': 'Other Drinks', // Legacy support
-      'ice_cream': 'Ice Cream',
-      'add_ons': 'Add Ons',
-    };
-    return labels[category] || category;
+  /**
+   * Enterprise-level: Get display label for a category
+   * Accepts either a Category object or a string (for backward compatibility)
+   */
+  const getCategoryLabel = (category: Category | string): string => {
+    if (typeof category === 'string') {
+      // String input - find the category object
+      const categoryObj = categories.find(cat => cat.name === category);
+      return categoryObj ? categoryObj.name : category;
+    }
+    // Category object - use the name directly
+    return category.name;
   };
 
   // Filter and sort logic
@@ -488,79 +508,91 @@ const MenuItemsManager = () => {
 
   // Category management functions
   const handleAddCategory = async () => {
-    const categoryKey = newCategoryName.trim().toLowerCase().replace(/\s+/g, '_');
-    const displayName = newCategoryName.trim().split('_').map(word =>
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+    // Enterprise-level: Use the actual input as the category name (display name)
+    const categoryName = newCategoryName.trim();
 
-    if (!categoryKey) {
+    if (!categoryName) {
       toast.error('Please enter a category name');
       return;
     }
-    if (categories.includes(categoryKey)) {
+
+    // Enterprise-level: Check if category already exists by name
+    if (categories.some(cat => cat.name === categoryName)) {
       toast.error('Category already exists');
       return;
     }
 
     try {
-      const response = await fetch(`${API_BASE}/categories`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: categoryKey, displayName }),
+      // Enterprise-level: Use CategoryService for type-safe API calls
+      const newCategory = await CategoryService.create({
+        name: categoryName,
+        displayName: categoryName,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create category');
-      }
+      // Enterprise-level: Update state with the new category object
+      setCategories([...categories, newCategory]);
 
-      setCategories([...categories, categoryKey]);
+      // Update the categories map
+      const newMap = new Map(categoriesMap);
+      newMap.set(newCategory.name, newCategory.categoryId);
+      setCategoriesMap(newMap);
+
       setNewCategoryName('');
+      setShowCategoryModal(false);
       toast.success('Category created successfully!');
     } catch (error) {
       console.error('Error creating category:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create category');
+
+      // Enterprise-level: Better error handling with ApiError
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Failed to create category');
+      }
     }
   };
 
-  const handleDeleteCategory = async (category: string) => {
-    // Check if any items use this category
+  const handleDeleteCategory = async (categoryName: string) => {
+    // Enterprise-level: Check if any items use this category
     const itemsUsingCategory = menuItems.filter(item =>
-      (item.categories && item.categories.includes(category)) || item.category === category
+      (item.categories && item.categories.includes(categoryName)) || item.category === categoryName
     );
 
     if (itemsUsingCategory.length > 0) {
-      toast.error(`Cannot delete category "${category}". ${itemsUsingCategory.length} item(s) are using it.`);
+      toast.error(`Cannot delete category "${categoryName}". ${itemsUsingCategory.length} item(s) are using it.`);
       return;
     }
 
     try {
-      // Find the category ID by name
-      const categoriesResponse = await fetch(`${API_BASE}/categories`);
-      const categoriesData = await categoriesResponse.json();
-      const categoryObj = categoriesData.find((c: any) => c.name === category);
+      // Enterprise-level: Find the category ID from the map
+      const categoryId = categoriesMap.get(categoryName);
 
-      if (!categoryObj) {
+      if (!categoryId) {
         toast.error('Category not found');
         return;
       }
 
-      const response = await fetch(`${API_BASE}/categories/${categoryObj.id}`, {
-        method: 'DELETE',
-      });
+      // Enterprise-level: Use CategoryService for type-safe API calls
+      await CategoryService.delete(categoryId);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete category');
-      }
+      // Enterprise-level: Update state by filtering out the deleted category
+      setCategories(categories.filter(c => c.name !== categoryName));
 
-      setCategories(categories.filter(c => c !== category));
+      // Update the categories map
+      const newMap = new Map(categoriesMap);
+      newMap.delete(categoryName);
+      setCategoriesMap(newMap);
+
       toast.success('Category deleted successfully!');
     } catch (error) {
       console.error('Error deleting category:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to delete category');
+
+      // Enterprise-level: Better error handling with ApiError
+      if (error instanceof ApiError) {
+        toast.error(error.message);
+      } else {
+        toast.error(error instanceof Error ? error.message : 'Failed to delete category');
+      }
     }
   };
 
@@ -625,35 +657,55 @@ const MenuItemsManager = () => {
               {/* Categories & Price */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Categories * (Select all that apply)</label>
+                  <label className="block text-sm font-bold text-gray-900 mb-3 uppercase tracking-wide">Category * (Select one)</label>
                   <div className="border-2 border-pink-100 rounded-xl p-3 bg-white max-h-60 overflow-y-auto">
-                    {(categories.length > 0 ? categories : [
-                      'best_sellers',
-                      'seasonal_specials',
-                      'signature',
-                      'hot_coffee',
-                      'iced_coffee',
-                      'cold_brew',
-                      'other_drinks',
-                      'ice_cream',
-                      'add_ons'
-                    ]).map((category) => (
-                      <label key={category} className="flex items-center gap-2 py-2 hover:bg-pink-50 px-2 rounded cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.categories.includes(category)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData({ ...formData, categories: [...formData.categories, category] });
-                            } else {
-                              setFormData({ ...formData, categories: formData.categories.filter(c => c !== category) });
-                            }
-                          }}
-                          className="w-4 h-4 text-pink-600 border-gray-300 rounded focus:ring-pink-500"
-                        />
-                        <span className="text-sm text-gray-700">{getCategoryLabel(category)}</span>
-                      </label>
-                    ))}
+                    {/* Enterprise-level: No hardcoded fallback - show loading or empty state */}
+                    {categories.length === 0 ? (
+                      <div className="text-center py-4 text-gray-500">
+                        {loading ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <FiLoader className="animate-spin" />
+                            <span>Loading categories...</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <p>No categories available.</p>
+                            <button
+                              type="button"
+                              onClick={() => setShowCategoryModal(true)}
+                              className="text-pink-600 hover:text-pink-700 font-medium text-sm"
+                            >
+                              Create your first category
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      categories.map((category) => (
+                        <label
+                          key={category.categoryId}
+                          className="flex items-center gap-3 py-2 hover:bg-pink-50 px-3 rounded-lg cursor-pointer transition-colors group"
+                        >
+                          <input
+                            type="radio"
+                            name="category"
+                            value={category.name}
+                            checked={formData.category === category.name}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                category: e.target.value,
+                                categories: [e.target.value]
+                              });
+                            }}
+                            className="w-4 h-4 text-pink-600 border-gray-300 focus:ring-2 focus:ring-pink-500 cursor-pointer"
+                          />
+                          <span className="text-sm text-gray-700 group-hover:text-gray-900 font-medium">
+                            {getCategoryLabel(category)}
+                          </span>
+                        </label>
+                      ))
+                    )}
                   </div>
                 </div>
                 <div>
@@ -965,8 +1017,9 @@ const MenuItemsManager = () => {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 focus:border-pink-500 bg-white transition-all"
                 >
                   <option value="all">All Categories</option>
+                  {/* Enterprise-level: Use Category objects from backend */}
                   {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
+                    <option key={cat.categoryId} value={cat.name}>{cat.name}</option>
                   ))}
                 </select>
               </div>
@@ -1266,7 +1319,10 @@ const MenuItemsManager = () => {
                     <FiPlus size={20} />
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-2">Category will be saved as: {newCategoryName.trim().toLowerCase().replace(/\s+/g, '_') || '...'}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {/* Enterprise-level: Show the actual category name that will be saved */}
+                  Category will be saved as: {newCategoryName.trim() || '...'}
+                </p>
               </div>
 
               {/* Existing Categories */}
@@ -1281,22 +1337,27 @@ const MenuItemsManager = () => {
                       <p>No categories yet. Add one above!</p>
                     </div>
                   ) : (
+                    /* Enterprise-level: Use Category objects from backend */
                     categories.map((category) => {
                       const itemCount = menuItems.filter(item =>
-                        (item.categories && item.categories.includes(category)) || item.category === category
+                        (item.categories && item.categories.includes(category.name)) || item.category === category.name
                       ).length;
                       return (
-                        <div key={category} className="flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-xl hover:border-pink-200 transition-all group">
+                        <div key={category.categoryId} className="flex items-center justify-between p-4 bg-white border-2 border-gray-100 rounded-xl hover:border-pink-200 transition-all group">
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-900 capitalize">
-                              {category.split('_').join(' ')}
+                            <p className="font-semibold text-gray-900">
+                              {/* Enterprise-level: Display the category name directly */}
+                              {category.name}
                             </p>
                             <p className="text-sm text-gray-500">
                               {itemCount} item{itemCount !== 1 ? 's' : ''}
                             </p>
+                            {category.description && (
+                              <p className="text-xs text-gray-400 mt-1">{category.description}</p>
+                            )}
                           </div>
                           <button
-                            onClick={() => handleDeleteCategory(category)}
+                            onClick={() => handleDeleteCategory(category.name)}
                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                             title="Delete category"
                           >
