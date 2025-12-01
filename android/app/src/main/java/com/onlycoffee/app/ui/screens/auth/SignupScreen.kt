@@ -43,10 +43,27 @@ fun SignupScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.isAuthenticated) {
-        if (uiState.isAuthenticated) {
-            navController.navigate("home") {
-                popUpTo("signup") { inclusive = true }
+    // Enterprise-level state change detection: Track if navigation has occurred
+    // We use a flag instead of tracking previous state to avoid timing issues
+    var hasNavigated by remember { mutableStateOf(false) }
+
+    // Enterprise-level navigation: Return to previous screen after successful registration
+    // Only navigate ONCE when authentication becomes true AND initialization is complete
+    // This prevents navigation loops while allowing proper post-registration navigation
+    // CRITICAL: Wait for isInitializing to be false to ensure user data is loaded
+    LaunchedEffect(uiState.isAuthenticated, uiState.isInitializing) {
+        if (uiState.isAuthenticated && !uiState.isInitializing && !hasNavigated) {
+            // User just registered AND user data is loaded - navigate back
+            hasNavigated = true
+
+            // Safely pop back to the previous screen
+            val popped = navController.popBackStack()
+            if (!popped) {
+                // No previous screen - navigate to profile as fallback
+                navController.navigate("profile") {
+                    popUpTo("signup") { inclusive = true }
+                    launchSingleTop = true
+                }
             }
         }
     }

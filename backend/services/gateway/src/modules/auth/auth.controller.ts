@@ -15,6 +15,7 @@ import {
   SendCodeDto,
   VerifyCodeDto,
   CompleteProfileDto,
+  AuthResponseDto,
 } from './dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -26,18 +27,19 @@ export class AuthController {
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({ status: 201, description: 'User successfully registered' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  async register(@Body() registerDto: RegisterDto) {
+  @ApiResponse({ status: 201, description: 'User successfully registered', type: AuthResponseDto })
+  @ApiResponse({ status: 400, description: 'Bad request - Invalid input data' })
+  @ApiResponse({ status: 409, description: 'Conflict - User with this email or phone already exists' })
+  async register(@Body() registerDto: RegisterDto): Promise<AuthResponseDto> {
     return this.authService.register(registerDto);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({ status: 200, description: 'User successfully logged in' })
+  @ApiResponse({ status: 200, description: 'User successfully logged in', type: AuthResponseDto })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: LoginDto) {
+  async login(@Body() loginDto: LoginDto): Promise<AuthResponseDto> {
     return this.authService.login(loginDto);
   }
 

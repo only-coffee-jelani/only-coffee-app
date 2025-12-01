@@ -3,20 +3,31 @@ package com.onlycoffee.app.managers
 import com.onlycoffee.app.data.model.UpdateProfileRequest
 import com.onlycoffee.app.data.model.User
 import com.onlycoffee.app.data.repository.AuthRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Central authentication manager for the app
  * Manages user authentication state and provides auth operations
+ *
+ * Enterprise-level implementation with proper error handling,
+ * lifecycle management, and state synchronization
  */
 @Singleton
 class AuthenticationManager @Inject constructor(
     private val authRepository: AuthRepository
 ) {
+    // Use a supervisor job so that failures in one coroutine don't cancel others
+    // Note: Since this is a Singleton, the scope lives for the app lifetime
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     private val _isAuthenticated = MutableStateFlow(false)
     val isAuthenticated: StateFlow<Boolean> = _isAuthenticated.asStateFlow()
 
@@ -29,10 +40,37 @@ class AuthenticationManager @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    // Track if we're initializing (loading user data on app start)
+    private val _isInitializing = MutableStateFlow(false)
+    val isInitializing: StateFlow<Boolean> = _isInitializing.asStateFlow()
+
     init {
-        // Check if user is already logged in
+        // Check if user is already logged in and load their profile
         if (authRepository.isLoggedIn()) {
             _isAuthenticated.value = true
+            _isInitializing.value = true
+
+            // Load current user data in background with proper error handling
+            scope.launch {
+                try {
+                    val success = loadCurrentUser()
+
+                    if (!success) {
+                        // Failed to load user - tokens might be expired
+                        _isAuthenticated.value = false
+                        _currentUser.value = null
+                        // Clear stored tokens since they're likely invalid
+                        authRepository.logout()
+                    }
+                } catch (e: Exception) {
+                    // Clear auth state on error
+                    _isAuthenticated.value = false
+                    _currentUser.value = null
+                    _errorMessage.value = "Failed to load user data. Please sign in again."
+                } finally {
+                    _isInitializing.value = false
+                }
+            }
         }
     }
 
@@ -41,7 +79,7 @@ class AuthenticationManager @Inject constructor(
         _errorMessage.value = null
 
         val result = authRepository.login(email, password)
-        
+
         return if (result.isSuccess) {
             val authResponse = result.getOrNull()
             _currentUser.value = authResponse?.user
@@ -49,7 +87,8 @@ class AuthenticationManager @Inject constructor(
             _isLoading.value = false
             true
         } else {
-            _errorMessage.value = result.exceptionOrNull()?.message ?: "Login failed"
+            val error = result.exceptionOrNull()?.message ?: "Login failed"
+            _errorMessage.value = error
             _isLoading.value = false
             false
         }
@@ -67,7 +106,7 @@ class AuthenticationManager @Inject constructor(
         _errorMessage.value = null
 
         val result = authRepository.register(email, password, firstName, lastName, phone, birthDate)
-        
+
         return if (result.isSuccess) {
             val authResponse = result.getOrNull()
             _currentUser.value = authResponse?.user
@@ -75,7 +114,8 @@ class AuthenticationManager @Inject constructor(
             _isLoading.value = false
             true
         } else {
-            _errorMessage.value = result.exceptionOrNull()?.message ?: "Registration failed"
+            val error = result.exceptionOrNull()?.message ?: "Registration failed"
+            _errorMessage.value = error
             _isLoading.value = false
             false
         }
@@ -96,9 +136,22 @@ class AuthenticationManager @Inject constructor(
 
         _isLoading.value = true
         val result = authRepository.getCurrentUser()
-        
+
         return if (result.isSuccess) {
-            _currentUser.value = result.getOrNull()
+            val user = result.getOrNull()
+
+            // Enterprise-level validation: If API returns success but user is null,
+            // the session is invalid (expired token, deleted account, etc.)
+            if (user == null) {
+                _currentUser.value = null
+                _isAuthenticated.value = false
+                _isLoading.value = false
+                // Clear stored tokens since session is invalid
+                authRepository.logout()
+                return false
+            }
+
+            _currentUser.value = user
             _isAuthenticated.value = true
             _isLoading.value = false
             true

@@ -18,13 +18,13 @@ class AuthRepository @Inject constructor(
         try {
             val request = LoginRequest(email, password)
             val response = authApiService.login(request)
-            
+
             // Save tokens
-            secureStorage.saveAccessToken(response.tokens.accessToken)
-            secureStorage.saveRefreshToken(response.tokens.refreshToken)
+            secureStorage.saveAccessToken(response.accessToken)
+            secureStorage.saveRefreshToken(response.refreshToken)
             secureStorage.saveUserId(response.user.id)
             secureStorage.saveUserEmail(response.user.email)
-            
+
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
@@ -42,13 +42,13 @@ class AuthRepository @Inject constructor(
         try {
             val request = RegisterRequest(email, password, firstName, lastName, phone, birthDate)
             val response = authApiService.register(request)
-            
+
             // Save tokens
-            secureStorage.saveAccessToken(response.tokens.accessToken)
-            secureStorage.saveRefreshToken(response.tokens.refreshToken)
+            secureStorage.saveAccessToken(response.accessToken)
+            secureStorage.saveRefreshToken(response.refreshToken)
             secureStorage.saveUserId(response.user.id)
             secureStorage.saveUserEmail(response.user.email)
-            
+
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)
@@ -117,13 +117,13 @@ class AuthRepository @Inject constructor(
         try {
             val request = VerifyPhoneRequest(phone, code)
             val response = authApiService.verifyPhone(request)
-            
+
             // Save tokens
-            secureStorage.saveAccessToken(response.tokens.accessToken)
-            secureStorage.saveRefreshToken(response.tokens.refreshToken)
+            secureStorage.saveAccessToken(response.accessToken)
+            secureStorage.saveRefreshToken(response.refreshToken)
             secureStorage.saveUserId(response.user.id)
             secureStorage.saveUserEmail(response.user.email)
-            
+
             Result.success(response)
         } catch (e: Exception) {
             Result.failure(e)

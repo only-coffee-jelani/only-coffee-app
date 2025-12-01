@@ -4,7 +4,7 @@ plugins {
     id("kotlin-kapt")
     id("dagger.hilt.android.plugin")
     id("kotlin-parcelize")
-    // id("com.google.gms.google-services") // Commented out - add google-services.json to enable
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -149,9 +149,10 @@ dependencies {
     // Stripe Payment Processing
     implementation("com.stripe:stripe-android:20.49.0")
 
-    // Firebase Cloud Messaging - Commented out until google-services.json is added
-    // implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
-    // implementation("com.google.firebase:firebase-messaging-ktx")
+    // Firebase Cloud Messaging
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

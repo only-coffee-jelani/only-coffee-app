@@ -2,6 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
@@ -18,6 +19,8 @@ import {
   SendCodeDto,
   VerifyCodeDto,
   CompleteProfileDto,
+  UserResponseDto,
+  AuthResponseDto,
 } from './dto';
 import { CouponsService } from '../coupons/coupons.service';
 import { SmsService } from './sms.service';
@@ -39,47 +42,76 @@ export class AuthService {
   async register(registerDto: RegisterDto) {
     const { email, password, firstName, lastName, phone, birthDate } = registerDto;
 
-    // Check if user already exists
-    const existingUser = await this.userRepository.findOne({ where: { email } });
-    if (existingUser) {
-      throw new UnauthorizedException('User with this email already exists');
+    // Validate input
+    if (!email || !password || !firstName || !lastName) {
+      throw new BadRequestException('Email, password, first name, and last name are required');
     }
 
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Check if user already exists by email
+    this.logger.log(`Checking if user exists with email: ${email}`);
+    const existingUserByEmail = await this.userRepository.findOne({ where: { email } });
+    this.logger.log(`Existing user found: ${existingUserByEmail ? 'YES' : 'NO'}`);
+    if (existingUserByEmail) {
+      this.logger.warn(`User already exists with email: ${email}, userId: ${existingUserByEmail.userId}`);
+      throw new ConflictException('User with this email already exists');
+    }
 
-    // Create user
-    const user = this.userRepository.create({
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      phone,
-      birthdate: birthDate ? new Date(birthDate) : null,
-    });
+    // Check if user already exists by phone (if provided)
+    if (phone) {
+      const existingUserByPhone = await this.userRepository.findOne({ where: { phone } });
+      if (existingUserByPhone) {
+        throw new ConflictException('User with this phone number already exists');
+      }
+    }
 
-    await this.userRepository.save(user);
+    try {
+      // Hash password
+      const passwordHash = await bcrypt.hash(password, 10);
 
-    // Grant starter coupons (run async, don't block registration)
-    this.couponsService
-      .grantStarterCoupons(user.userId)
-      .then(() => {
-        this.logger.log(`Starter coupons granted to new user: ${user.userId}`);
-      })
-      .catch((error) => {
-        this.logger.error(
-          `Failed to grant starter coupons to user ${user.userId}:`,
-          error,
-        );
+      // Create user
+      const user = this.userRepository.create({
+        email,
+        passwordHash,
+        firstName,
+        lastName,
+        phone,
+        birthdate: birthDate ? new Date(birthDate) : null,
       });
 
-    // Generate tokens
-    const tokens = await this.generateTokens(user);
+      await this.userRepository.save(user);
 
-    return {
-      user: this.sanitizeUser(user),
-      ...tokens,
-    };
+      this.logger.log(`New user registered: ${user.userId} (${email})`);
+
+      // Grant starter coupons (run async, don't block registration)
+      this.couponsService
+        .grantStarterCoupons(user.userId)
+        .then(() => {
+          this.logger.log(`Starter coupons granted to new user: ${user.userId}`);
+        })
+        .catch((error) => {
+          this.logger.error(
+            `Failed to grant starter coupons to user ${user.userId}:`,
+            error,
+          );
+        });
+
+      // Generate tokens
+      const tokens = await this.generateTokens(user);
+
+      // Return response with properly mapped user data
+      return {
+        user: UserResponseDto.fromEntity(user),
+        ...tokens,
+      };
+    } catch (error) {
+      // Handle database errors
+      if (error instanceof ConflictException || error instanceof BadRequestException) {
+        throw error;
+      }
+
+      this.logger.error(`Registration failed for ${email}:`, error);
+      throw new InternalServerErrorException('Failed to register user. Please try again later.');
+    }
   }
 
   async login(loginDto: LoginDto) {
@@ -107,8 +139,9 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.generateTokens(user);
 
+    // Return response with properly mapped user data
     return {
-      user: this.sanitizeUser(user),
+      user: UserResponseDto.fromEntity(user),
       ...tokens,
     };
   }
@@ -253,8 +286,9 @@ export class AuthService {
     // Generate tokens
     const tokens = await this.generateTokens(user);
 
+    // Return response with properly mapped user data
     return {
-      user: this.sanitizeUser(user),
+      user: UserResponseDto.fromEntity(user),
       ...tokens,
       isNewUser, // Tell client if profile completion is needed
     };
@@ -318,8 +352,9 @@ export class AuthService {
       }
     }
 
+    // Return response with properly mapped user data
     return {
-      user: this.sanitizeUser(user),
+      user: UserResponseDto.fromEntity(user),
       success: true,
       message: 'Profile updated successfully',
     };

@@ -112,9 +112,9 @@ private fun getTierGradient(tier: UserTier): Brush {
 }
 
 @Composable
-private fun getTierIcon(tier: UserTier): ImageVector {
+private fun getTierIcon(tier: UserTier?): ImageVector {
     return when (tier) {
-        UserTier.BRONZE -> Icons.Default.Shield
+        UserTier.BRONZE, null -> Icons.Default.Shield // Default to BRONZE if null
         UserTier.SILVER -> Icons.Default.Star
         UserTier.GOLD -> Icons.Default.EmojiEvents  // Crown/trophy
         UserTier.PLATINUM -> Icons.Default.Diamond

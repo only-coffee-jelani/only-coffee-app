@@ -1,0 +1,23 @@
+### Test Registration with senaiayalew@gmail.com
+POST http://localhost:3000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "senaiayalew@gmail.com",
+  "password": "Testing1!",
+  "firstName": "Senai",
+  "lastName": "Ayalew",
+  "phone": "5047770440"
+}
+
+### Test Registration with a new email
+POST http://localhost:3000/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "test123@example.com",
+  "password": "Testing1!",
+  "firstName": "Test",
+  "lastName": "User"
+}
+

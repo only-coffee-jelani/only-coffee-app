@@ -51,6 +51,12 @@ coverage/
 *.key
 secrets/
 
+# Firebase credentials (CRITICAL - NEVER COMMIT)
+google-services.json
+*firebase-adminsdk*.json
+firebase-service-account.json
+firebase-credentials.json
+
 # Database
 *.sqlite
 *.sqlite3

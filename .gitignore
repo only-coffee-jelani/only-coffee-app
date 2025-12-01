@@ -240,6 +240,16 @@ aws-credentials.json
 gcloud-credentials.json
 service-account.json
 
+# Firebase credentials (CRITICAL - NEVER COMMIT)
+google-services.json
+*firebase-adminsdk*.json
+firebase-service-account.json
+firebase-credentials.json
+backend/google-services.json
+backend/*firebase-adminsdk*.json
+android/app/google-services.json
+mobile/ios/GoogleService-Info.plist
+
 # ------------------------------------------------------------------------------
 # DATABASE
 # ------------------------------------------------------------------------------

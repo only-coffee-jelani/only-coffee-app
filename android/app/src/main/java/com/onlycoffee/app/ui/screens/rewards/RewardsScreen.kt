@@ -44,11 +44,14 @@ fun RewardsScreen(
 
 @Composable
 private fun AuthenticatedRewardsContent(user: com.onlycoffee.app.data.model.User) {
+    // Enterprise-level: Handle null tier gracefully with default
+    val tier = user.loyaltyTier ?: UserTier.BRONZE
+
     Card(
         modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = getTierColor(user.loyaltyTier).copy(alpha = 0.1f)
+            containerColor = getTierColor(tier).copy(alpha = 0.1f)
         )
     ) {
         Column(
@@ -58,12 +61,12 @@ private fun AuthenticatedRewardsContent(user: com.onlycoffee.app.data.model.User
             Icon(
                 imageVector = Icons.Default.Star,
                 contentDescription = null,
-                tint = getTierColor(user.loyaltyTier),
+                tint = getTierColor(tier),
                 modifier = Modifier.size(60.dp)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Text(
-                text = user.loyaltyTier.displayName,
+                text = tier.displayName,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )

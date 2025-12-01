@@ -5,5 +5,8 @@
     <color name="primary">#FF93A3</color>
     <color name="primary_dark">#E07A8A</color>
     <color name="accent">#FF93A3</color>
+
+    <!-- Notification color (brand color) -->
+    <color name="notification_color">#FF93A3</color>
 </resources>
 

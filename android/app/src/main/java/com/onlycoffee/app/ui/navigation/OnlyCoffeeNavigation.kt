@@ -33,7 +33,8 @@ import com.onlycoffee.app.ui.screens.menu.MenuScreen
 import com.onlycoffee.app.ui.screens.orders.OrdersScreenUpdated
 import com.onlycoffee.app.ui.screens.product.ProductDetailScreen
 import com.onlycoffee.app.ui.screens.profile.ProfileScreen
-import com.onlycoffee.app.ui.screens.rewards.RewardsScreen
+// Rewards screen import - currently not used in bottom navigation
+// import com.onlycoffee.app.ui.screens.rewards.RewardsScreen
 import com.onlycoffee.app.ui.screens.coupons.MyCouponsScreen
 import com.onlycoffee.app.ui.screens.stores.StoreViewModel
 import com.onlycoffee.app.ui.theme.BrandPrimary
@@ -112,9 +113,11 @@ fun OnlyCoffeeNavigation(
             composable(BottomNavItem.Orders.route) {
                 OrdersScreenUpdated(navController = navController)
             }
-            composable(BottomNavItem.Rewards.route) {
-                RewardsScreen(navController = navController)
-            }
+            // Rewards route - currently not included in bottom navigation
+            // Can be re-enabled by uncommenting this block and adding Rewards to bottom nav items
+            // composable(BottomNavItem.Rewards.route) {
+            //     RewardsScreen(navController = navController)
+            // }
             composable(BottomNavItem.Profile.route) {
                 ProfileScreen(navController = navController)
             }
@@ -167,7 +170,6 @@ fun OnlyCoffeeBottomNavigation(
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Menu,
-        BottomNavItem.Rewards,
         BottomNavItem.Orders,
         BottomNavItem.Profile
     )

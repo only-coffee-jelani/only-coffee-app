@@ -20,6 +20,7 @@ sealed class NetworkException(message: String, cause: Throwable? = null) : Excep
     class UnauthorizedException : NetworkException("Session expired. Please log in again.")
     class NotFoundException : NetworkException("The requested resource was not found.")
     class BadRequestException(message: String) : NetworkException("Invalid request: $message")
+    class ConflictException(message: String) : NetworkException(message)
     class UnknownException(cause: Throwable) : NetworkException("An unexpected error occurred: ${cause.message}", cause)
 }
 

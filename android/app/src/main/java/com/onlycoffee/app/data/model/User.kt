@@ -9,37 +9,24 @@ import java.util.Date
 data class User(
     val id: String,
     val email: String,
-    @SerializedName("first_name")
     val firstName: String,
-    @SerializedName("last_name")
     val lastName: String,
     val phone: String? = null,
     val role: UserRole = UserRole.CUSTOMER,
-    @SerializedName("loyalty_points")
     val loyaltyPoints: Int = 0,
-    @SerializedName("loyalty_tier")
-    val loyaltyTier: UserTier = UserTier.BRONZE,
-    @SerializedName("stripe_customer_id")
+    // Enterprise-level: Make nullable to handle backend responses where tier might be null
+    // Default to BRONZE if null for new users
+    val loyaltyTier: UserTier? = UserTier.BRONZE,
     val stripeCustomerId: String? = null,
-    @SerializedName("is_active")
     val isActive: Boolean = true,
-    @SerializedName("email_verified")
     val emailVerified: Boolean = false,
-    @SerializedName("phone_verified")
     val phoneVerified: Boolean = false,
-    @SerializedName("marketing_opt_in")
     val marketingOptIn: Boolean = false,
-    @SerializedName("profile_completed")
     val profileCompleted: Boolean = false,
-    @SerializedName("is_loyalty_member")
     val isLoyaltyMember: Boolean = false,
-    @SerializedName("notifications_enabled")
     val notificationsEnabled: Boolean = true,
-    @SerializedName("last_login_at")
     val lastLoginAt: Date? = null,
-    @SerializedName("created_at")
     val createdAt: Date,
-    @SerializedName("updated_at")
     val updatedAt: Date
 ) : Parcelable {
     val fullName: String
@@ -63,29 +50,24 @@ data class LoginRequest(
 data class RegisterRequest(
     val email: String,
     val password: String,
-    @SerializedName("first_name")
     val firstName: String,
-    @SerializedName("last_name")
     val lastName: String,
     val phone: String? = null,
-    @SerializedName("birth_date")
     val birthDate: String? = null
 )
 
 data class AuthResponse(
     val user: User,
-    val tokens: TokenPair
+    val accessToken: String,
+    val refreshToken: String
 )
 
 data class TokenPair(
-    @SerializedName("access_token")
     val accessToken: String,
-    @SerializedName("refresh_token")
     val refreshToken: String
 )
 
 data class RefreshTokenRequest(
-    @SerializedName("refresh_token")
     val refreshToken: String
 )
 
@@ -105,16 +87,11 @@ data class VerifyPhoneRequest(
 
 // Profile Update Models
 data class UpdateProfileRequest(
-    @SerializedName("first_name")
     val firstName: String? = null,
-    @SerializedName("last_name")
     val lastName: String? = null,
     val phone: String? = null,
-    @SerializedName("birth_date")
     val birthDate: String? = null,
-    @SerializedName("marketing_opt_in")
     val marketingOptIn: Boolean? = null,
-    @SerializedName("notifications_enabled")
     val notificationsEnabled: Boolean? = null
 )
 

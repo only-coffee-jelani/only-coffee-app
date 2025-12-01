@@ -1,81 +1,134 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '@shared/database/entities/user.entity';
-
-// For now, we'll use a simple in-memory storage for device tokens
-// In production, you'd want to store these in the database
-interface DeviceToken {
-  userId: string;
-  token: string;
-  platform: 'ios' | 'android';
-  createdAt: Date;
-}
+import { User, UserDevice } from '@shared/database/entities';
+import { FirebaseService } from './firebase.service';
 
 export interface NotificationPayload {
   title: string;
   body: string;
+  imageUrl?: string;
   data?: Record<string, any>;
 }
 
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
-  private deviceTokens: Map<string, DeviceToken> = new Map();
 
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(UserDevice)
+    private readonly userDeviceRepository: Repository<UserDevice>,
+    private readonly firebaseService: FirebaseService,
   ) {}
 
   /**
    * Register a device token for push notifications
+   * Saves to database with idempotency (upsert)
    */
   async registerDeviceToken(
     userId: string,
     token: string,
     platform: 'ios' | 'android',
   ): Promise<void> {
-    this.deviceTokens.set(userId, {
-      userId,
-      token,
-      platform,
-      createdAt: new Date(),
-    });
+    try {
+      // Check if device already exists
+      let device = await this.userDeviceRepository.findOne({
+        where: { userId, pushToken: token },
+      });
 
-    this.logger.log(
-      `Device token registered for user ${userId} (${platform}): ${token.substring(0, 10)}...`,
-    );
+      if (device) {
+        // Update existing device
+        device.lastActiveAt = new Date();
+        device.deviceType = platform;
+        await this.userDeviceRepository.save(device);
 
-    // TODO: Save to database
-    // await this.deviceTokenRepository.save({ userId, token, platform });
+        this.logger.log(
+          `Device token updated for user ${userId} (${platform}): ${token.substring(0, 10)}...`,
+        );
+      } else {
+        // Create new device
+        device = this.userDeviceRepository.create({
+          userId,
+          pushToken: token,
+          deviceType: platform,
+          lastActiveAt: new Date(),
+        });
+        await this.userDeviceRepository.save(device);
+
+        this.logger.log(
+          `Device token registered for user ${userId} (${platform}): ${token.substring(0, 10)}...`,
+        );
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to register device token for user ${userId}:`,
+        error,
+      );
+      throw error;
+    }
   }
 
   /**
    * Send push notification to a specific user
+   * Uses Firebase Admin SDK for both iOS and Android
    */
   async sendPushNotification(
     userId: string,
     notification: NotificationPayload,
   ): Promise<boolean> {
-    const deviceToken = this.deviceTokens.get(userId);
-
-    if (!deviceToken) {
-      this.logger.warn(`No device token found for user ${userId}`);
-      return false;
-    }
-
     try {
-      if (deviceToken.platform === 'ios') {
-        await this.sendAPNSNotification(deviceToken.token, notification);
-      } else {
-        await this.sendFCMNotification(deviceToken.token, notification);
+      // Get all devices for this user
+      const devices = await this.userDeviceRepository.find({
+        where: { userId },
+      });
+
+      if (devices.length === 0) {
+        this.logger.warn(`No devices found for user ${userId}`);
+        return false;
+      }
+
+      // Filter devices with valid push tokens
+      const validDevices = devices.filter((d) => d.pushToken);
+
+      if (validDevices.length === 0) {
+        this.logger.warn(`No valid push tokens found for user ${userId}`);
+        return false;
+      }
+
+      // Send to all devices
+      let successCount = 0;
+      for (const device of validDevices) {
+        const result = await this.firebaseService.sendToDevice(
+          device.pushToken!,
+          {
+            title: notification.title,
+            body: notification.body,
+            imageUrl: notification.imageUrl,
+          },
+          this.convertDataToStrings(notification.data),
+        );
+
+        if (result.success) {
+          successCount++;
+        } else if (
+          result.error === 'Invalid or expired token' ||
+          result.error === 'Token not registered'
+        ) {
+          // Remove invalid token
+          await this.userDeviceRepository.remove(device);
+          this.logger.log(
+            `Removed invalid device token for user ${userId}: ${device.pushToken?.substring(0, 10)}...`,
+          );
+        }
       }
 
       this.logger.log(
-        `Push notification sent to user ${userId}: ${notification.title}`,
+        `Push notification sent to ${successCount}/${validDevices.length} devices for user ${userId}: ${notification.title}`,
       );
-      return true;
+
+      return successCount > 0;
     } catch (error) {
       this.logger.error(
         `Failed to send push notification to user ${userId}`,
@@ -198,71 +251,20 @@ export class NotificationsService {
     });
   }
 
-  // MARK: - Platform-specific implementations
+  // MARK: - Helper methods
 
   /**
-   * Send notification via Apple Push Notification Service (APNS)
+   * Convert data object to strings (Firebase requirement)
    */
-  private async sendAPNSNotification(
-    deviceToken: string,
-    notification: NotificationPayload,
-  ): Promise<void> {
-    // TODO: Implement APNS integration
-    // This would use the apn package or AWS SNS
-    this.logger.debug(
-      `[APNS] Would send notification to ${deviceToken.substring(0, 10)}...: ${notification.title}`,
-    );
+  private convertDataToStrings(
+    data?: Record<string, any>,
+  ): Record<string, string> | undefined {
+    if (!data) return undefined;
 
-    /*
-    Example implementation with apn package:
-
-    const apnProvider = new apn.Provider({
-      token: {
-        key: process.env.APNS_KEY,
-        keyId: process.env.APNS_KEY_ID,
-        teamId: process.env.APNS_TEAM_ID,
-      },
-      production: process.env.NODE_ENV === 'production',
-    });
-
-    const notification = new apn.Notification({
-      alert: {
-        title: notification.title,
-        body: notification.body,
-      },
-      topic: 'com.onlycoffee.app',
-      payload: notification.data,
-      sound: 'default',
-    });
-
-    await apnProvider.send(notification, deviceToken);
-    */
-  }
-
-  /**
-   * Send notification via Firebase Cloud Messaging (FCM)
-   */
-  private async sendFCMNotification(
-    deviceToken: string,
-    notification: NotificationPayload,
-  ): Promise<void> {
-    // TODO: Implement FCM integration
-    // This would use the firebase-admin package or AWS SNS
-    this.logger.debug(
-      `[FCM] Would send notification to ${deviceToken.substring(0, 10)}...: ${notification.title}`,
-    );
-
-    /*
-    Example implementation with firebase-admin:
-
-    await admin.messaging().send({
-      token: deviceToken,
-      notification: {
-        title: notification.title,
-        body: notification.body,
-      },
-      data: notification.data,
-    });
-    */
+    const stringData: Record<string, string> = {};
+    for (const [key, value] of Object.entries(data)) {
+      stringData[key] = String(value);
+    }
+    return stringData;
   }
 }

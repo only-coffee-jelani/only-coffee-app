@@ -9,9 +9,11 @@ import com.onlycoffee.app.data.api.CarouselAnalyticsApiService
 import com.onlycoffee.app.data.api.CouponsApiService
 import com.onlycoffee.app.data.api.LoyaltyApiService
 import com.onlycoffee.app.data.api.MenuApiService
+import com.onlycoffee.app.data.api.NotificationsApiService
 import com.onlycoffee.app.data.api.OffersApiService
 import com.onlycoffee.app.data.api.OrderApiService
 import com.onlycoffee.app.data.api.PaymentApiService
+import com.onlycoffee.app.data.api.RewardsApiService
 import com.onlycoffee.app.data.api.SplashScreenApi
 import com.onlycoffee.app.data.api.StoreApiService
 import com.onlycoffee.app.managers.SecureStorageManager
@@ -156,5 +158,17 @@ object NetworkModule {
     @Singleton
     fun providePaymentApiService(retrofit: Retrofit): PaymentApiService {
         return retrofit.create(PaymentApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationsApiService(retrofit: Retrofit): NotificationsApiService {
+        return retrofit.create(NotificationsApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideRewardsApiService(retrofit: Retrofit): RewardsApiService {
+        return retrofit.create(RewardsApiService::class.java)
     }
 }

@@ -49,6 +49,10 @@ class ErrorHandler @Inject constructor(
             }
             401, 403 -> NetworkException.UnauthorizedException()
             404 -> NetworkException.NotFoundException()
+            409 -> {
+                val message = parseErrorMessage(exception) ?: "Resource already exists"
+                NetworkException.ConflictException(message)
+            }
             in 500..599 -> {
                 val message = parseErrorMessage(exception) ?: "Server error"
                 NetworkException.ServerException(exception.code(), message)
@@ -64,10 +68,17 @@ class ErrorHandler @Inject constructor(
         return try {
             exception.response()?.errorBody()?.string()?.let { errorBody ->
                 // Try to parse JSON error message
-                // For now, return the raw error body
-                errorBody.take(200) // Limit to 200 characters
+                try {
+                    val jsonObject = org.json.JSONObject(errorBody)
+                    val message = jsonObject.optString("message")
+                    if (message.isNotEmpty()) message else null
+                } catch (e: Exception) {
+                    // If JSON parsing fails, return raw error body (limited)
+                    errorBody.take(200)
+                }
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Failed to parse error message", e)
             null
         }
     }
@@ -77,19 +88,21 @@ class ErrorHandler @Inject constructor(
      */
     fun getUserFriendlyMessage(exception: NetworkException): String {
         return when (exception) {
-            is NetworkException.NoInternetException -> 
+            is NetworkException.NoInternetException ->
                 "No internet connection. Please check your network settings."
-            is NetworkException.TimeoutException -> 
+            is NetworkException.TimeoutException ->
                 "Request timed out. Please try again."
-            is NetworkException.UnauthorizedException -> 
+            is NetworkException.UnauthorizedException ->
                 "Your session has expired. Please log in again."
-            is NetworkException.NotFoundException -> 
+            is NetworkException.NotFoundException ->
                 "The requested item was not found."
-            is NetworkException.BadRequestException -> 
+            is NetworkException.BadRequestException ->
                 exception.message ?: "Invalid request. Please check your input."
-            is NetworkException.ServerException -> 
+            is NetworkException.ConflictException ->
+                exception.message ?: "This resource already exists."
+            is NetworkException.ServerException ->
                 "Server error. Please try again later."
-            is NetworkException.UnknownException -> 
+            is NetworkException.UnknownException ->
                 "An unexpected error occurred. Please try again."
         }
     }
@@ -105,6 +118,7 @@ class ErrorHandler @Inject constructor(
             is NetworkException.UnauthorizedException -> false
             is NetworkException.NotFoundException -> false
             is NetworkException.BadRequestException -> false
+            is NetworkException.ConflictException -> false
             is NetworkException.UnknownException -> true
         }
     }

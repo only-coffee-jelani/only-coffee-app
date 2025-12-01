@@ -4,6 +4,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from '@shared/database/entities';
 import { UsersService } from './users.service';
+import { UserResponseDto } from '../auth/dto/user-response.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -20,21 +21,11 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User profile retrieved successfully',
-    schema: {
-      example: {
-        id: 'uuid',
-        email: 'john.doe@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+1234567890',
-        birthDate: '1990-01-01',
-        createdAt: '2024-01-01T00:00:00Z',
-      },
-    },
+    type: UserResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getProfile(@CurrentUser() user: User) {
-    return user;
+  async getProfile(@CurrentUser() user: User): Promise<UserResponseDto> {
+    return UserResponseDto.fromEntity(user);
   }
 
   @Put('me')
@@ -45,11 +36,13 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User profile updated successfully',
+    type: UserResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Invalid update data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async updateProfile(@CurrentUser() user: User, @Body() updates: Partial<User>) {
-    return this.usersService.updateProfile(user.userId, updates);
+  async updateProfile(@CurrentUser() user: User, @Body() updates: Partial<User>): Promise<UserResponseDto> {
+    const updatedUser = await this.usersService.updateProfile(user.userId, updates);
+    return UserResponseDto.fromEntity(updatedUser);
   }
 
   @Get('me/loyalty')
